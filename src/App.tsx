@@ -5,6 +5,7 @@ import ClientsPage from './pages/ClientsPage';
 import EventsPage from './pages/EventsPage';
 import QuotesPage from './pages/QuotesPage';
 import EventRequestPage from './pages/EventRequestPage';
+import EventSummaryPage from './pages/EventSummaryPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="clients" element={<ClientsPage />} />
           <Route path="events" element={<EventsPage />} />
           <Route path="events/request" element={<EventRequestPage />} />
+          <Route path="events/:eventId" element={<EventSummaryPage />} />
         </Route>
       </Routes>
     </Router>

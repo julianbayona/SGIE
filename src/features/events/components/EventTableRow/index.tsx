@@ -3,6 +3,7 @@ import type { EventRecord } from '@/features/events/types';
 
 interface EventTableRowProps {
   event: EventRecord;
+  onViewEvent: (eventId: string) => void;
 }
 
 const statusClasses: Record<EventRecord['status'], string> = {
@@ -17,7 +18,7 @@ const statusDotClasses: Record<EventRecord['status'], string> = {
   'Cotizacion Enviada': 'bg-gold',
 };
 
-const EventTableRow: React.FC<EventTableRowProps> = ({ event }) => {
+const EventTableRow: React.FC<EventTableRowProps> = ({ event, onViewEvent }) => {
   return (
     <tr className="hover:bg-surface transition-colors">
       <td className="px-6 py-5">
@@ -56,6 +57,7 @@ const EventTableRow: React.FC<EventTableRowProps> = ({ event }) => {
         <div className="flex justify-end gap-2">
           <button
             type="button"
+            onClick={() => onViewEvent(event.id)}
             className="p-1.5 hover:bg-panel rounded text-text3 hover:text-gold transition-colors"
           >
             <span className="material-symbols-outlined text-lg">visibility</span>

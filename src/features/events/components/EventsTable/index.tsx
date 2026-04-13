@@ -4,9 +4,10 @@ import type { EventRecord } from '@/features/events/types';
 
 interface EventsTableProps {
   events: EventRecord[];
+  onViewEvent: (eventId: string) => void;
 }
 
-const EventsTable: React.FC<EventsTableProps> = ({ events }) => {
+const EventsTable: React.FC<EventsTableProps> = ({ events, onViewEvent }) => {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left">
@@ -23,7 +24,7 @@ const EventsTable: React.FC<EventsTableProps> = ({ events }) => {
 
         <tbody className="divide-y divide-stone-100">
           {events.map((event) => (
-            <EventTableRow key={event.id} event={event} />
+            <EventTableRow key={event.id} event={event} onViewEvent={onViewEvent} />
           ))}
         </tbody>
       </table>

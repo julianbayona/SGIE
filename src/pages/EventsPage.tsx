@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EventsPageHeader from '@/features/events/components/EventsPageHeader';
 import EventsToolbar from '@/features/events/components/EventsToolbar';
 import EventsTable from '@/features/events/components/EventsTable';
@@ -53,6 +54,7 @@ const eventsData: EventRecord[] = [
 ];
 
 const EventsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<EventsTab>('Historial');
 
   const visibleEvents = useMemo(() => {
@@ -69,7 +71,7 @@ const EventsPage: React.FC = () => {
 
       <div className="bg-surface rounded-xl shadow-sm overflow-hidden border border-border">
         <EventsToolbar activeTab={activeTab} onTabChange={setActiveTab} />
-        <EventsTable events={visibleEvents} />
+        <EventsTable events={visibleEvents} onViewEvent={(eventId) => navigate(`/events/${eventId}`)} />
         <EventsTablePagination from={1} to={visibleEvents.length} total={128} />
       </div>
     </section>
