@@ -1,0 +1,297 @@
+
+<style>
+  :root {
+    --bg:       #F8F7F4;
+    --surface:  #FFFFFF;
+    --card:     #FFFFFF;
+    --panel:    #F2F0EB;
+    --hover:    #EDEAE3;
+    --border:   #E0DAD0;
+    --border2:  #C8BFA8;
+
+    --gold:     #A8841C;
+    --gold-l:   #C9A227;
+    --gold-d:   #7A5E10;
+    --gold-bg:  rgba(168,132,28,0.07);
+    --gold-bg2: rgba(168,132,28,0.13);
+
+    --text1: #1A1714;
+    --text2: #4A4035;
+    --text3: #8A7D68;
+    --text4: #B8AD9A;
+
+    --red:      #B83232;
+    --green:    #2D7D4F;
+    --blue:     #2358A0;
+    --red-bg:   rgba(184,50,50,0.07);
+    --green-bg: rgba(45,125,79,0.07);
+    --blue-bg:  rgba(35,88,160,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .guide { max-width: 680px; font-family: 'Segoe UI', sans-serif; background: var(--bg); border-radius: 10px; }
+
+  .guide-header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--gold-l);
+    padding: 28px 32px;
+    border-radius: 10px 10px 0 0;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .h-logo {
+    width: 50px; height: 50px; border-radius: 8px;
+    background: var(--gold-bg2); border: 1.5px solid var(--gold-l);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: var(--gold);
+    font-family: 'Georgia', serif; font-style: italic; flex-shrink: 0;
+  }
+  .h-text { flex: 1; }
+  .h-title { font-size: 22px; font-weight: 700; color: var(--gold); font-family: 'Georgia', serif; font-style: italic; }
+  .h-sub   { font-size: 10px; letter-spacing: 0.18em; color: var(--text3); margin-top: 4px; text-transform: uppercase; }
+  .h-badge { background: var(--gold-bg); border: 1px solid var(--border2); border-radius: 4px; padding: 4px 10px; font-size: 10px; color: var(--gold-d); letter-spacing: 0.1em; text-transform: uppercase; align-self: flex-start; white-space: nowrap; }
+
+  .section { padding: 26px 32px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .section.alt { background: var(--bg); }
+  .section:last-child { border-bottom: none; border-radius: 0 0 10px 10px; }
+
+  .sec-title { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 18px; }
+  .sec-note  { font-size: 11px; color: var(--text4); margin-top: -12px; margin-bottom: 16px; font-style: italic; }
+
+  .chip-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .chip { flex: 1; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .cp { height: 36px; }
+  .ci { padding: 6px 8px; background: var(--panel); }
+  .cn { font-size: 11px; font-weight: 600; color: var(--text1); }
+  .ch { font-size: 10px; color: var(--text3); font-family: monospace; }
+
+  .sw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sw { border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .sp { height: 50px; }
+  .sb { padding: 8px 10px; background: var(--panel); }
+  .sn { font-size: 12px; font-weight: 600; color: var(--text1); }
+  .sx { font-size: 11px; color: var(--text3); font-family: monospace; }
+  .su { font-size: 10px; color: var(--text4); margin-top: 2px; font-style: italic; }
+
+  .tr {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 14px; background: var(--bg);
+    border-radius: 6px; border: 1px solid var(--border); margin-bottom: 7px;
+  }
+  .tm { min-width: 128px; }
+  .tl { font-size: 10px; color: var(--text4); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ts { font-size: 10px; color: var(--border2); font-family: monospace; margin-top: 2px; }
+  .t-script { font-size: 24px; font-weight: 700; color: var(--gold); font-family: 'Georgia', serif; font-style: italic; }
+  .t-h1     { font-size: 20px; font-weight: 600; color: var(--text1); }
+  .t-h2     { font-size: 16px; font-weight: 600; color: var(--text1); }
+  .t-h3     { font-size: 14px; font-weight: 500; color: var(--text2); }
+  .t-body   { font-size: 13px; color: var(--text2); }
+  .t-small  { font-size: 12px; color: var(--text3); }
+  .t-label  { font-size: 10px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.12em; }
+
+  .sr { display: flex; align-items: center; gap: 12px; margin-bottom: 7px; }
+  .sb2 { height: 14px; background: var(--gold); opacity: 0.4; border-radius: 2px; }
+  .sl { font-size: 11px; color: var(--text2); min-width: 80px; }
+  .sv { font-size: 10px; color: var(--text4); font-family: monospace; }
+
+  .rr { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+  .rd { background: var(--gold-bg); border: 1.5px solid var(--gold-l); display: flex; align-items: center; justify-content: center; }
+  .rl { font-size: 10px; color: var(--text3); margin-top: 5px; text-align: center; }
+  .rp { font-size: 10px; color: var(--gold); text-align: center; font-family: monospace; }
+
+  .nav-wrap { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
+  .nav-bar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 18px; display: flex; align-items: center; height: 46px;
+  }
+  .nav-brand { font-size: 15px; color: var(--gold); font-family: 'Georgia', serif; font-style: italic; margin-right: 24px; flex-shrink: 0; }
+  .nav-item { font-size: 11px; color: var(--text3); padding: 0 12px; height: 46px; display: flex; align-items: center; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 2px solid transparent; }
+  .nav-item.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
+  .nav-body { background: var(--bg); padding: 12px 16px; font-size: 12px; color: var(--text4); }
+
+  .ev { border-left: 3px solid; padding: 10px 12px; border-radius: 0 6px 6px 0; }
+  .et { font-size: 10px; font-family: monospace; color: var(--text4); margin-bottom: 3px; }
+  .en { font-size: 13px; font-weight: 600; }
+  .es { font-size: 11px; margin-top: 2px; opacity: 0.7; }
+  .ev-gold  { border-color: var(--gold-l); background: var(--gold-bg); color: var(--text1); }
+  .ev-green { border-color: var(--green); background: var(--green-bg); color: #1A5535; }
+  .ev-red   { border-color: var(--red); background: var(--red-bg); color: #7A1A1A; }
+  .ev-blue  { border-color: var(--blue); background: var(--blue-bg); color: #103070; }
+
+  .cd { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+  .ct { background: var(--gold); color: #fff; }
+  .cn2 { color: var(--text2); }
+  .co { color: var(--text4); }
+
+  .av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; border: 1.5px solid var(--gold-l); background: var(--gold-bg2); color: var(--gold); font-family: 'Georgia', serif; }
+
+  .btn { padding: 8px 18px; border-radius: 6px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; letter-spacing: 0.07em; text-transform: uppercase; }
+  .btn-g  { background: var(--gold); color: #fff; }
+  .btn-o  { background: transparent; border: 1.5px solid var(--gold-l); color: var(--gold); }
+  .btn-gh { background: transparent; border: 1px solid var(--border2); color: var(--text3); }
+
+  .tag { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 4px; }
+  .tdot { width: 7px; height: 7px; border-radius: 2px; }
+
+  .pip { padding: 4px 11px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .div-line { width: 100%; height: 1px; background: var(--border); margin: 20px 0; }
+  .gold-div { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .gd-l { flex: 1; height: 1px; background: var(--border2); opacity: 0.6; }
+  .gd-d { width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
+
+  .comp-lbl { font-size: 10px; color: var(--gold-d); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 700; }
+</style>
+
+<div class="guide">
+
+  <div class="guide-header">
+    <div class="h-logo">CB</div>
+    <div class="h-text">
+      <div class="h-title">Club Boyacá</div>
+      <div class="h-sub">Tunja · Boyacá · Colombia &nbsp;·&nbsp; Sistema de Gestión</div>
+    </div>
+    <div class="h-badge">Style Guide v4</div>
+  </div>
+
+  <div class="section alt">
+    <div class="sec-title">01 · Fondos y estructura</div>
+    <div class="sec-note">Base blanca cálida — no fría. El dorado respira sobre estos fondos sin pelear.</div>
+    <div class="chip-row">
+      <div class="chip"><div class="cp" style="background:#FFFFFF;border-bottom:1px solid #E0DAD0"></div><div class="ci"><div class="cn">Surface</div><div class="ch">#FFFFFF</div></div></div>
+      <div class="chip"><div class="cp" style="background:#F8F7F4"></div><div class="ci"><div class="cn">Base</div><div class="ch">#F8F7F4</div></div></div>
+      <div class="chip"><div class="cp" style="background:#F2F0EB"></div><div class="ci"><div class="cn">Panel</div><div class="ch">#F2F0EB</div></div></div>
+      <div class="chip"><div class="cp" style="background:#EDEAE3"></div><div class="ci"><div class="cn">Hover</div><div class="ch">#EDEAE3</div></div></div>
+    </div>
+    <div class="chip-row">
+      <div class="chip"><div class="cp" style="background:#E0DAD0"></div><div class="ci"><div class="cn">Border suave</div><div class="ch">#E0DAD0</div></div></div>
+      <div class="chip"><div class="cp" style="background:#C8BFA8"></div><div class="ci"><div class="cn">Border énfasis</div><div class="ch">#C8BFA8</div></div></div>
+      <div class="chip"><div class="cp" style="background:rgba(168,132,28,0.07)"></div><div class="ci"><div class="cn">Gold tint</div><div class="ch">gold 7%</div></div></div>
+      <div class="chip"><div class="cp" style="background:rgba(168,132,28,0.13)"></div><div class="ci"><div class="cn">Gold tint +</div><div class="ch">gold 13%</div></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">02 · Paleta dorada · Color de marca</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="sp" style="background:#A8841C"></div><div class="sb"><div class="sn">Gold primario</div><div class="sx">#A8841C</div><div class="su">CTA, activo, acento UI</div></div></div>
+      <div class="sw"><div class="sp" style="background:#C9A227"></div><div class="sb"><div class="sn">Gold light</div><div class="sx">#C9A227</div><div class="su">Display, hover, logo</div></div></div>
+      <div class="sw"><div class="sp" style="background:#7A5E10"></div><div class="sb"><div class="sn">Gold dark</div><div class="sx">#7A5E10</div><div class="su">Pressed, bordes énfasis</div></div></div>
+      <div class="sw"><div class="sp" style="background:#1A1714"></div><div class="sb"><div class="sn">Texto principal</div><div class="sx">#1A1714</div><div class="su">Títulos, body</div></div></div>
+      <div class="sw"><div class="sp" style="background:#4A4035"></div><div class="sb"><div class="sn">Texto secundario</div><div class="sx">#4A4035</div><div class="su">Subtítulos, meta</div></div></div>
+      <div class="sw"><div class="sp" style="background:#8A7D68"></div><div class="sb"><div class="sn">Texto muted</div><div class="sx">#8A7D68</div><div class="su">Hints, placeholders</div></div></div>
+    </div>
+  </div>
+
+  <div class="section alt">
+    <div class="sec-title">03 · Colores heráldicos · Acento semántico</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="sp" style="background:#B83232"></div><div class="sb"><div class="sn">Rojo</div><div class="sx">#B83232</div><div class="su">Urgente, alerta</div></div></div>
+      <div class="sw"><div class="sp" style="background:#2D7D4F"></div><div class="sb"><div class="sn">Verde</div><div class="sx">#2D7D4F</div><div class="su">Activo, confirmación</div></div></div>
+      <div class="sw"><div class="sp" style="background:#2358A0"></div><div class="sb"><div class="sn">Azul</div><div class="sx">#2358A0</div><div class="su">Info, directiva</div></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">04 · Tipografía</div>
+    <div class="tr"><div class="tm"><div class="tl">Display</div><div class="ts">24px · 700 · Georgia italic</div></div><div style="flex:1"><span class="t-script">Club Boyacá</span></div></div>
+    <div class="tr"><div class="tm"><div class="tl">H1 · Página</div><div class="ts">20px · 600 · sans</div></div><div style="flex:1"><span class="t-h1">Instalaciones del Club</span></div></div>
+    <div class="tr"><div class="tm"><div class="tl">H2 · Sección</div><div class="ts">16px · 600 · sans</div></div><div style="flex:1"><span class="t-h2">Próximos Eventos</span></div></div>
+    <div class="tr"><div class="tm"><div class="tl">H3 · Subtítulo</div><div class="ts">14px · 500 · sans</div></div><div style="flex:1"><span class="t-h3">Reserva de Instalaciones</span></div></div>
+    <div class="tr"><div class="tm"><div class="tl">Body</div><div class="ts">13px · 400 · sans · 1.6lh</div></div><div style="flex:1"><span class="t-body">Bienvenido al sistema de gestión del Club Boyacá.</span></div></div>
+    <div class="tr"><div class="tm"><div class="tl">Small / meta</div><div class="ts">12px · 400 · sans</div></div><div style="flex:1"><span class="t-small">Socio activo · Categoría Platinum</span></div></div>
+    <div class="tr"><div class="tm"><div class="tl">Label</div><div class="ts">10px · 700 · uppercase</div></div><div style="flex:1"><span class="t-label">Agenda · Reservas · Socios</span></div></div>
+  </div>
+
+  <div class="section alt">
+    <div class="sec-title">05 · Espaciado</div>
+    <div class="sr"><div class="sl">xs · 4px</div><div class="sb2" style="width:4px"></div><div class="sv">separación mínima</div></div>
+    <div class="sr"><div class="sl">sm · 8px</div><div class="sb2" style="width:8px"></div><div class="sv">gap ítems inline</div></div>
+    <div class="sr"><div class="sl">md · 12px</div><div class="sb2" style="width:12px"></div><div class="sv">padding cards compactas</div></div>
+    <div class="sr"><div class="sl">lg · 16px</div><div class="sb2" style="width:16px"></div><div class="sv">padding estándar</div></div>
+    <div class="sr"><div class="sl">xl · 24px</div><div class="sb2" style="width:24px"></div><div class="sv">separación bloques</div></div>
+    <div class="sr"><div class="sl">2xl · 32px</div><div class="sb2" style="width:32px"></div><div class="sv">padding secciones</div></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">06 · Border radius</div>
+    <div class="rr">
+      <div><div class="rd" style="border-radius:2px;width:36px;height:36px;"></div><div class="rl">xs</div><div class="rp">2px</div></div>
+      <div><div class="rd" style="border-radius:4px;width:44px;height:44px;"></div><div class="rl">sm</div><div class="rp">4px</div></div>
+      <div><div class="rd" style="border-radius:6px;width:52px;height:52px;"></div><div class="rl">md</div><div class="rp">6px</div></div>
+      <div><div class="rd" style="border-radius:8px;width:60px;height:60px;"></div><div class="rl">lg</div><div class="rp">8px</div></div>
+      <div><div class="rd" style="border-radius:12px;width:66px;height:66px;"></div><div class="rl">xl</div><div class="rp">12px</div></div>
+      <div><div class="rd" style="border-radius:50%;width:44px;height:44px;"></div><div class="rl">full</div><div class="rp">50%</div></div>
+    </div>
+  </div>
+
+  <div class="section alt">
+    <div class="sec-title">07 · Componentes</div>
+
+    <div class="comp-lbl">Barra de navegación</div>
+    <div class="nav-wrap">
+      <div class="nav-bar">
+        <span class="nav-brand">Club Boyacá</span>
+        <span class="nav-item active">Agenda</span>
+        <span class="nav-item">Socios</span>
+        <span class="nav-item">Reservas</span>
+        <span class="nav-item">Eventos</span>
+      </div>
+      <div class="nav-body">Contenido del panel principal</div>
+    </div>
+
+    <div class="comp-lbl">Tarjetas de eventos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+      <div class="ev ev-gold"><div class="et">09:00 – 12:00</div><div class="en">Asamblea General</div><div class="es">Salón Principal</div></div>
+      <div class="ev ev-green"><div class="et">15:00 – 18:00</div><div class="en">Torneo de Tenis</div><div class="es">Cancha norte</div></div>
+      <div class="ev ev-red"><div class="et">20:00 – 23:00</div><div class="en">Cena de Gala</div><div class="es">Salón de honor</div></div>
+      <div class="ev ev-blue"><div class="et">07:00 – 09:00</div><div class="en">Reunión directiva</div><div class="es">Sala de juntas</div></div>
+    </div>
+
+    <div class="comp-lbl">Mini calendario</div>
+    <div style="display:flex;gap:5px;margin-bottom:20px">
+      <div class="cd co">28</div>
+      <div class="cd cn2">5</div><div class="cd cn2">6</div><div class="cd cn2">7</div><div class="cd cn2">8</div>
+      <div class="cd ct">9</div>
+      <div class="cd cn2">10</div><div class="cd cn2">11</div>
+    </div>
+
+    <div class="comp-lbl">Contacto socio</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div class="av">FG</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text1);font-family:'Georgia',serif;">Frank Goodman</div>
+        <div style="font-size:11px;color:var(--text3);">Socio activo · Categoría Platinum</div>
+      </div>
+    </div>
+
+    <div class="comp-lbl">Botones</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="btn btn-g">Reservar</button>
+      <button class="btn btn-o">Ver eventos</button>
+      <button class="btn btn-gh">Cancelar</button>
+    </div>
+
+    <div class="comp-lbl">Categorías del calendario</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">
+      <div class="tag" style="background:var(--gold-bg);color:var(--gold-d)"><div class="tdot" style="background:var(--gold)"></div>Eventos</div>
+      <div class="tag" style="background:var(--green-bg);color:#1A5535"><div class="tdot" style="background:var(--green)"></div>Deportes</div>
+      <div class="tag" style="background:var(--red-bg);color:#7A1A1A"><div class="tdot" style="background:var(--red)"></div>Urgente</div>
+      <div class="tag" style="background:var(--blue-bg);color:#103070"><div class="tdot" style="background:var(--blue)"></div>Directiva</div>
+    </div>
+
+    <div class="comp-lbl">Pipeline de socios</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">
+      <div class="pip" style="background:var(--panel);color:var(--text3);border:1px solid var(--border)">Prospecto</div>
+      <div class="pip" style="background:var(--gold-bg);color:var(--gold-d);border:1px solid var(--border2)">Contactado</div>
+      <div class="pip" style="background:var(--green-bg);color:#1A5535;border:1px solid rgba(45,125,79,0.25)">Activo</div>
+      <div class="pip" style="background:var(--blue-bg);color:#103070;border:1px solid rgba(35,88,160,0.25)">Platinum</div>
+      <div class="pip" style="background:var(--red-bg);color:#7A1A1A;border:1px solid rgba(184,50,50,0.25)">Inactivo</div>
+    </div>
+
+    <div class="div-line"></div>
+    <div class="comp-lbl">Separador heráldico</div>
+    <div class="gold-div"><div class="gd-l"></div><div class="gd-d"></div><div class="gd-l"></div></div>
+    <div style="font-size:11px;color:var(--text4);font-style:italic;">Toque de identidad entre secciones premium.</div>
+  </div>
+
+</div>

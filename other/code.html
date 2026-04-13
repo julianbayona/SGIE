@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,600;1,6..72,800&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#735800",
+                        "primary-gold": "#A8841C",
+                        "on-primary": "#ffffff",
+                        "surface": "#faf9f6",
+                        "background": "#faf9f6",
+                        "on-background": "#1a1c1a",
+                        "on-surface": "#1a1c1a",
+                        "on-surface-variant": "#4d4636",
+                        "outline-variant": "#d1c5b0",
+                        "surface-container-low": "#f4f3f0",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#ffd880",
+                        "on-secondary-container": "#795d0f",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "agenda-red": "#B83232",
+                        "agenda-green": "#2D7D4F",
+                        "agenda-blue": "#2358A0",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "label": ["Manrope", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-serif-italic { font-family: 'Newsreader', serif; font-style: italic; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .ghost-border { border: 1px solid rgba(168, 132, 28, 0.15); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1c5b0; border-radius: 10px; }
+        
+        .badge-confirmed { background-color: rgba(45, 125, 79, 0.1); color: #2D7D4F; border: 1px solid rgba(45, 125, 79, 0.2); }
+        .badge-pending { background-color: rgba(184, 50, 50, 0.1); color: #B83232; border: 1px solid rgba(184, 50, 50, 0.2); }
+        .badge-sent { background-color: rgba(168, 132, 28, 0.1); color: #A8841C; border: 1px solid rgba(168, 132, 28, 0.2); }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr);
+            grid-auto-rows: minmax(48px, auto);
+        }
+        .calendar-cell { border-right: 1px solid #f0eee9; border-bottom: 1px solid #f0eee9; }
+        .calendar-header { border-right: 1px solid #f0eee9; }
+        
+        .mini-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-neutral-800 dark:bg-stone-950 flex flex-col z-40 border-r border-stone-200/20">
+<div class="text-3xl italic font-serif text-yellow-600 dark:text-yellow-500 px-4 py-6">CB</div>
+<div class="px-4 py-2 mt-2">
+<p class="text-stone-500 text-[10px] uppercase tracking-widest font-medium">Event Management</p>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded text-yellow-500 bg-stone-700/40 font-bold border-r-4 border-yellow-600 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-medium tracking-wide">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="font-medium tracking-wide">Events</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-medium tracking-wide">Logistics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium tracking-wide">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium tracking-wide">Catalog Settings</span>
+</a>
+</nav>
+<div class="p-4 border-t border-stone-700/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-stone-700 flex items-center justify-center text-xs text-yellow-500 font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="text-stone-200 text-xs font-bold truncate">Juan Delgado</p>
+<p class="text-stone-500 text-[10px] truncate">Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 w-[calc(100%-16rem)] bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-md shadow-sm fixed top-0 z-30 border-b border-outline-variant/10">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full focus-within:ring-1 focus-within:ring-primary-gold/20 rounded">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-lg">search</span>
+<input class="w-full bg-surface-container-low border-none rounded py-2 pl-10 pr-4 text-sm focus:ring-0 placeholder-stone-400" placeholder="Buscar eventos, socios, cotizaciones..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-stone-600 hover:text-primary-gold transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary-gold rounded-full border-2 border-surface"></span>
+</button>
+<div class="h-8 w-px bg-stone-200/50"></div>
+<button class="text-stone-600 hover:text-primary-gold transition-colors flex items-center gap-2">
+<span class="text-sm font-medium">Administrator</span>
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="ml-64 pt-16 pb-6 min-h-screen bg-[#F8F7F4]">
+<div class="max-w-[1600px] mx-auto px-8 py-6 space-y-6">
+<!-- Page Header & Action -->
+<div class="flex justify-between items-end">
+<div>
+<h1 class="text-3xl font-serif-italic text-primary-gold">Dashboard Principal</h1>
+<p class="text-on-surface-variant font-medium text-xs mt-1 uppercase tracking-widest opacity-80">Lunes, 24 de Julio, 2023</p>
+</div>
+<button class="bg-primary-gold hover:bg-primary text-on-primary px-5 py-2.5 rounded shadow-md transition-all flex items-center gap-2 font-semibold text-xs active:scale-95">
+<span class="material-symbols-outlined text-base">add_circle</span>
+                Crear Solicitud
+            </button>
+</div>
+<!-- Horizontal Próximos Eventos Section (Replaces KPIs) -->
+<section class="bg-surface-container-lowest ghost-border rounded-xl shadow-sm overflow-hidden flex flex-col h-24">
+<div class="px-4 py-2 bg-stone-50/50 border-b border-outline-variant/10 flex justify-between items-center">
+<h2 class="font-serif-italic text-sm text-primary-gold">Próximos Eventos (7 días)</h2>
+<a class="text-[8px] font-bold text-stone-400 uppercase tracking-widest hover:text-primary-gold" href="#">Ver todos</a>
+</div>
+<div class="flex-1 overflow-x-auto overflow-y-hidden flex items-center px-4 gap-4 custom-scrollbar">
+<!-- Event Item 1 -->
+<div class="flex-shrink-0 flex items-center gap-3 bg-white p-2 rounded-lg border border-outline-variant/10 hover:shadow-sm transition-shadow min-w-[200px]">
+<div class="text-center border-r border-stone-100 pr-3">
+<p class="text-[9px] font-bold text-on-surface leading-tight">24</p>
+<p class="text-[7px] text-stone-400 uppercase font-bold">Jul</p>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[10px] font-bold text-on-surface truncate">Frank Goodman</p>
+<p class="text-[8px] text-on-surface-variant italic font-serif">Jade</p>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-agenda-green shadow-sm" title="Confirmado"></span>
+</div>
+<!-- Event Item 2 -->
+<div class="flex-shrink-0 flex items-center gap-3 bg-white p-2 rounded-lg border border-outline-variant/10 hover:shadow-sm transition-shadow min-w-[200px]">
+<div class="text-center border-r border-stone-100 pr-3">
+<p class="text-[9px] font-bold text-on-surface leading-tight">25</p>
+<p class="text-[7px] text-stone-400 uppercase font-bold">Jul</p>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[10px] font-bold text-on-surface truncate">Alicia Morales</p>
+<p class="text-[8px] text-on-surface-variant italic font-serif">Versalles</p>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-gold shadow-sm" title="Cotización"></span>
+</div>
+<!-- Event Item 3 -->
+<div class="flex-shrink-0 flex items-center gap-3 bg-white p-2 rounded-lg border border-outline-variant/10 hover:shadow-sm transition-shadow min-w-[200px]">
+<div class="text-center border-r border-stone-100 pr-3">
+<p class="text-[9px] font-bold text-on-surface leading-tight">26</p>
+<p class="text-[7px] text-stone-400 uppercase font-bold">Jul</p>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[10px] font-bold text-on-surface truncate">Torneo Tenis</p>
+<p class="text-[8px] text-on-surface-variant italic font-serif">Cancha</p>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-agenda-green shadow-sm" title="Confirmado"></span>
+</div>
+<!-- Event Item 4 -->
+<div class="flex-shrink-0 flex items-center gap-3 bg-white p-2 rounded-lg border border-outline-variant/10 hover:shadow-sm transition-shadow min-w-[200px]">
+<div class="text-center border-r border-stone-100 pr-3">
+<p class="text-[9px] font-bold text-on-surface leading-tight">28</p>
+<p class="text-[7px] text-stone-400 uppercase font-bold">Jul</p>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[10px] font-bold text-on-surface truncate">Ricardo Uribe</p>
+<p class="text-[8px] text-on-surface-variant italic font-serif">Honor</p>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-agenda-red shadow-sm" title="Pendiente"></span>
+</div>
+<!-- Event Item 5 -->
+<div class="flex-shrink-0 flex items-center gap-3 bg-white p-2 rounded-lg border border-outline-variant/10 hover:shadow-sm transition-shadow min-w-[200px]">
+<div class="text-center border-r border-stone-100 pr-3">
+<p class="text-[9px] font-bold text-on-surface leading-tight">30</p>
+<p class="text-[7px] text-stone-400 uppercase font-bold">Jul</p>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[10px] font-bold text-on-surface truncate">Directiva Club</p>
+<p class="text-[8px] text-on-surface-variant italic font-serif">Jade</p>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-agenda-blue shadow-sm" title="Directiva"></span>
+</div>
+</div>
+</section>
+<!-- Main Content Area -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Center Content: Full Width Weekly Calendar -->
+<div class="col-span-12 lg:col-span-7 xl:col-span-8 bg-surface-container-lowest border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm flex flex-col">
+<!-- Calendar Header -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant/10">
+<div class="flex items-center gap-4">
+<h2 class="font-serif-italic text-xl text-primary-gold">Agenda Semanal</h2>
+<div class="flex items-center gap-2">
+<div class="flex bg-surface-container-low p-0.5 rounded">
+<button class="p-1 hover:bg-white rounded transition-colors"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="px-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">24 - 30 Jul</button>
+<button class="p-1 hover:bg-white rounded transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+<button class="px-3 py-1 bg-primary-gold text-white text-[10px] font-bold rounded uppercase tracking-widest hover:bg-primary transition-colors">HOY</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex bg-surface-container-low p-0.5 rounded shadow-inner">
+<button class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant hover:bg-white rounded transition-all">Día</button>
+<button class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest bg-white text-primary-gold shadow-sm rounded transition-all">Semana</button>
+<button class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant hover:bg-white rounded transition-all">Mes</button>
+</div>
+</div>
+</div>
+<!-- Calendar Body -->
+<div class="overflow-y-auto max-h-[600px] custom-scrollbar">
+<div class="calendar-grid"><!-- Week Headers -->
+<div class="calendar-header bg-stone-50"></div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Lun</p>
+<p class="text-sm font-serif-italic text-primary-gold">24</p>
+</div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Mar</p>
+<p class="text-sm font-serif-italic text-on-surface">25</p>
+</div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Mié</p>
+<p class="text-sm font-serif-italic text-on-surface">26</p>
+</div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Jue</p>
+<p class="text-sm font-serif-italic text-on-surface">27</p>
+</div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Vie</p>
+<p class="text-sm font-serif-italic text-on-surface">28</p>
+</div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Sáb</p>
+<p class="text-sm font-serif-italic text-on-surface">29</p>
+</div>
+<div class="calendar-header bg-stone-50 p-2 text-center border-b border-outline-variant/10">
+<p class="text-[8px] font-bold text-stone-400 uppercase">Dom</p>
+<p class="text-sm font-serif-italic text-on-surface">30</p>
+</div>
+<!-- 00:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">00:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 02:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">02:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 04:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">04:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 06:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">06:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 08:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">08:00</div>
+<div class="calendar-cell bg-white relative p-1">
+<div class="absolute inset-1 rounded bg-agenda-green/10 border-l-2 border-agenda-green p-1.5">
+<p class="text-[8px] font-bold leading-tight truncate">FRANK GOODMAN</p>
+<p class="text-[7px] text-agenda-green font-medium">Clase Tenis</p>
+</div>
+</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<div class="calendar-cell bg-white relative p-1">
+<div class="absolute inset-1 rounded bg-agenda-red/10 border-l-2 border-agenda-red p-1.5">
+<p class="text-[8px] font-bold leading-tight truncate">MANTENIMIENTO</p>
+<p class="text-[7px] text-agenda-red font-medium">Caldera Central</p>
+</div>
+</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 10:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">10:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<div class="calendar-cell bg-white relative p-1">
+<div class="absolute inset-1 rounded bg-agenda-blue/10 border-l-2 border-agenda-blue p-1.5">
+<p class="text-[8px] font-bold leading-tight truncate">REUNIÓN DIRECTIVA</p>
+<p class="text-[7px] text-agenda-blue font-medium">Salon Jade</p>
+</div>
+</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 12:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">12:00</div>
+<div class="calendar-cell bg-white relative"></div>
+<div class="calendar-cell bg-white relative p-1">
+<div class="absolute inset-1 rounded bg-primary-gold/10 border-l-2 border-primary-gold p-1.5">
+<p class="text-[8px] font-bold leading-tight truncate">ALMUERZO SOCIOS</p>
+<p class="text-[7px] text-primary-gold font-medium">Parrilla</p>
+</div>
+</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 14:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">14:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<div class="calendar-cell bg-white relative p-1">
+<div class="absolute inset-1 rounded bg-agenda-green/10 border-l-2 border-agenda-green p-1.5">
+<p class="text-[8px] font-bold leading-tight truncate">TORNEO TENIS</p>
+<p class="text-[7px] text-agenda-green font-medium">Cancha 1-4</p>
+</div>
+</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 16:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">16:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 18:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">18:00</div>
+<div class="calendar-cell bg-white relative"></div>
+<div class="calendar-cell bg-white relative p-1">
+<div class="absolute inset-1 rounded bg-primary-gold/10 border-l-2 border-primary-gold p-1.5">
+<p class="text-[8px] font-bold leading-tight truncate">ALICIA MORALES</p>
+<p class="text-[7px] text-primary-gold font-medium">Versalles</p>
+</div>
+</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 20:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">20:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div>
+<!-- 22:00 -->
+<div class="calendar-cell p-2 text-[10px] font-bold text-stone-400 text-right pr-3">22:00</div>
+<div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div><div class="calendar-cell bg-white relative"></div></div>
+</div>
+<!-- Calendar Footer: Legend -->
+<div class="p-3 border-t border-outline-variant/10 bg-stone-50/50">
+<div class="flex items-center gap-6 px-4">
+<p class="text-[9px] font-bold uppercase tracking-widest text-stone-400 mr-2">Referencia:</p>
+<div class="flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-widest text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-primary-gold"></span> Social
+                        </div>
+<div class="flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-widest text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-agenda-green"></span> Deportes
+                        </div>
+<div class="flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-widest text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-agenda-red"></span> Urgente
+                        </div>
+<div class="flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-widest text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-agenda-blue"></span> Directiva
+                        </div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar -->
+<aside class="col-span-12 lg:col-span-5 xl:col-span-4 space-y-4">
+<!-- Availability Section -->
+<section class="bg-surface-container-lowest ghost-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-4 border-b border-outline-variant/10">
+<h3 class="text-[10px] font-bold text-primary-gold uppercase tracking-[0.2em] mb-4">Disponibilidad</h3>
+<!-- Mini Calendar Component -->
+<div class="bg-stone-50/40 rounded-lg p-4 border border-outline-variant/20">
+<div class="flex justify-between items-center mb-3">
+<span class="text-xs font-serif-italic text-primary-gold uppercase tracking-widest">Julio 2023</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-sm text-stone-400 cursor-pointer hover:text-primary-gold">chevron_left</span>
+<span class="material-symbols-outlined text-sm text-stone-400 cursor-pointer hover:text-primary-gold">chevron_right</span>
+</div>
+</div>
+<div class="mini-calendar-grid gap-y-1.5">
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">L</div>
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">M</div>
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">M</div>
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">J</div>
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">V</div>
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">S</div>
+<div class="text-[8px] font-bold text-stone-400 text-center uppercase">D</div>
+<!-- Days -->
+<div class="text-[9px] text-stone-300 py-1 text-center"></div>
+<div class="text-[9px] text-stone-300 py-1 text-center"></div>
+<div class="text-[9px] text-stone-300 py-1 text-center"></div>
+<div class="text-[9px] text-stone-300 py-1 text-center"></div>
+<div class="text-[9px] text-stone-300 py-1 text-center"></div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">1</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">2</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">3</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">4</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">5</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">6</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">7</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">8</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">9</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">10</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">11</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">12</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">13</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">14</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">15</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">16</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">17</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">18</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">19</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">20</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">21</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">22</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">23</div>
+<div class="text-[9px] text-white font-bold bg-primary-gold rounded-full w-5 h-5 flex items-center justify-center mx-auto shadow-sm">24</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">25</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">26</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">27</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">28</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">29</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">30</div>
+<div class="text-[9px] text-on-surface-variant py-1 text-center">31</div>
+</div>
+</div>
+</div>
+<div class="px-4 py-3 bg-white">
+<div class="flex justify-between items-baseline mb-4">
+<h4 class="text-sm font-serif-italic text-primary-gold">Disponibilidad de Salones</h4>
+<span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Lun 24 Jul</span>
+</div>
+<div class="space-y-0.5">
+<div class="flex items-center justify-between py-2 border-b border-stone-100">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-agenda-green"></span>
+<span class="text-[11px] font-medium text-on-surface">Salón Jade</span>
+</div>
+<span class="text-[10px] font-serif-italic text-stone-400">Libre</span>
+</div>
+<div class="flex items-center justify-between py-2 border-b border-stone-100">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-gold"></span>
+<span class="text-[11px] font-medium text-on-surface">Versalles</span>
+</div>
+<span class="text-[10px] font-serif-italic text-stone-400">Parcial</span>
+</div>
+<div class="flex items-center justify-between py-2 border-b border-stone-100">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-agenda-green"></span>
+<span class="text-[11px] font-medium text-on-surface">Cancha 1–4</span>
+</div>
+<span class="text-[10px] font-serif-italic text-stone-400">Libre</span>
+</div>
+<div class="flex items-center justify-between py-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-agenda-red"></span>
+<span class="text-[11px] font-medium text-on-surface">Caldera Central</span>
+</div>
+<span class="text-[10px] font-serif-italic text-stone-400">Ocupado</span>
+</div>
+</div>
+<button class="w-full mt-6 bg-primary-gold text-on-primary py-2.5 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                            + Crear solicitud
+                        </button>
+</div>
+</section>
+<!-- Static Summary or Auxiliary Section -->
+</aside>
+</div>
+</div>
+</main>
+</body></html>

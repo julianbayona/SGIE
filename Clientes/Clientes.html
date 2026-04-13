@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Club Boyacá - Gestión de Clientes</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,600;1,6..72,800&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#735800",
+                        "primary-gold": "#A8841C",
+                        "on-primary": "#ffffff",
+                        "surface": "#faf9f6",
+                        "background": "#faf9f6",
+                        "on-background": "#1a1c1a",
+                        "on-surface": "#1a1c1a",
+                        "on-surface-variant": "#4d4636",
+                        "outline-variant": "#d1c5b0",
+                        "surface-container-low": "#f4f3f0",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#ffd880",
+                        "on-secondary-container": "#795d0f",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "label": ["Manrope", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .font-serif-italic {
+            font-family: 'Newsreader', serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface flex min-h-screen">
+    <!-- SideNavBar -->
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-neutral-800 dark:bg-stone-950 flex flex-col z-40 border-r border-stone-200/20 shadow-2xl">
+        <div class="text-3xl italic font-serif text-yellow-600 dark:text-yellow-500 px-4 py-6">CB</div>
+        <div class="px-4 py-2 mt-2">
+            <p class="text-stone-500 text-[10px] uppercase tracking-widest font-medium">Administrador</p>
+        </div>
+        <nav class="flex-1 px-2 space-y-1">
+            <!-- Dashboard -->
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="font-medium tracking-wide">Dashboard</span>
+            </a>
+            <!-- Clientes (Active) -->
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-yellow-500 bg-stone-700/40 font-bold border-r-4 border-yellow-600 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">group</span>
+                <span class="font-medium tracking-wide">Clientes</span>
+            </a>
+            <!-- Eventos -->
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">event_available</span>
+                <span class="font-medium tracking-wide">Eventos</span>
+            </a>
+            <!-- Logística -->
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">local_shipping</span>
+                <span class="font-medium tracking-wide">Logística</span>
+            </a>
+            <!-- Reportes -->
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="font-medium tracking-wide">Reportes</span>
+            </a>
+            <!-- Configuración -->
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="font-medium tracking-wide">Configuración</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-stone-700/30">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-8 h-8 rounded-full bg-stone-700 flex items-center justify-center text-xs text-yellow-500 font-bold">
+                    JD</div>
+                <div class="overflow-hidden">
+                    <p class="text-stone-200 text-xs font-bold truncate">Juan Delgado</p>
+                    <p class="text-stone-500 text-[10px] truncate">Super Admin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <!-- Main Workspace -->
+    <main class="ml-64 flex-1 flex flex-col min-h-screen bg-[#F8F7F4]">
+        <!-- TopNavBar -->
+        <header
+            class="flex justify-between items-center h-16 px-8 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-md shadow-sm fixed top-0 left-64 right-0 z-30 border-b border-outline-variant/10">
+            <div class="flex items-center flex-1 max-w-xl gap-8">
+                <div class="relative w-full focus-within:ring-1 focus-within:ring-primary-gold/20 rounded">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-lg">search</span>
+                    <input
+                        class="w-full bg-surface-container-low border-none rounded py-2 pl-10 pr-4 text-sm focus:ring-0 placeholder-stone-400"
+                        placeholder="Buscar cliente por nombre o cédula..." type="text" />
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4">
+                    <button class="text-stone-600 hover:text-primary-gold transition-colors relative">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span
+                            class="absolute top-0 right-0 w-2 h-2 bg-primary-gold rounded-full border-2 border-surface"></span>
+                    </button>
+                    <button class="text-stone-600 hover:text-primary-gold transition-colors">
+                        <span class="material-symbols-outlined">history</span>
+                    </button>
+                </div>
+                <div class="h-8 w-px bg-stone-200/50"></div>
+                <button class="text-stone-600 hover:text-primary-gold transition-colors flex items-center gap-2">
+                    <span class="text-sm font-medium">Administrator</span>
+                    <span class="material-symbols-outlined">person</span>
+                </button>
+            </div>
+        </header>
+        <!-- Content Area -->
+        <section class="mt-16 p-8 flex-1 flex flex-col gap-6 max-w-[1600px] mx-auto w-full">
+            <!-- Filters & Actions -->
+            <div class="flex justify-between items-end">
+                <div class="flex flex-col gap-4">
+                    <nav class="flex gap-8 border-b border-outline-variant/20">
+                        <button
+                            class="pb-3 px-1 border-b-2 border-primary-gold text-primary-gold font-bold text-sm transition-all">Todos</button>
+                        <button
+                            class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant font-medium text-sm hover:text-primary-gold transition-all">Socios</button>
+                        <button
+                            class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant font-medium text-sm hover:text-primary-gold transition-all">No
+                            Socios</button>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button
+                        class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded text-sm font-semibold text-on-surface-variant hover:bg-stone-100 transition-all">
+                        <span class="material-symbols-outlined text-lg">tune</span>
+                        Filtros Avanzados
+                    </button>
+                    <button
+                        class="flex items-center gap-2 px-4 py-2 bg-primary-gold text-white rounded text-sm font-bold shadow-md hover:bg-primary transition-all active:scale-95">
+                        <span class="material-symbols-outlined text-lg">person_add</span>
+                        Nuevo Cliente
+                    </button>
+                </div>
+            </div>
+            <!-- Client Table Container -->
+            <div
+                class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden flex-1 flex flex-col">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-stone-50">
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest">
+                                Cédula</th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest">
+                                Nombre Completo</th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest">
+                                Teléfono</th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest">
+                                Correo Electrónico</th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest">
+                                Tipo</th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest text-center">
+                                Estado</th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-label font-bold text-stone-400 uppercase tracking-widest text-right">
+                                Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-100">
+                        <!-- Row 1 -->
+                        <tr class="hover:bg-stone-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span
+                                    class="bg-stone-100 text-stone-600 px-2 py-1 rounded text-xs font-mono font-bold">1.024.456.789</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-primary-gold font-bold hover:underline cursor-pointer">Ricardo
+                                        Albarracín</span>
+                                    <span class="text-[10px] text-stone-400 font-label">Registrado: 12 Oct 2023</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-stone-600">+57 312 456 7890</td>
+                            <td class="px-6 py-4 text-sm text-stone-600 italic underline decoration-primary-gold/20">
+                                r.albarracin@email.com</td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Socio</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                                    Activo
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div
+                                    class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button class="p-1.5 text-stone-400 hover:text-primary-gold transition-colors"><span
+                                            class="material-symbols-outlined text-lg">edit</span></button>
+                                    <button class="p-1.5 text-stone-400 hover:text-primary-gold transition-colors"><span
+                                            class="material-symbols-outlined text-lg">visibility</span></button>
+                                    <button class="p-1.5 text-stone-400 hover:text-error transition-colors"><span
+                                            class="material-symbols-outlined text-lg">delete</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Row 2 -->
+                        <tr class="hover:bg-stone-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span
+                                    class="bg-stone-100 text-stone-600 px-2 py-1 rounded text-xs font-mono font-bold">79.567.890</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-primary-gold font-bold hover:underline cursor-pointer">Claudia
+                                        Mendoza</span>
+                                    <span class="text-[10px] text-stone-400 font-label">Registrado: 05 Nov 2023</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-stone-600">+57 300 123 4455</td>
+                            <td class="px-6 py-4 text-sm text-stone-600 italic underline decoration-primary-gold/20">
+                                claudia.m@gmail.com</td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="bg-stone-100 text-stone-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">No
+                                    Socio</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                                    Activo
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div
+                                    class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button class="p-1.5 text-stone-400 hover:text-primary-gold transition-colors"><span
+                                            class="material-symbols-outlined text-lg">edit</span></button>
+                                    <button class="p-1.5 text-stone-400 hover:text-primary-gold transition-colors"><span
+                                            class="material-symbols-outlined text-lg">visibility</span></button>
+                                    <button class="p-1.5 text-stone-400 hover:text-error transition-colors"><span
+                                            class="material-symbols-outlined text-lg">delete</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Row 3 -->
+                        <tr class="hover:bg-stone-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span
+                                    class="bg-stone-100 text-stone-600 px-2 py-1 rounded text-xs font-mono font-bold">1.018.234.567</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-primary-gold font-bold hover:underline cursor-pointer">Mauricio
+                                        Herrera</span>
+                                    <span class="text-[10px] text-stone-400 font-label">Registrado: 20 Ene 2024</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-stone-600">+57 315 987 6543</td>
+                            <td class="px-6 py-4 text-sm text-stone-600 italic underline decoration-primary-gold/20">
+                                m.herrera@boyaca.org</td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Socio</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-stone-100 text-stone-500 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400/40"></span>
+                                    Suspendido
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div
+                                    class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button class="p-1.5 text-stone-400 hover:text-primary-gold transition-colors"><span
+                                            class="material-symbols-outlined text-lg">edit</span></button>
+                                    <button class="p-1.5 text-stone-400 hover:text-primary-gold transition-colors"><span
+                                            class="material-symbols-outlined text-lg">visibility</span></button>
+                                    <button class="p-1.5 text-stone-400 hover:text-error transition-colors"><span
+                                            class="material-symbols-outlined text-lg">delete</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- Pagination Footer -->
+                <div class="mt-auto bg-white border-t border-stone-100 px-8 py-4 flex items-center justify-between">
+                    <p class="text-xs text-stone-400 font-medium">Mostrando <span class="font-bold text-on-surface">1 -
+                            10</span> de <span class="font-bold text-on-surface">1,245</span> clientes</p>
+                    <div class="flex items-center gap-2">
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded border border-stone-200 text-stone-400 hover:bg-stone-50 transition-colors">
+                            <span class="material-symbols-outlined text-base">chevron_left</span>
+                        </button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded bg-primary-gold text-white text-xs font-bold shadow-sm">1</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded text-xs font-bold text-stone-400 hover:bg-stone-50 transition-colors">2</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded text-xs font-bold text-stone-400 hover:bg-stone-50 transition-colors">3</button>
+                        <span class="px-2 text-stone-300">...</span>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded text-xs font-bold text-stone-400 hover:bg-stone-50 transition-colors">125</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded border border-stone-200 text-stone-400 hover:bg-stone-50 transition-colors">
+                            <span class="material-symbols-outlined text-base">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Floating Action Button -->
+    <button
+        class="fixed bottom-8 right-8 w-14 h-14 bg-primary-gold text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50">
+        <span class="material-symbols-outlined text-2xl">person_add</span>
+    </button>
+</body>
+
+</html>
