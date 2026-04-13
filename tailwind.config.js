@@ -36,6 +36,20 @@ export default {
         'red-text': '#7A1A1A',
         'green-text': '#1A5535',
         'blue-text': '#103070',
+
+        // Compatibility aliases for existing calendar and layout components
+        'primary': '#7A5E10',
+        'primary-gold': '#A8841C',
+        'on-primary': '#FFFFFF',
+        'on-surface': '#1A1714',
+        'on-surface-variant': '#4A4035',
+        'outline-variant': '#D1C5B0',
+        'surface-container-low': '#F2F0EB',
+        'surface-container-lowest': '#FFFFFF',
+        'secondary-container': '#FCDCA3',
+        'on-secondary-container': '#775F32',
+        'agenda-green': '#2D7D4F',
+        'agenda-red': '#B83232',
       },
       spacing: {
         'xs': '0.25rem',
