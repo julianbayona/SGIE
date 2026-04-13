@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Gestión de Eventos - Club Boyacá</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#5d4200",
+                        "surface-container-high": "#eae7e7",
+                        "tertiary": "#085ea2",
+                        "outline-variant": "#d3c4af",
+                        "surface-tint": "#7b5800",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#775f32",
+                        "background": "#fcf9f8",
+                        "primary-fixed": "#ffdea6",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f6f3f2",
+                        "on-surface-variant": "#4f4535",
+                        "surface": "#fcf9f8",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e5e2e1",
+                        "surface-dim": "#dcd9d9",
+                        "surface-bright": "#fcf9f8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1c1b1b",
+                        "on-error": "#ffffff",
+                        "primary-container": "#986d00",
+                        "on-tertiary-fixed-variant": "#004880",
+                        "on-primary-container": "#fffbff",
+                        "secondary": "#725b2e",
+                        "surface-container": "#f0eded",
+                        "on-tertiary-fixed": "#001c37",
+                        "tertiary-fixed-dim": "#a1c9ff",
+                        "on-primary-fixed": "#271900",
+                        "tertiary-fixed": "#d2e4ff",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#f7bd48",
+                        "inverse-on-surface": "#f3f0ef",
+                        "secondary-fixed": "#ffdea6",
+                        "primary-fixed-dim": "#f7bd48",
+                        "secondary-container": "#fcdba3",
+                        "on-secondary-fixed-variant": "#594319",
+                        "on-error-container": "#93000a",
+                        "primary": "#785600",
+                        "secondary-fixed-dim": "#e2c28c",
+                        "on-surface": "#1c1b1b",
+                        "on-secondary-fixed": "#271900",
+                        "outline": "#817563",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-tertiary-container": "#fdfcff",
+                        "inverse-surface": "#1c1b1b",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #fcf9f8;
+        }
+
+        .serif-italic {
+            font-family: 'Noto Serif', serif;
+            font-style: italic;
+        }
+
+        .serif-bold {
+            font-family: 'Noto Serif', serif;
+            font-weight: 700;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="text-on-surface antialiased">
+    <!-- SideNavBar Monolith -->
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-[#1c1b1b] flex flex-col py-6 z-50 shadow-2xl shadow-black/20">
+        <!-- Brand Header -->
+        <div class="px-6 mb-10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#785600] rounded-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-white"
+                    style='font-variation-settings: "FILL" 1;'>account_balance</span>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-[#785600] leading-tight" style="">Club Boyacá</h1>
+                <p class="text-[10px] text-white/50 uppercase tracking-widest font-label" style="">Administración
+                    Heritage</p>
+            </div>
+        </div>
+        <!-- Navigation Links -->
+        <nav class="flex-1 space-y-1">
+            <a class="flex items-center px-6 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="dashboard" style="">dashboard</span>
+                Dashboard
+            </a>
+            <a class="flex items-center px-6 py-3 border-l-4 border-[#785600] text-white bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="event" style="">event</span>
+                Eventos
+            </a>
+            <a class="flex items-center px-6 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="calendar_month" style="">calendar_month</span>
+                Calendario
+            </a>
+            <a class="flex items-center px-6 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="groups" style="">groups</span>
+                Clientes
+            </a>
+            <a class="flex items-center px-6 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="analytics" style="">analytics</span>
+                Reportes
+            </a>
+        </nav>
+        <!-- Footer Links -->
+        <div class="mt-auto pt-6 space-y-1">
+            <a class="flex items-center px-6 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="settings" style="">settings</span>
+                Configuración
+            </a>
+            <a class="flex items-center px-6 py-3 text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 ease-in-out font-semibold text-sm"
+                href="#" style="">
+                <span class="material-symbols-outlined mr-3" data-icon="logout" style="">logout</span>
+                Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+    <!-- Main Content Wrapper -->
+    <main class="ml-64 min-h-screen">
+        <!-- TopNavBar -->
+        <header
+            class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-[#fcf9f8]/80 backdrop-blur-md z-40 flex justify-between items-center px-8 border-b border-surface-container">
+            <div class="flex-1 flex items-center">
+                <div class="relative w-96 flex items-center group">
+                    <span
+                        class="material-symbols-outlined absolute left-3 text-slate-400 text-lg transition-colors group-focus-within:text-primary"
+                        style="">search</span>
+                    <input
+                        class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-10 text-sm focus:ring-1 focus:ring-primary/20 py-2.5 transition-all outline-none"
+                        placeholder="Buscar por ID, cliente o fecha..." type="text" />
+                    <button
+                        class="absolute right-2 p-1.5 hover:bg-surface-container-high rounded-md text-slate-400 hover:text-primary transition-all flex items-center justify-center"
+                        title="Filtros Avanzados">
+                        <span class="material-symbols-outlined text-xl" style="">filter_list</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button
+                    class="w-10 h-10 flex items-center justify-center text-slate-600 hover:text-[#785600] transition-all"
+                    style="">
+                    <span class="material-symbols-outlined" data-icon="notifications" style="">notifications</span>
+                </button>
+                <div class="h-8 w-px bg-slate-200 mx-2"></div>
+                <button class="flex items-center gap-3 text-slate-600 hover:text-[#785600] transition-all" style="">
+                    <div class="text-right">
+                        <p class="text-xs font-bold text-on-surface" style="">Admin Heritage</p>
+                        <p class="text-[10px] text-slate-500" style="">Superusuario</p>
+                    </div>
+                    <span class="material-symbols-outlined text-3xl" data-icon="account_circle"
+                        style="">account_circle</span>
+                </button>
+            </div>
+        </header>
+        <!-- Content Canvas -->
+        <div class="pt-24 px-8 pb-12">
+            <!-- Page Header -->
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <nav
+                        class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-slate-400 mb-2 font-label">
+                        <span class="" style="">Gestión</span>
+                        <span class="material-symbols-outlined text-[12px]" style="">chevron_right</span>
+                        <span class="text-primary font-bold" style="">Eventos</span>
+                    </nav>
+                    <h2 class="text-4xl serif-italic text-on-surface" style="">Gestión de Eventos</h2>
+                </div>
+                <button
+                    class="flex items-center gap-2 bg-gradient-to-r from-[#785600] to-[#986d00] text-white px-6 py-3 rounded-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all font-bold text-sm"
+                    style="">
+                    <span class="material-symbols-outlined text-lg" style="">add_circle</span>
+                    Nuevo Evento
+                </button>
+            </div>
+            <!-- Dashboard Content Card -->
+            <div
+                class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-surface-container">
+                <!-- Filters & Tabs -->
+                <div class="p-6 pb-0">
+                    <div class="flex items-center border-b border-surface-container">
+                        <div class="flex gap-8">
+                            <button class="pb-4 border-b-2 border-primary text-primary font-bold text-sm"
+                                style="">Historial</button>
+                            <button
+                                class="pb-4 border-b-2 border-transparent text-slate-500 hover:text-primary transition-all text-sm"
+                                style="">Activos</button>
+                            <button
+                                class="pb-4 border-b-2 border-transparent text-slate-500 hover:text-primary transition-all text-sm"
+                                style=""><br /></button>
+                            <button
+                                class="pb-4 border-b-2 border-transparent text-slate-500 hover:text-primary transition-all text-sm"
+                                style=""><br /></button>
+                            <button
+                                class="pb-4 border-b-2 border-transparent text-slate-500 hover:text-primary transition-all text-sm"
+                                style=""><br /></button>
+                        </div>
+                        <div class="ml-auto flex items-center gap-3 pb-3">
+                            <button
+                                class="p-2 bg-surface-container text-slate-600 rounded flex items-center gap-2 text-xs font-semibold hover:bg-surface-container-high transition-colors"
+                                style="">
+                                <span class="material-symbols-outlined text-sm" style="">download</span>
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Table Container -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-surface-container-low/50">
+                                <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-label text-slate-500"
+                                    style="">ID / Fecha</th>
+                                <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-label text-slate-500"
+                                    style="">Cliente</th>
+                                <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-label text-slate-500"
+                                    style="">Salón</th>
+                                <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-label text-slate-500"
+                                    style="">Tipo de Evento</th>
+                                <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-label text-slate-500"
+                                    style="">Estado</th>
+                                <th class="px-6 py-4 text-[10px] uppercase tracking-widest font-label text-slate-500 text-right"
+                                    style="">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-surface-container-low">
+                            <!-- Row 1 -->
+                            <tr class="hover:bg-surface transition-colors">
+                                <td class="px-6 py-5" style="">
+                                    <p class="font-bold text-on-surface text-sm" style="">#EV-2409</p>
+                                    <p class="text-xs text-slate-500" style="">14 Oct, 2024</p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs uppercase"
+                                            style="">AM</div>
+                                        <div>
+                                            <p class="font-bold text-on-surface text-sm" style="">Ana María Rojas</p>
+                                            <p class="text-xs text-slate-500" style="">CC. 1.052.485.xxx</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <p class="text-sm font-medium" style="">Salón Jade</p>
+                                    <p class="text-[10px] text-slate-400" style=""><br /></p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <span
+                                        class="px-2 py-1 bg-surface-container text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider"
+                                        style="">Social</span>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span class="text-xs font-bold text-emerald-700" style="">Confirmado</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-right" style="">
+                                    <div class="flex justify-end gap-2">
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">visibility</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">edit</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-emerald-500 transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg"
+                                                style='font-variation-settings: "FILL" 1;'>chat</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Row 2 -->
+                            <tr class="hover:bg-surface transition-colors">
+                                <td class="px-6 py-5" style="">
+                                    <p class="font-bold text-on-surface text-sm" style="">#EV-2410</p>
+                                    <p class="text-xs text-slate-500" style="">18 Oct, 2024</p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs uppercase"
+                                            style="">JC</div>
+                                        <div>
+                                            <p class="font-bold text-on-surface text-sm" style="">Juan Camilo Daza</p>
+                                            <p class="text-xs text-slate-500" style="">CC. 80.231.xxx</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <p class="text-sm font-medium" style="">Versalles Principal</p>
+                                    <p class="text-[10px] text-slate-400" style=""><br /></p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <span
+                                        class="px-2 py-1 bg-surface-container text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider"
+                                        style="">Boda</span>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-error"></span>
+                                        <span class="text-xs font-bold text-error" style="">Pendiente Anticipo</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-right" style="">
+                                    <div class="flex justify-end gap-2">
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">visibility</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">edit</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-emerald-500 transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg"
+                                                style='font-variation-settings: "FILL" 1;'>chat</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Row 3 -->
+                            <tr class="hover:bg-surface transition-colors">
+                                <td class="px-6 py-5" style="">
+                                    <p class="font-bold text-on-surface text-sm" style="">#EV-2411</p>
+                                    <p class="text-xs text-slate-500" style="">22 Oct, 2024</p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs uppercase"
+                                            style="">CC</div>
+                                        <div>
+                                            <p class="font-bold text-on-surface text-sm" style="">Constructora Capital
+                                            </p>
+                                            <p class="text-xs text-slate-500" style="">NIT. 900.564.xxx</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <p class="text-sm font-medium" style="">Multiple</p>
+                                    <p class="text-[10px] text-slate-400" style=""><br /></p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <span
+                                        class="px-2 py-1 bg-surface-container text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider"
+                                        style="">Corporativo</span>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-primary"></span>
+                                        <span class="text-xs font-bold text-primary" style="">Cotización Enviada</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-right" style="">
+                                    <div class="flex justify-end gap-2">
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">visibility</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">edit</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-emerald-500 transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg"
+                                                style='font-variation-settings: "FILL" 1;'>chat</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Row 4 -->
+                            <tr class="hover:bg-surface transition-colors">
+                                <td class="px-6 py-5" style="">
+                                    <p class="font-bold text-on-surface text-sm" style="">#EV-2412</p>
+                                    <p class="text-xs text-slate-500" style="">25 Oct, 2024</p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs uppercase"
+                                            style="">LR</div>
+                                        <div>
+                                            <p class="font-bold text-on-surface text-sm" style="">Lucía Ramírez</p>
+                                            <p class="text-xs text-slate-500" style="">CC. 46.382.xxx</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <p class="text-sm font-medium" style="">Terraza Mirador</p>
+                                    <p class="text-[10px] text-slate-400" style=""><br /></p>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <span
+                                        class="px-2 py-1 bg-surface-container text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider"
+                                        style="">Social</span>
+                                </td>
+                                <td class="px-6 py-5" style="">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span class="text-xs font-bold text-emerald-700" style="">Confirmado</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-right" style="">
+                                    <div class="flex justify-end gap-2">
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">visibility</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-primary transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg" style="">edit</span>
+                                        </button>
+                                        <button
+                                            class="p-1.5 hover:bg-surface-container rounded text-slate-400 hover:text-emerald-500 transition-all"
+                                            style="">
+                                            <span class="material-symbols-outlined text-lg"
+                                                style='font-variation-settings: "FILL" 1;'>chat</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Footer -->
+                <div
+                    class="p-6 bg-surface-container-low/30 flex justify-between items-center border-t border-surface-container">
+                    <p class="text-xs text-slate-500" style="">Mostrando <span class="font-bold text-on-surface"
+                            style="">1 - 4</span> de 128 eventos</p>
+                    <div class="flex gap-2">
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-surface-container hover:bg-surface transition-all"
+                            style="">
+                            <span class="material-symbols-outlined text-sm" style="">chevron_left</span>
+                        </button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-bold text-xs"
+                            style="">1</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-surface-container hover:bg-surface transition-all text-xs"
+                            style="">2</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-surface-container hover:bg-surface transition-all text-xs"
+                            style="">3</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-surface-container hover:bg-surface transition-all"
+                            style="">
+                            <span class="material-symbols-outlined text-sm" style="">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Executive Summary Bar (Redesigned KPIs) -->
+        </div>
+    </main>
+    <!-- FAB for quick action (optional but useful) -->
+    <button
+        class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center hover:rotate-90 transition-all duration-300 active:scale-90 md:hidden"
+        style="">
+        <span class="material-symbols-outlined text-2xl" style="">add</span>
+    </button>
+</body>
+
+</html>
