@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Crear Solicitud de Evento | Club Boyacá</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    'colors': {
+                        'secondary-container': '#f7e0b6',
+                        'on-primary-fixed': '#261a00',
+                        'on-error': '#ffffff',
+                        'primary': '#785a0d',
+                        'surface-container-lowest': '#ffffff',
+                        'on-secondary': '#ffffff',
+                        'on-background': '#1c1b1b',
+                        'on-secondary-fixed-variant': '#544526',
+                        'surface-bright': '#fcf9f8',
+                        'on-secondary-fixed': '#251a02',
+                        'tertiary-fixed-dim': '#b1c5ff',
+                        'surface-container-low': '#f6f3f2',
+                        'primary-fixed': '#ffdf9f',
+                        'surface-tint': '#785a0d',
+                        'tertiary': '#485d91',
+                        'surface-container-high': '#eae7e7',
+                        'tertiary-fixed': '#dae2ff',
+                        'surface': '#fcf9f8',
+                        'error-container': '#ffdad6',
+                        'error': '#ba1a1a',
+                        'on-tertiary-fixed-variant': '#2f4578',
+                        'on-primary-fixed-variant': '#5c4300',
+                        'surface-dim': '#dcd9d9',
+                        'outline-variant': '#d1c5b3',
+                        'background': '#fcf9f8',
+                        'secondary-fixed-dim': '#dac49c',
+                        'on-tertiary-container': '#203769',
+                        'surface-container-highest': '#e5e2e1',
+                        'inverse-on-surface': '#f3f0ef',
+                        'surface-container': '#f0eded',
+                        'on-tertiary-fixed': '#001946',
+                        'on-surface-variant': '#4e4638',
+                        'on-primary-container': '#4a3500',
+                        'inverse-primary': '#e9c16d',
+                        'surface-variant': '#e5e2e1',
+                        'inverse-surface': '#313030',
+                        'tertiary-container': '#8ca1da',
+                        'secondary': '#6d5c3b',
+                        'primary-container': '#c29d4d',
+                        'on-tertiary': '#ffffff',
+                        'primary-fixed-dim': '#e9c16d',
+                        'on-surface': '#1c1b1b',
+                        'on-secondary-container': '#736241',
+                        'on-primary': '#ffffff',
+                        'outline': '#7f7666',
+                        'secondary-fixed': '#f7e0b6',
+                        'on-error-container': '#93000a'
+                    },
+                    'borderRadius': {
+                        'DEFAULT': '0.125rem',
+                        'lg': '0.25rem',
+                        'xl': '0.5rem',
+                        'full': '0.75rem'
+                    },
+                    'fontFamily': {
+                        'headline': ['Newsreader'],
+                        'body': ['Manrope'],
+                        'label': ['Manrope']
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Newsreader', serif;
+        }
+
+        input,
+        select {
+            height: 48px;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background">
+    <!-- SideNavBar Component -->
+    <aside class="bg-[#1a1a1a] h-screen w-64 fixed left-0 top-0 flex flex-col py-8 px-4 z-50">
+        <div class="mb-10 px-4">
+            <span class="text-xl font-serif text-[#c29d4d] uppercase tracking-widest block" style="">The Curator</span>
+            <span class="text-xs text-gray-400 font-serif tracking-tight" style="">Heritage &amp; Precision</span>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a class="flex items-center gap-3 px-4 py-3 text-gray-400 font-medium hover:text-white transition-colors hover:bg-white/5 transition-all scale-98 active:opacity-80"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="dashboard" style="">dashboard</span>
+                <span class="" style="">Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-gray-400 font-medium hover:text-white transition-colors hover:bg-white/5 transition-all scale-98 active:opacity-80"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="group" style="">group</span>
+                <span class="" style="">Clients</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-[#c29d4d] font-bold border-l-2 border-[#c29d4d] pl-4 hover:bg-white/5 transition-all scale-98 active:opacity-80"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="event" style="">event</span>
+                <span class="" style="">Events</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-gray-400 font-medium hover:text-white transition-colors hover:bg-white/5 transition-all scale-98 active:opacity-80"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="local_shipping" style="">local_shipping</span>
+                <span class="" style="">Logistics</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-gray-400 font-medium hover:text-white transition-colors hover:bg-white/5 transition-all scale-98 active:opacity-80"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="analytics" style="">analytics</span>
+                <span class="" style="">Reports</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-gray-400 font-medium hover:text-white transition-colors hover:bg-white/5 transition-all scale-98 active:opacity-80"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="settings" style="">settings</span>
+                <span class="" style="">Settings</span>
+            </a>
+        </nav>
+        <div class="mt-auto border-t border-white/10 pt-6 px-4">
+            <button
+                class="w-full bg-[#c29d4d] text-on-primary-fixed py-3 rounded-lg mb-6 font-semibold scale-98 active:opacity-80 transition-transform"
+                style="">
+                New Event
+            </button>
+            <div class="space-y-4">
+                <a class="flex items-center gap-3 text-gray-400 font-medium hover:text-white transition-colors" href="#"
+                    style="">
+                    <span class="material-symbols-outlined" data-icon="help_outline" style="">help_outline</span>
+                    <span class="" style="">Help</span>
+                </a>
+                <a class="flex items-center gap-3 text-gray-400 font-medium hover:text-white transition-colors" href="#"
+                    style="">
+                    <span class="material-symbols-outlined" data-icon="logout" style="">logout</span>
+                    <span class="" style="">Sign Out</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+    <!-- TopNavBar Component -->
+    <header
+        class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-[#fcf9f8] dark:bg-[#1a1a1a] border-b border-gray-100 dark:border-white/5 flex items-center justify-between px-8 z-40">
+        <div class="flex items-center flex-1 max-w-xl">
+            <div
+                class="relative w-full focus-within:ring-1 focus-within:ring-[#c29d4d] rounded-lg overflow-hidden transition-all">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    style="">search</span>
+                <input
+                    class="w-full bg-surface-container-low border-none pl-11 pr-4 py-2 font-body placeholder:text-gray-500 focus:ring-0 text-sm"
+                    placeholder="Buscar expedientes o eventos..." type="text">
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <button class="text-gray-500 hover:text-[#c29d4d] transition-colors relative" style="">
+                <span class="material-symbols-outlined" data-icon="notifications" style="">notifications</span>
+                <span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full"></span>
+            </button>
+            <div class="flex items-center gap-3 cursor-pointer group">
+                <div class="text-right">
+                    <p class="font-body font-semibold text-on-surface text-sm" style="">Admin Curator</p>
+                    <p class="text-xs text-on-surface-variant" style="">Gestor de Eventos</p>
+                </div>
+                <img alt="User Profile"
+                    class="w-10 h-10 rounded-full object-cover grayscale brightness-90 hover:grayscale-0 transition-all duration-300"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaYbm90s-0gxfqpCg7o-RaMC94Wce0hHq0v4rDe5jr49CVaNpvqwRFzBEmWf1RoQNXf_wIH24BEVBfmta6rHn9P915-b796F5Ym2dv3k_b6GXr9H4pGjF1Lnvikw8wA3zvwFn9-BNkAfjdFwePTvEZWoZWVIh0bTlP4zPVQme6_2rYWwVJD95alLQXt8bQaz3aCM2qo4Rs9H5evFrkYaCdCVmxOe3ZE5sxp37CEEUPEL5W4Fstp2halaJcsE1pAyHdKhK_jw5TrmM"
+                    style="">
+            </div>
+        </div>
+    </header>
+    <!-- Main Content Canvas -->
+    <main class="ml-64 pt-24 pb-32 px-12 min-h-screen max-w-7xl mx-auto lg:px-24">
+        <!-- Header Section -->
+        <div class="mb-12">
+            <p class="text-primary font-label tracking-widest text-xs uppercase mb-2" style="">Solicitud de Registro</p>
+            <h1 class="text-4xl font-headline italic" style="">Crear Solicitud de Evento</h1>
+        </div>
+        <div class="space-y-12">
+            <!-- Section 1: Customer Information (Simplified Search) -->
+            <section>
+                <div class="flex items-baseline gap-4 mb-6">
+                    <h2 class="text-2xl font-headline" style="">Información del Cliente</h2>
+                    <div class="flex-1 h-px bg-surface-container-high"></div>
+                </div>
+                <div class="bg-surface-container-low p-8 rounded-lg">
+                    <div class="flex flex-col gap-6">
+                        <div class="w-full">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Búsqueda de Socio / Cliente</label>
+                            <div class="relative max-w-2xl">
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-sm"
+                                    style="">person_search</span>
+                                <input
+                                    class="w-full bg-surface-container-lowest border border-outline-variant/30 pl-10 pr-4 py-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm"
+                                    placeholder="Buscar cliente (nombre o cédula)" type="text">
+                            </div>
+                        </div>
+                        <!-- Client Result Placeholder (Simulated state: Found) -->
+                        <div
+                            class="hidden flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-sm">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-primary" style="">person</span>
+                                <div>
+                                    <p class="font-headline text-lg" style="">Mauricio Alejandro de Alarcón</p>
+                                    <span
+                                        class="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary text-white rounded-full"
+                                        style="">Socio</span>
+                                </div>
+                            </div>
+                            <button class="text-on-surface-variant hover:text-primary transition-colors" style="">
+                                <span class="material-symbols-outlined" style="">edit</span>
+                            </button>
+                        </div>
+                        <!-- Not Found State Placeholder -->
+                        <div class="flex items-center gap-4 pt-2">
+                            <button
+                                class="flex items-center gap-2 text-primary font-bold text-sm hover:underline transition-all group"
+                                style="">
+                                <span
+                                    class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform"
+                                    style="">add_circle</span>
+                                Registrar Nuevo Cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Section 2: Event Basics -->
+            <section>
+                <div class="flex items-baseline gap-4 mb-6">
+                    <h2 class="text-2xl font-headline" style="">Detalles del Evento</h2>
+                    <div class="flex-1 h-px bg-surface-container-high"></div>
+                </div>
+                <div class="bg-surface-container-low p-8 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                        <!-- 1. Fecha -->
+                        <div class="flex flex-col">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Fecha</label>
+                            <input
+                                class="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm"
+                                type="date">
+                        </div>
+                        <!-- 2. Hora -->
+                        <div class="flex flex-col">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Hora</label>
+                            <input
+                                class="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm"
+                                type="time">
+                        </div>
+                        <!-- 3. Duración -->
+                        <div class="flex flex-col">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Duración</label>
+                            <select
+                                class="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm">
+                                <option>2 Horas</option>
+                                <option>4 Horas</option>
+                                <option>6 Horas</option>
+                                <option>Jornada Completa</option>
+                            </select>
+                        </div>
+                        <!-- 4. Número de Asistentes -->
+                        <div class="flex flex-col">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Número de Asistentes</label>
+                            <input
+                                class="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm"
+                                placeholder="0" type="number">
+                        </div>
+                        <!-- 5. Tipo de Evento -->
+                        <div class="flex flex-col">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Tipo de Evento</label>
+                            <select
+                                class="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm">
+                                <option>Ceremonia Social</option>
+                                <option>Conferencia Corporativa</option>
+                                <option>Gala de Beneficencia</option>
+                                <option>Almuerzo Privado</option>
+                            </select>
+                        </div>
+                        <!-- 6. Tipo de Comida -->
+                        <div class="flex flex-col">
+                            <label
+                                class="block text-[10px] font-label font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2"
+                                style="">Tipo de Comida</label>
+                            <select
+                                class="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-sm shadow-sm">
+                                <option>Sin Servicio</option>
+                                <option>Buffet Internacional</option>
+                                <option>Banquete de Pasos</option>
+                                <option>Cóctel / Pasabocas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Section 3: Venue Selection -->
+            <section>
+                <div class="flex items-baseline gap-4 mb-6">
+                    <h2 class="text-2xl font-headline" style="">Selección de Salón</h2>
+                    <div class="flex-1 h-px bg-surface-container-high"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Venue Card 1 -->
+                    <div
+                        class="group relative bg-surface-container-lowest border-2 border-transparent hover:border-primary-container p-4 flex gap-4 transition-all duration-300 cursor-pointer shadow-sm">
+                        <div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden rounded-sm">
+                            <img alt="Salón Jade"
+                                class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVCDtfd-K8nw7ygwy_MbhMgOfwIBbc9Dkw34Tc6AsB4Rv7NFtlkYBRffYpIpfNb2PgANL7d0WGiFP4aPCYoaCvmlc3DKLBZniQ_bIAyH6PwDFvZLqH2FYIU-5E-s9szEhVnZjPqQvhMf35lcux12g90eH-RRTtmcs42v6sVlzntBmWyzkRPN915gIIgN3EnJ0niZZ_n9p5yQrLc4VKvDrjftILyaEVSjx7wkr9wM0eUlbXiLdQmeIDpsCqPPjd9KVzalOZZgP7l28"
+                                style="">
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-headline mb-1" style="">Salón Jade</h3>
+                            <p class="text-xs text-on-surface-variant mb-3" style="">Ambiente señorial con acabados en
+                                mármol.</p>
+                            <span
+                                class="block font-headline italic text-xs mt-1 font-semibold flex items-center gap-1 text-amber-600"
+                                style=""><span class="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>Parcial</span>
+                            <p class="text-[10px] text-on-surface-variant font-body mt-1" style="">2 eventos pendientes
+                                por confirmar</p>
+                        </div>
+                        <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="material-symbols-outlined text-primary"
+                                style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+                        </div>
+                    </div>
+                    <!-- Venue Card 2 (Selected) -->
+                    <div
+                        class="group relative bg-[#fdf9f0] border-4 border-[#c29d4d] p-4 flex gap-4 transition-all duration-300 cursor-pointer shadow-md">
+                        <div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden rounded-sm">
+                            <img alt="Versalles" class="w-full h-full object-cover transition-all"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe_wM7RQKcxVSOeaPXhR2Lk1hnv5rs6F_ydUQHWGKRH05HiZIvGJsdv5lznT7hghlN5PpxU5gj9lz30Cu2NVvZPIi7rbJeXAZHKjNNM6roNMpgkTl4e85Zq5Vck1DPD96XHd0PZ08Pwn7LfIdS1J9R1D9WpAij7jsKcnuVztNhAEaFv_RR_WZ1PT0_vX7EWA2Fi_yZtzHVV9F7XgVpW72HO7cow3DXjW7I1EW_LQXFyLGcXyJbATg5OaJ5pmZMYQACslArgizH7mI"
+                                style="">
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-headline mb-1" style="">Versalles</h3>
+                            <p class="text-xs text-on-surface-variant mb-3" style="">Estilo clásico francés con
+                                iluminación natural.</p>
+                            <span
+                                class="block font-headline italic text-xs mt-1 font-semibold flex items-center gap-1 text-amber-600"
+                                style=""><span class="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>Parcial</span>
+                            <p class="text-[10px] text-on-surface-variant font-body mt-1" style="">1 evento pendiente
+                                por confirmar</p>
+                        </div>
+                        <div class="absolute top-4 right-4 opacity-100"><span
+                                class="material-symbols-outlined text-[#c29d4d] text-3xl"
+                                style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span></div>
+                    </div>
+                    <!-- Venue Card 3 -->
+                    <div
+                        class="group relative bg-surface-container-lowest border-2 border-transparent hover:border-primary-container p-4 flex gap-4 transition-all duration-300 cursor-pointer shadow-sm">
+                        <div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden rounded-sm">
+                            <img alt="Terraza"
+                                class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlhkbo3iRv6XLLtTGMWEJQGM-yxca-BoZ0mwIcCjKwIwUsQWuyxKE7uMATiUInpQ9gxNiqPurAOiBLi0kaFgenTH_QSW8SamTsT5Qej12gWKkVYau7a2hviscogWWFXlqAFUym5zvy88Mc38ejZqd0Aq66MxHOtr1Rr8GPvY3bCiCGYEtWsUlP8ByJYQzEK4e52wzFHfjeSoyUUdg8H9z_Uj-FFFpYLlpx_cVdOYcvyB6IiNNCFbB-RFhH5aSo2XyFGeVCjCqIx60"
+                                style="">
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-headline mb-1" style="">Terraza</h3>
+                            <p class="text-xs text-on-surface-variant mb-3" style="">Espacio al aire libre con vista
+                                panorámica.</p>
+                            <span
+                                class="block text-[#2e7d32] font-headline italic text-xs mt-1 font-semibold flex items-center gap-1"
+                                style="">
+                                <span class="w-1.5 h-1.5 bg-[#2e7d32] rounded-full"></span>Disponible
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Venue Card 4 -->
+                    <div
+                        class="group relative bg-surface-container-lowest border-2 border-transparent hover:border-primary-container p-4 flex gap-4 transition-all duration-300 cursor-pointer shadow-sm">
+                        <div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden rounded-sm">
+                            <img alt="Biblioteca"
+                                class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx4tke91bXcbIlUMqsoj7YzpxR8GfQJ3YTlABYPJkqjtg5kVG6eXs8GtpHoe1eluVYv75BZFw2Tl-VyfRMVdqTJVv2aU48yiijsD03c4Nge-Ea7ARTkSK59euo18-ySCL-Vc12ybL4yYCZtT0Rg7sEJtAayDu3cuxqbkzW-p9WBScwBK-m1ulNEoSG2V1ulqJM0XD7Ch-YUQJlH8twtl4zMiInHssz4l6eZOhekHR5R4oWng0EQrgz4C4XlaDiPMwv7Jvr35PCP9o"
+                                style="">
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-headline mb-1" style="">Biblioteca</h3>
+                            <p class="text-xs text-on-surface-variant mb-3" style="">Privacidad absoluta rodeada de
+                                historia.</p>
+                            <span
+                                class="block text-[#2e7d32] font-headline italic text-xs mt-1 font-semibold flex items-center gap-1"
+                                style="">
+                                <span class="w-1.5 h-1.5 bg-[#2e7d32] rounded-full"></span>Disponible
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    <!-- Bottom Action Bar -->
+    <footer
+        class="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white border-t border-outline-variant/30 py-6 px-12 flex items-center justify-between z-40 backdrop-blur-md bg-white/90">
+        <div class="flex items-center gap-6">
+            <button
+                class="text-sm font-bold text-on-surface hover:text-error hover:bg-error/10 bg-[#f5f2ed] border-2 border-outline-variant px-8 py-3.5 rounded-sm transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+                style=""><span class="material-symbols-outlined text-xl font-bold" style="">close</span>
+                Cancelar Registro</button>
+        </div>
+        <div class="flex items-center gap-4">
+            <p class="text-xs text-on-surface-variant font-body italic max-w-[200px] text-right leading-tight mr-4"
+                style="">
+                Se creará el evento y podrás completar los detalles después
+            </p>
+            <button
+                class="bg-primary text-white px-8 py-4 rounded-sm font-bold flex items-center gap-3 hover:bg-primary/90 transition-all shadow-lg active:scale-95"
+                style="">
+                Crear evento y continuar
+                <span class="material-symbols-outlined" style="">chevron_right</span>
+            </button>
+        </div>
+    </footer>
+</body>
+
+</html>

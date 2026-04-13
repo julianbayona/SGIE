@@ -4,6 +4,7 @@ import CalendarPage from './pages/CalendarPage';
 import ClientsPage from './pages/ClientsPage';
 import EventsPage from './pages/EventsPage';
 import QuotesPage from './pages/QuotesPage';
+import EventRequestPage from './pages/EventRequestPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="events" element={<EventsPage />} />
+          <Route path="events/request" element={<EventRequestPage />} />
         </Route>
       </Routes>
     </Router>

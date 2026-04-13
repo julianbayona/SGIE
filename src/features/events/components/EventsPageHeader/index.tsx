@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const EventsPageHeader: React.FC = () => {
   return (
@@ -12,13 +13,13 @@ const EventsPageHeader: React.FC = () => {
         <h1 className="text-4xl font-display italic text-text1">Gestion de Eventos</h1>
       </div>
 
-      <button
-        type="button"
+      <Link
+        to="/events/request"
         className="flex items-center gap-2 bg-gradient-to-r from-gold-d to-gold text-white px-6 py-3 rounded-lg shadow-gold hover:brightness-110 active:scale-[0.98] transition-all font-bold text-sm"
       >
         <span className="material-symbols-outlined text-lg">add_circle</span>
         Nuevo Evento
-      </button>
+      </Link>
     </div>
   );
 };
