@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import CalendarPage from './pages/CalendarPage';
 import ClientsPage from './pages/ClientsPage';
 import EventsPage from './pages/EventsPage';
+import QuotesPage from './pages/QuotesPage';
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<CalendarPage />} />
+          <Route path="quotes" element={<QuotesPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="events" element={<EventsPage />} />
         </Route>
