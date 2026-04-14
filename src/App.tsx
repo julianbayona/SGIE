@@ -11,6 +11,7 @@ import EventSectionPlaceholderPage from './pages/EventSectionPlaceholderPage';
 import EventMontagePage from './pages/EventMontagePage';
 import EventQuotePage from './pages/EventQuotePage';
 import EventPaymentsPage from './pages/EventPaymentsPage';
+import EventAgendaPage from './pages/EventAgendaPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="events/request" element={<EventRequestPage />} />
           <Route path="events/:eventId" element={<EventSummaryPage />} />
           <Route path="events/:eventId/menu" element={<EventMenuPage />} />
+          <Route path="events/:eventId/agenda" element={<EventAgendaPage />} />
           <Route path="events/:eventId/montaje" element={<EventMontagePage />} />
           <Route path="events/:eventId/cotizacion" element={<EventQuotePage />} />
           <Route path="events/:eventId/pagos" element={<EventPaymentsPage />} />

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { getEventSummaryById } from '@/features/events/data/eventSummary';
 
@@ -103,7 +103,6 @@ const EventMenuPage: React.FC = () => {
   const [beverage, setBeverage] = useState<CourseState>(() => createDefaultState(beverageOptions[0]!));
   const [economicPreviewLines, setEconomicPreviewLines] = useState<EconomicPreviewLine[]>([]);
   const [exceptionsText, setExceptionsText] = useState('');
-  const [tastingDateTime, setTastingDateTime] = useState('');
 
   const updateCourse = (key: string, updater: (prev: CourseState) => CourseState) => {
     setCourses((prev) => ({
@@ -353,29 +352,24 @@ const EventMenuPage: React.FC = () => {
 
             <div className="bg-primary-gold/5 p-8 shadow-sm border border-primary-gold/20 space-y-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl">restaurant</span>
+                <span className="material-symbols-outlined text-6xl">event_note</span>
               </div>
-              <h4 className="font-display text-xl font-bold text-primary-gold border-b border-primary-gold/20 pb-2">Prueba de plato (opcional)</h4>
+              <h4 className="font-display text-xl font-bold text-primary-gold border-b border-primary-gold/20 pb-2">Agenda y recordatorios</h4>
               <div className="space-y-5 relative z-10">
-                <p className="text-sm text-on-surface-variant">Agende una sesion de degustacion para cerrar detalles del menu antes del evento.</p>
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold">Fecha y hora sugerida</label>
-                    <input
-                      className="w-full bg-white border border-primary-gold/20 focus:ring-2 focus:ring-primary-gold/30 rounded-sm text-sm py-3 px-4"
-                      type="datetime-local"
-                      value={tastingDateTime}
-                      onChange={(eventTarget) => setTastingDateTime(eventTarget.target.value)}
-                    />
-                  </div>
-                  <button className="w-full bg-gradient-to-r from-primary to-primary-gold text-white px-6 py-3 text-sm font-bold shadow-md flex items-center justify-center gap-3" type="button">
+                <p className="text-sm text-on-surface-variant">
+                  Gestiona aqui solo la propuesta gastronomica. Las pruebas de plato y recordatorios de anticipo se programan en la Agenda del evento, donde puedes crear multiples registros.
+                </p>
+                <div className="space-y-3">
+                  <Link
+                    className="w-full bg-gradient-to-r from-primary to-primary-gold text-white px-6 py-3 text-sm font-bold shadow-md flex items-center justify-center gap-3 hover:opacity-95 transition-opacity"
+                    to={`/events/${event.id}/agenda`}
+                  >
                     <span className="material-symbols-outlined">calendar_add_on</span>
-                    Agendar en calendario
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 py-1">
-                  <span className="material-symbols-outlined text-primary-gold text-sm">info</span>
-                  <span className="text-[11px] italic text-primary-gold font-medium">Se enviara una invitacion a los organizadores</span>
+                    Ir a Agenda del evento
+                  </Link>
+                  <p className="text-[11px] italic text-primary-gold font-medium">
+                    Alli podras registrar varias degustaciones y multiples recordatorios para cada anticipo.
+                  </p>
                 </div>
               </div>
             </div>

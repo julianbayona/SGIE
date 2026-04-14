@@ -6,19 +6,19 @@ import { getEventSummaryById } from '@/features/events/data/eventSummary';
 const sectionLabelByTab: Record<EventDetailTab, string> = {
   summary: 'Resumen',
   menu: 'Menu',
+  agenda: 'Agenda',
   montaje: 'Montaje',
   cotizacion: 'Cotizacion',
   pagos: 'Pagos',
-  historial: 'Historial',
 };
 
 const placeholderTextByTab: Record<EventDetailTab, string> = {
   summary: 'Resumen general del evento.',
   menu: 'Configuracion de menu del evento.',
+  agenda: 'Programacion de degustaciones y recordatorios de anticipos.',
   montaje: 'Definicion de montaje y distribucion del salon.',
   cotizacion: 'Ajustes de costos y consolidado de cotizacion.',
   pagos: 'Control de anticipos y pagos pendientes.',
-  historial: 'Registro historico de cambios del evento.',
 };
 
 const EventSectionPlaceholderPage: React.FC = () => {
@@ -28,10 +28,10 @@ const EventSectionPlaceholderPage: React.FC = () => {
 
   const activeTab: EventDetailTab =
     section === 'menu' ||
+    section === 'agenda' ||
     section === 'montaje' ||
     section === 'cotizacion' ||
-    section === 'pagos' ||
-    section === 'historial'
+    section === 'pagos'
       ? section
       : 'summary';
 
