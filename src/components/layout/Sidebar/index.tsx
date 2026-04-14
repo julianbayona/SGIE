@@ -6,7 +6,6 @@ const navItems = [
   { to: '/quotes', icon: 'description', label: 'Cotizaciones' },
   { to: '/clients', icon: 'group', label: 'Clients' },
   { to: '/events', icon: 'event_available', label: 'Events' },
-  { to: '/logistics', icon: 'inventory_2', label: 'Logistics' },
   { to: '/reports', icon: 'analytics', label: 'Reports' },
   { to: '/settings', icon: 'settings', label: 'Catalog Settings' },
 ];
