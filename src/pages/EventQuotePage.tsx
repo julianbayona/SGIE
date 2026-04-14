@@ -385,6 +385,7 @@ const EventQuotePage: React.FC = () => {
           <button
             className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors px-6 py-2.5 text-sm font-medium"
             type="button"
+            onClick={() => setQuoteStatus('Enviada')}
           >
             Marcar como enviada
           </button>

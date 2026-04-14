@@ -67,18 +67,22 @@ const beverageOptions: MenuItemOption[] = [
 interface CourseState {
   selectedLabel: string;
   basePrice: number;
-  overridePrice: number;
-  autoQuantity: boolean;
   quantity: number;
   notes: string;
 }
 
-const createDefaultState = (option: MenuItemOption, guests: number): CourseState => ({
+interface EconomicPreviewLine {
+  id: string;
+  product: string;
+  quantity: number;
+  unitPrice: number;
+  notes: string;
+}
+
+const createDefaultState = (option: MenuItemOption): CourseState => ({
   selectedLabel: option.label,
   basePrice: option.price,
-  overridePrice: option.price,
-  autoQuantity: true,
-  quantity: guests,
+  quantity: 0,
   notes: '',
 });
 
@@ -90,13 +94,14 @@ const EventMenuPage: React.FC = () => {
     const initial: Record<string, CourseState> = {};
 
     courseConfigs.forEach((course) => {
-      initial[course.key] = createDefaultState(course.options[0]!, event.guests || 120);
+      initial[course.key] = createDefaultState(course.options[0]!);
     });
 
     return initial;
   });
 
-  const [beverage, setBeverage] = useState<CourseState>(() => createDefaultState(beverageOptions[0]!, event.guests || 120));
+  const [beverage, setBeverage] = useState<CourseState>(() => createDefaultState(beverageOptions[0]!));
+  const [economicPreviewLines, setEconomicPreviewLines] = useState<EconomicPreviewLine[]>([]);
   const [exceptionsText, setExceptionsText] = useState('');
   const [tastingDateTime, setTastingDateTime] = useState('');
 
@@ -107,17 +112,33 @@ const EventMenuPage: React.FC = () => {
     }));
   };
 
-  const subtotalPerPerson = useMemo(() => {
-    const courseTotal = Object.values(courses).reduce((acc, course) => acc + course.overridePrice, 0);
+  const addEconomicPreviewLine = (line: Omit<EconomicPreviewLine, 'id'>) => {
+    if (line.quantity <= 0) {
+      return;
+    }
 
-    return courseTotal + beverage.overridePrice;
-  }, [courses, beverage.overridePrice]);
+    setEconomicPreviewLines((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        ...line,
+      },
+    ]);
+  };
 
   const totalEstimate = useMemo(() => {
+    return economicPreviewLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
+  }, [economicPreviewLines]);
+
+  const subtotalPerPerson = useMemo(() => {
     const guests = event.guests || 0;
 
-    return subtotalPerPerson * guests;
-  }, [event.guests, subtotalPerPerson]);
+    if (guests <= 0) {
+      return 0;
+    }
+
+    return totalEstimate / guests;
+  }, [event.guests, totalEstimate]);
 
   return (
     <section className="space-y-8 pb-32">
@@ -148,7 +169,6 @@ const EventMenuPage: React.FC = () => {
                           ...prev,
                           selectedLabel: option.label,
                           basePrice: option.price,
-                          overridePrice: option.price,
                         }));
                       }}
                     >
@@ -160,69 +180,21 @@ const EventMenuPage: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="lg:col-span-3">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio Override</label>
-                        <span className="text-[9px] font-medium text-neutral-400">Base: {formatCurrency(courseState.basePrice)}</span>
-                      </div>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
-                        <input
-                          className={`w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 pl-7 pr-3 ${courseState.overridePrice !== courseState.basePrice ? 'border-b-2 border-primary-gold' : ''}`}
-                          type="number"
-                          min={0}
-                          value={courseState.overridePrice}
-                          onChange={(eventTarget) => {
-                            const next = Number(eventTarget.target.value);
-                            updateCourse(course.key, (prev) => ({
-                              ...prev,
-                              overridePrice: Number.isNaN(next) ? 0 : next,
-                            }));
-                          }}
-                        />
-                      </div>
-                      {courseState.overridePrice !== courseState.basePrice ? (
-                        <div className="flex items-center gap-1 opacity-80">
-                          <span className="material-symbols-outlined text-[12px] text-primary-gold">edit</span>
-                          <span className="text-[9px] text-primary-gold font-medium italic">Modificado manualmente</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
                   <div className="lg:col-span-2">
                     <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Cantidad</label>
-                    <div className="flex items-center gap-3 h-[42px]">
-                      <div className="flex items-center gap-2">
-                        <input
-                          className="w-4 h-4 border-2 border-outline-variant text-primary-gold focus:ring-primary-gold rounded-sm"
-                          type="checkbox"
-                          checked={courseState.autoQuantity}
-                          onChange={(eventTarget) => {
-                            updateCourse(course.key, (prev) => ({
-                              ...prev,
-                              autoQuantity: eventTarget.target.checked,
-                            }));
-                          }}
-                        />
-                        <label className="text-[11px] font-medium leading-none">Auto ({event.guests})</label>
-                      </div>
-                      <input
-                        className={`w-16 border-none text-sm py-2 px-2 text-center ${courseState.autoQuantity ? 'bg-neutral-100 opacity-50' : 'bg-surface-container-low'}`}
-                        type="number"
-                        min={0}
-                        value={courseState.autoQuantity ? event.guests : courseState.quantity}
-                        onChange={(eventTarget) => {
-                          const next = Number(eventTarget.target.value);
-                          updateCourse(course.key, (prev) => ({
-                            ...prev,
-                            quantity: Number.isNaN(next) ? 0 : next,
-                          }));
-                        }}
-                        disabled={courseState.autoQuantity}
-                      />
-                    </div>
+                    <input
+                      className="w-full h-[42px] bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm text-center"
+                      type="number"
+                      min={0}
+                      value={courseState.quantity}
+                      onChange={(eventTarget) => {
+                        const next = Number(eventTarget.target.value);
+                        updateCourse(course.key, (prev) => ({
+                          ...prev,
+                          quantity: Math.max(0, Number.isNaN(next) ? 0 : next),
+                        }));
+                      }}
+                    />
                   </div>
 
                   <div className="lg:col-span-3">
@@ -240,6 +212,38 @@ const EventMenuPage: React.FC = () => {
                       }}
                     />
                   </div>
+
+                  <div className="lg:col-span-2">
+                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Precio base</label>
+                    <div className="h-[42px] flex items-center justify-end px-3 bg-surface-container-low text-sm font-bold text-primary-gold">
+                      {formatCurrency(courseState.basePrice)}
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-1 pt-6">
+                    <button
+                      className="w-full h-[42px] border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium text-on-surface flex items-center justify-center gap-1.5"
+                      type="button"
+                      title="Agregar al resumen"
+                      disabled={courseState.quantity <= 0}
+                      onClick={() => {
+                        addEconomicPreviewLine({
+                          product: courseState.selectedLabel,
+                          quantity: courseState.quantity,
+                          unitPrice: courseState.basePrice,
+                          notes: courseState.notes.trim(),
+                        });
+
+                        updateCourse(course.key, (prev) => ({
+                          ...prev,
+                          quantity: 0,
+                          notes: '',
+                        }));
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-primary-gold">add_circle</span>
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -248,7 +252,7 @@ const EventMenuPage: React.FC = () => {
           <div className="bg-surface-container-lowest p-8 shadow-sm space-y-6">
             <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Gestion de Bebidas</h4>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start">
-              <div className="lg:col-span-4">
+              <div className="lg:col-span-5">
                 <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Bebida Seleccionada</label>
                 <select
                   className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 px-3 italic"
@@ -259,7 +263,6 @@ const EventMenuPage: React.FC = () => {
                       ...prev,
                       selectedLabel: option.label,
                       basePrice: option.price,
-                      overridePrice: option.price,
                     }));
                   }}
                 >
@@ -271,63 +274,53 @@ const EventMenuPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className="lg:col-span-3">
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio Override</label>
-                    <span className="text-[9px] font-medium text-neutral-400">Base: {formatCurrency(beverage.basePrice)}</span>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
-                    <input
-                      className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 pl-7 pr-3"
-                      type="number"
-                      min={0}
-                      value={beverage.overridePrice}
-                      onChange={(eventTarget) => {
-                        const next = Number(eventTarget.target.value);
-                        setBeverage((prev) => ({
-                          ...prev,
-                          overridePrice: Number.isNaN(next) ? 0 : next,
-                        }));
-                      }}
-                    />
-                  </div>
-                </div>
+              <div className="lg:col-span-2">
+                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Cantidad</label>
+                <input
+                  className="w-full h-[42px] bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm text-center"
+                  type="number"
+                  min={0}
+                  value={beverage.quantity}
+                  onChange={(eventTarget) => {
+                    const next = Number(eventTarget.target.value);
+                    setBeverage((prev) => ({
+                      ...prev,
+                      quantity: Math.max(0, Number.isNaN(next) ? 0 : next),
+                    }));
+                  }}
+                />
               </div>
 
               <div className="lg:col-span-2">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Cantidad</label>
-                <div className="flex items-center gap-3 h-[42px]">
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="w-4 h-4 border-2 border-outline-variant text-primary-gold focus:ring-primary-gold rounded-sm"
-                      type="checkbox"
-                      checked={beverage.autoQuantity}
-                      onChange={(eventTarget) => {
-                        setBeverage((prev) => ({
-                          ...prev,
-                          autoQuantity: eventTarget.target.checked,
-                        }));
-                      }}
-                    />
-                    <label className="text-[11px] font-medium leading-none">Auto ({event.guests})</label>
-                  </div>
-                  <input
-                    className={`w-16 border-none text-sm py-2 px-2 text-center ${beverage.autoQuantity ? 'bg-neutral-100 opacity-50' : 'bg-surface-container-low'}`}
-                    type="number"
-                    min={0}
-                    value={beverage.autoQuantity ? event.guests : beverage.quantity}
-                    onChange={(eventTarget) => {
-                      const next = Number(eventTarget.target.value);
-                      setBeverage((prev) => ({
-                        ...prev,
-                        quantity: Number.isNaN(next) ? 0 : next,
-                      }));
-                    }}
-                    disabled={beverage.autoQuantity}
-                  />
+                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Precio base</label>
+                <div className="h-[42px] flex items-center justify-end px-3 bg-surface-container-low text-sm font-bold text-primary-gold">
+                  {formatCurrency(beverage.basePrice)}
                 </div>
+              </div>
+
+              <div className="lg:col-span-3 pt-6">
+                <button
+                  className="w-full h-[42px] border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium text-on-surface flex items-center justify-center gap-1.5"
+                  type="button"
+                  title="Agregar al resumen"
+                  disabled={beverage.quantity <= 0}
+                  onClick={() => {
+                    addEconomicPreviewLine({
+                      product: beverage.selectedLabel,
+                      quantity: beverage.quantity,
+                      unitPrice: beverage.basePrice,
+                      notes: beverage.notes.trim(),
+                    });
+
+                    setBeverage((prev) => ({
+                      ...prev,
+                      quantity: 0,
+                      notes: '',
+                    }));
+                  }}
+                >
+                  <span className="material-symbols-outlined text-[16px] text-primary-gold">add_circle</span>
+                </button>
               </div>
 
               <div className="lg:col-span-12">
@@ -396,24 +389,27 @@ const EventMenuPage: React.FC = () => {
               <span className="text-xs font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">{event.guests} pax</span>
             </div>
 
-            <div className="space-y-3 mb-6">
-              {courseConfigs.map((course) => {
-                const courseState = courses[course.key]!;
-                const isOverride = courseState.overridePrice !== courseState.basePrice;
+            <div className="mb-6">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-3 text-[10px] uppercase tracking-wider text-neutral-500 font-bold mb-3">
+                <span>Producto</span>
+                <span className="text-right">Cantidad</span>
+                <span className="text-right">Precio</span>
+              </div>
 
-                return (
-                  <div key={course.key} className={`flex justify-between text-sm ${isOverride ? '' : 'text-neutral-400 italic'}`}>
-                    <span className={isOverride ? 'text-neutral-500' : ''}>
-                      {course.title} {isOverride ? '(Override)' : '(Base)'}
+              <div className="space-y-2">
+              {economicPreviewLines.length === 0 ? (
+                <p className="text-sm text-neutral-400 italic">Aun no hay items agregados al resumen.</p>
+              ) : (
+                economicPreviewLines.map((line) => (
+                  <div key={line.id} className="grid grid-cols-[1fr_auto_auto] gap-3 text-sm items-start">
+                    <p className="text-neutral-600">{line.product}</p>
+                    <span className="text-right text-neutral-500">{line.quantity}</span>
+                    <span className="font-medium text-neutral-800 text-right">
+                      {formatCurrency(line.unitPrice * line.quantity)}
                     </span>
-                    <span className="font-medium text-neutral-800">{formatCurrency(courseState.overridePrice)}</span>
                   </div>
-                );
-              })}
-
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Bebidas</span>
-                <span className="font-medium text-neutral-800">{formatCurrency(beverage.overridePrice)}</span>
+                ))
+              )}
               </div>
             </div>
 
