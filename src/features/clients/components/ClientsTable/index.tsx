@@ -4,9 +4,10 @@ import type { Client } from '@/features/clients/types';
 
 interface ClientsTableProps {
   clients: Client[];
+  onEditClient: (client: Client) => void;
 }
 
-const ClientsTable: React.FC<ClientsTableProps> = ({ clients }) => {
+const ClientsTable: React.FC<ClientsTableProps> = ({ clients, onEditClient }) => {
   return (
     <table className="w-full text-left border-collapse">
       <thead>
@@ -22,7 +23,7 @@ const ClientsTable: React.FC<ClientsTableProps> = ({ clients }) => {
       </thead>
       <tbody className="divide-y divide-stone-100">
         {clients.map((client) => (
-          <ClientTableRow key={client.idNumber} client={client} />
+          <ClientTableRow key={client.idNumber} client={client} onEditClient={onEditClient} />
         ))}
       </tbody>
     </table>

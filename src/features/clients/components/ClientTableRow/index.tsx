@@ -3,9 +3,10 @@ import type { Client } from '@/features/clients/types';
 
 interface ClientTableRowProps {
   client: Client;
+  onEditClient: (client: Client) => void;
 }
 
-const ClientTableRow: React.FC<ClientTableRowProps> = ({ client }) => {
+const ClientTableRow: React.FC<ClientTableRowProps> = ({ client, onEditClient }) => {
   const isMember = client.category === 'Socio';
   const isActive = client.status === 'Activo';
 
@@ -47,7 +48,11 @@ const ClientTableRow: React.FC<ClientTableRowProps> = ({ client }) => {
       </td>
       <td className="px-6 py-4 text-right">
         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button type="button" className="p-1.5 text-stone-400 hover:text-gold transition-colors">
+          <button
+            type="button"
+            onClick={() => onEditClient(client)}
+            className="p-1.5 text-stone-400 hover:text-gold transition-colors"
+          >
             <span className="material-symbols-outlined text-lg">edit</span>
           </button>
           <button type="button" className="p-1.5 text-stone-400 hover:text-gold transition-colors">

@@ -4,11 +4,12 @@ import type { ClientsTab } from '@/features/clients/types';
 interface ClientsHeaderProps {
   activeTab: ClientsTab;
   onTabChange: (tab: ClientsTab) => void;
+  onCreateClient: () => void;
 }
 
 const tabs: ClientsTab[] = ['Todos', 'Socios', 'No Socios'];
 
-const ClientsHeader: React.FC<ClientsHeaderProps> = ({ activeTab, onTabChange }) => {
+const ClientsHeader: React.FC<ClientsHeaderProps> = ({ activeTab, onTabChange, onCreateClient }) => {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <nav className="flex gap-8 border-b border-border/80">
@@ -42,6 +43,7 @@ const ClientsHeader: React.FC<ClientsHeaderProps> = ({ activeTab, onTabChange })
         </button>
         <button
           type="button"
+          onClick={onCreateClient}
           className="flex items-center gap-2 px-4 py-2 bg-gold text-white rounded-md text-sm font-bold shadow-sm hover:bg-gold-d transition-colors"
         >
           <span className="material-symbols-outlined text-lg">person_add</span>
