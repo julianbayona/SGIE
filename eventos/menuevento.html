@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Gastronomy Management - Club Boyacá</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Inter:wght@100..900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#755717",
+                        "on-secondary-container": "#636262",
+                        "on-surface": "#191c1d",
+                        "on-tertiary-container": "#fffcff",
+                        "inverse-surface": "#2e3132",
+                        "secondary-container": "#e2dfde",
+                        "on-tertiary-fixed": "#261900",
+                        "on-error": "#ffffff",
+                        "primary": "#705904",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "background": "#f8f9fa",
+                        "secondary": "#5f5e5e",
+                        "tertiary-container": "#90702e",
+                        "primary-container": "#8b7220",
+                        "surface-tint": "#735c07",
+                        "tertiary-fixed": "#ffdea5",
+                        "primary-fixed-dim": "#e3c46a",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#cfc6b2",
+                        "error-container": "#ffdad6",
+                        "surface": "#f8f9fa",
+                        "on-background": "#191c1d",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "on-primary-fixed": "#241a00",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed-variant": "#474746",
+                        "inverse-primary": "#e3c46a",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-surface-variant": "#4c4638",
+                        "surface-dim": "#d9dadb",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface-container-high": "#e7e8e9",
+                        "primary-fixed": "#ffe088",
+                        "on-error-container": "#93000a",
+                        "outline": "#7e7666",
+                        "surface-container": "#edeeef",
+                        "on-primary-container": "#fffcff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .serif {
+            font-family: 'Newsreader', serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+
+        .metallic-cta {
+            background: linear-gradient(135deg, #705904 0%, #8b7220 100%);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .input-dense {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+
+<body class="flex min-h-screen">
+    <!-- NavigationDrawer (Shared Component) -->
+    <aside class="hidden md:flex flex-col h-screen w-[280px] bg-[#2E3132] py-8 sticky top-0 shrink-0">
+        <div class="px-6 mb-10">
+            <h1 class="text-lg font-serif text-white italic" style="">Club Boyacá</h1>
+            <p class="text-neutral-400 text-[10px] tracking-[0.2em] uppercase font-medium" style="">The Digital Curator
+            </p>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a class="text-neutral-400 hover:text-white px-6 py-3 flex items-center gap-4 transition-colors" href="#"
+                style="">
+                <span class="material-symbols-outlined" data-icon="dashboard" style="">dashboard</span>
+                <span class="font-medium text-xs tracking-wider uppercase" style="">Dashboard</span>
+            </a>
+            <a class="text-neutral-400 hover:text-white px-6 py-3 flex items-center gap-4 transition-colors" href="#"
+                style="">
+                <span class="material-symbols-outlined" data-icon="event_note" style="">event_note</span>
+                <span class="font-medium text-xs tracking-wider uppercase" style="">Event Registry</span>
+            </a>
+            <a class="bg-[#8B7220] text-white rounded-r-full mr-4 px-6 py-3 flex items-center gap-4 transform scale-95 duration-150"
+                href="#" style="">
+                <span class="material-symbols-outlined" data-icon="restaurant" style="">restaurant</span>
+                <span class="font-medium text-xs tracking-wider uppercase" style="">Gastronomy</span>
+            </a>
+            <a class="text-neutral-400 hover:text-white px-6 py-3 flex items-center gap-4 transition-colors" href="#"
+                style="">
+                <span class="material-symbols-outlined" data-icon="inventory" style="">inventory</span>
+                <span class="font-medium text-xs tracking-wider uppercase" style="">Logistics</span>
+            </a>
+            <a class="text-neutral-400 hover:text-white px-6 py-3 flex items-center gap-4 transition-colors" href="#"
+                style="">
+                <span class="material-symbols-outlined" data-icon="settings" style="">settings</span>
+                <span class="font-medium text-xs tracking-wider uppercase" style="">Settings</span>
+            </a>
+        </nav>
+        <div class="px-6 pt-8 mt-auto border-t border-neutral-800">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-white overflow-hidden">
+                    <img alt="Profile" class=""
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxsxNIFBMYhSOau9KfwWw4XJKn02TpR_FcYXjqZqYrBzI7ZvC4fusivvKugIAz_fc5M5aywMNx-Y6AiKJ2vHn9ThOVEfSGcCLK6hli7mqItKxgKnmtSOt2hsG6HeaWcxkaqSsnhfcvdAi6qq3hLImK_JgO_8pUua9Mw2J-NLVkXZZDhXwm2oKqT8-a2I0E0_kzOyUHpBN9hzZeVanuWMvUahiz6umXJeOW5eHXKq6bBYi0sQA3sMYW7UCNZ07PEl_4TnpRG9w3RCSh"
+                        style="" />
+                </div>
+                <div>
+                    <p class="text-white text-sm font-medium" style="">Club Boyacá</p>
+                    <p class="text-neutral-400 text-xs italic" style="">Digital Curator</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <!-- Main Canvas -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- TopAppBar (Shared Component) -->
+        <header
+            class="bg-neutral-50 flex justify-between items-center w-full px-6 py-3 sticky top-0 z-40 border-b border-neutral-200">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-neutral-500" style=""><span class="material-symbols-outlined"
+                        data-icon="menu" style="">menu</span></button>
+                <h2 class="text-xl font-serif italic text-yellow-900 leading-none" style="">Club Boyacá</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <nav class="hidden md:flex gap-6">
+                    <a class="text-neutral-500 font-medium text-sm hover:bg-neutral-200/50 px-2 py-1 transition-opacity"
+                        href="#" style="">Protocol</a>
+                    <a class="text-yellow-900 font-semibold text-sm hover:bg-neutral-200/50 px-2 py-1 transition-opacity"
+                        href="#" style="">Gastronomy</a>
+                    <a class="text-neutral-500 font-medium text-sm hover:bg-neutral-200/50 px-2 py-1 transition-opacity"
+                        href="#" style="">Logistics</a>
+                </nav>
+                <div class="w-8 h-8 rounded-full bg-neutral-200 overflow-hidden ring-2 ring-white">
+                    <img alt="User Profile" class=""
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb239uTL0xP1RwjORfbwkxTYtMRc2NsI1Twezp_bkhR8jVyd-S4-ZSLNv6wukv51OOm3nD-n_sPcDDSDCkKA5m-czYskeUHgOAtq0FELvZmQeymqwkOm-8AchO8-ZSiAyO9StDjn1-KOSLF77K-wnPmgd3DQKGnRLX7660-A8CN09EZhl65GKTHbuhzovsZekC8gy_sovwF22GylBlc3jyuEl5ES7Bb757o1NVO2hAse6b6Nac_1kaBlb5LgjAKKwx6eYolk1AtvT0"
+                        style="" />
+                </div>
+            </div>
+        </header>
+        <!-- New Reference Header Style -->
+        <div class="bg-surface p-6 md:p-8 space-y-4">
+            <!-- Event ID and Badge -->
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] font-bold text-neutral-500 tracking-wider" style="">EVT-041</span>
+                <span
+                    class="bg-[#FFEDD5] text-[#9A3412] px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-[#FED7AA]"
+                    style="">
+                    <span class="material-symbols-outlined text-sm" style="font-size: 14px;">description</span>
+                    Pendiente anticipo
+                </span>
+            </div>
+            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                <div class="space-y-4">
+                    <!-- Event Title -->
+                    <h3 class="serif text-4xl md:text-5xl font-bold text-[#191C1D]" style="">Boda · Carlos Ruiz</h3>
+                    <!-- Metadata -->
+                    <div class="flex flex-wrap items-center gap-6 text-neutral-500 text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg" style="">calendar_today</span>
+                            <span class="" style="">24 de Agosto, 2024</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg" style="">schedule</span>
+                            <span class="" style="">18:00 - 02:00</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        class="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-colors"
+                        style="">
+                        <span class="material-symbols-outlined text-lg" style="">public</span>
+                        Enlace público
+                    </button>
+                    <button
+                        class="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-colors"
+                        style="">
+                        <span class="material-symbols-outlined text-lg" style="">edit</span>
+                        Editar
+                    </button>
+                    <button
+                        class="bg-[#FEE2E2] hover:bg-red-200 text-[#991B1B] px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-colors"
+                        style="">
+                        <span class="material-symbols-outlined text-lg" style="">cancel</span>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Stepper Navigation -->
+        <nav class="bg-surface border-b border-neutral-200 sticky top-[53px] z-30">
+            <div class="max-w-6xl mx-auto px-6 overflow-x-auto no-scrollbar">
+                <div class="flex items-center space-x-8 whitespace-nowrap min-w-max">
+                    <a class="py-4 border-b-2 border-transparent text-neutral-500 font-medium text-sm hover:text-primary transition-colors"
+                        href="#" style="">Resumen</a>
+                    <a class="py-4 border-b-2 border-primary text-primary font-bold text-sm" href="#" style="">Menú</a>
+                    <a class="py-4 border-b-2 border-transparent text-neutral-500 font-medium text-sm hover:text-primary transition-colors"
+                        href="#" style="">Montaje</a>
+                    <a class="py-4 border-b-2 border-transparent text-neutral-500 font-medium text-sm hover:text-primary transition-colors"
+                        href="#" style="">Cotización</a>
+                    <a class="py-4 border-b-2 border-transparent text-neutral-500 font-medium text-sm hover:text-primary transition-colors"
+                        href="#" style="">Pagos</a>
+                    <a class="py-4 border-b-2 border-transparent text-neutral-500 font-medium text-sm hover:text-primary transition-colors"
+                        href="#" style="">Historial</a>
+                </div>
+            </div>
+        </nav>
+        <div class="lg:flex lg:items-start max-w-[1400px] mx-auto w-full">
+            <div class="p-6 md:p-10 space-y-8 flex-1 mb-32 md:mb-20">
+                <!-- Main Menu Selection -->
+                <div class="bg-surface-container-lowest p-8 shadow-sm space-y-10">
+                    <h4 class="serif text-xl font-bold text-on-surface border-b border-outline-variant pb-2" style="">
+                        Selección de Menú Principal</h4>
+                    <div class=""><!-- ENTRADA -->
+                        <div
+                            class="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start border-b border-surface-container pb-10 mb-10">
+                            <div class="lg:col-span-12 mb-2">
+                                <label
+                                    class="label-md font-label text-xs uppercase tracking-wider text-primary font-bold block">Entrada</label>
+                            </div>
+                            <div class="lg:col-span-4">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Selección</label>
+                                <select
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3 italic">
+                                    <option>Seleccionar...</option>
+                                    <option>Carpaccio de res con alcaparras</option>
+                                    <option>Ensalada de frutos del bosque</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex justify-between items-center">
+                                        <label
+                                            class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio
+                                            Override</label>
+                                        <span class="text-[9px] font-medium text-neutral-400">Base: $25,000</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                                        <input
+                                            class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 pl-7 pr-3 border-b-2 border-primary"
+                                            placeholder="0.00" type="number" value="28500" />
+                                    </div>
+                                    <div class="flex items-center gap-1 opacity-80">
+                                        <span class="material-symbols-outlined text-[12px] text-primary">edit</span>
+                                        <span class="text-[9px] text-primary font-medium italic">Modificado
+                                            manualmente</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Cantidad</label>
+                                <div class="flex items-center gap-3 h-[42px]">
+                                    <div class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 border-2 border-outline-variant text-primary focus:ring-primary rounded-sm"
+                                            id="auto-entrada-1" type="checkbox" />
+                                        <label class="text-[11px] font-medium leading-none" for="auto-entrada-1">Auto
+                                            (120)</label>
+                                    </div>
+                                    <input
+                                        class="w-16 bg-neutral-100 border-none text-sm py-2 px-2 opacity-50 text-center"
+                                        disabled="" placeholder="0" type="number" />
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Especificaciones</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3"
+                                    placeholder="Instrucciones..." type="text" />
+                            </div>
+                        </div>
+                        <!-- CONSOMÉ -->
+                        <div
+                            class="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start border-b border-surface-container pb-10 mb-10">
+                            <div class="lg:col-span-12 mb-2">
+                                <label
+                                    class="label-md font-label text-xs uppercase tracking-wider text-primary font-bold block">Consomé</label>
+                            </div>
+                            <div class="lg:col-span-4">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Selección</label>
+                                <select
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3 italic">
+                                    <option>Seleccionar...</option>
+                                    <option>Crema de espárragos</option>
+                                    <option>Consomé de pavo artesanal</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex justify-between items-center">
+                                        <label
+                                            class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio
+                                            Override</label>
+                                        <span class="text-[9px] font-medium text-neutral-400">Base: $8,500</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                                        <input
+                                            class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 pl-7 pr-3"
+                                            placeholder="0.00" type="number" value="8500" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Cantidad</label>
+                                <div class="flex items-center gap-3 h-[42px]">
+                                    <div class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 border-2 border-outline-variant text-primary focus:ring-primary rounded-sm"
+                                            id="auto-consome" type="checkbox" />
+                                        <label class="text-[11px] font-medium leading-none" for="auto-consome">Auto
+                                            (120)</label>
+                                    </div>
+                                    <input
+                                        class="w-16 bg-neutral-100 border-none text-sm py-2 px-2 opacity-50 text-center"
+                                        disabled="" placeholder="0" type="number" />
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Especificaciones</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3"
+                                    placeholder="Instrucciones..." type="text" />
+                            </div>
+                        </div>
+                        <!-- PLATO FUERTE -->
+                        <div
+                            class="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start border-b border-surface-container pb-10 mb-10">
+                            <div class="lg:col-span-12 mb-2">
+                                <label
+                                    class="label-md font-label text-xs uppercase tracking-wider text-primary font-bold block">Plato
+                                    Fuerte</label>
+                            </div>
+                            <div class="lg:col-span-4">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Selección</label>
+                                <select
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3 italic">
+                                    <option>Seleccionar...</option>
+                                    <option>Medallón de lomo en salsa pimienta</option>
+                                    <option>Salmón a la parrilla con costra de finas hierbas</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex justify-between items-center">
+                                        <label
+                                            class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio
+                                            Override</label>
+                                        <span class="text-[9px] font-medium text-neutral-400">Base: $65,000</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                                        <input
+                                            class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 pl-7 pr-3"
+                                            placeholder="0.00" type="number" value="65000" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Cantidad</label>
+                                <div class="flex items-center gap-3 h-[42px]">
+                                    <div class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 border-2 border-outline-variant text-primary focus:ring-primary rounded-sm"
+                                            id="auto-fuerte" type="checkbox" />
+                                        <label class="text-[11px] font-medium leading-none" for="auto-fuerte">Auto
+                                            (120)</label>
+                                    </div>
+                                    <input
+                                        class="w-16 bg-neutral-100 border-none text-sm py-2 px-2 opacity-50 text-center"
+                                        disabled="" placeholder="0" type="number" />
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Especificaciones</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3"
+                                    placeholder="Término de la carne, salsas..." type="text" />
+                            </div>
+                        </div>
+                        <!-- POSTRE -->
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start pb-4">
+                            <div class="lg:col-span-12 mb-2">
+                                <label
+                                    class="label-md font-label text-xs uppercase tracking-wider text-primary font-bold block">Postre</label>
+                            </div>
+                            <div class="lg:col-span-4">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Selección</label>
+                                <select
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3 italic">
+                                    <option>Seleccionar...</option>
+                                    <option>Mousse de chocolate al 70%</option>
+                                    <option>Cheesecake de frutos amarillos</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex justify-between items-center">
+                                        <label
+                                            class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio
+                                            Override</label>
+                                        <span class="text-[9px] font-medium text-neutral-400">Base: $12,000</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                                        <input
+                                            class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 pl-7 pr-3"
+                                            placeholder="0.00" type="number" value="12000" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Cantidad</label>
+                                <div class="flex items-center gap-3 h-[42px]">
+                                    <div class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 border-2 border-outline-variant text-primary focus:ring-primary rounded-sm"
+                                            id="auto-postre" type="checkbox" />
+                                        <label class="text-[11px] font-medium leading-none" for="auto-postre">Auto
+                                            (120)</label>
+                                    </div>
+                                    <input
+                                        class="w-16 bg-neutral-100 border-none text-sm py-2 px-2 opacity-50 text-center"
+                                        disabled="" placeholder="0" type="number" />
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <label
+                                    class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Especificaciones</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3"
+                                    placeholder="Decoración..." type="text" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Gestión de Bebidas Section -->
+                <!-- Gestión de Bebidas Section -->
+                <div class="bg-surface-container-lowest p-8 shadow-sm space-y-6">
+                    <h4 class="serif text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Gestión de
+                        Bebidas</h4>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start">
+                        <div class="lg:col-span-4">
+                            <label
+                                class="label-md font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Bebida
+                                Seleccionada</label>
+                            <select
+                                class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 px-3 italic">
+                                <option>Jugo natural + Agua</option>
+                                <option>Vino de la casa</option>
+                                <option>Gaseosas variadas</option>
+                                <option>Barra libre nacional</option>
+                            </select>
+                        </div>
+                        <div class="lg:col-span-3">
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex justify-between items-center">
+                                    <label
+                                        class="label-md font-label text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Precio
+                                        Override</label>
+                                    <span class="text-[9px] font-medium text-neutral-400">Base: $15,000</span>
+                                </div>
+                                <div class="relative">
+                                    <span
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                                    <input
+                                        class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-2.5 pl-7 pr-3"
+                                        placeholder="0.00" type="number" value="0.00" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label
+                                class="label-md font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Cantidad</label>
+                            <div class="flex items-center gap-3 h-[42px]">
+                                <div class="flex items-center gap-2">
+                                    <input checked=""
+                                        class="w-4 h-4 border-2 border-outline-variant text-primary focus:ring-primary rounded-sm"
+                                        id="auto-bebida-fixed" type="checkbox" />
+                                    <label class="text-[11px] font-medium leading-none" for="auto-bebida-fixed">Auto
+                                        (120)</label>
+                                </div>
+                                <input class="w-16 bg-neutral-100 border-none text-sm py-2 px-2 opacity-50 text-center"
+                                    disabled="" placeholder="0" type="number" />
+                            </div>
+                        </div>
+                        <div class="lg:col-span-12">
+                            <label
+                                class="label-md font-label text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Especificaciones
+                                del Servicio de Bebidas</label>
+                            <textarea
+                                class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-3 px-3 min-h-[80px]"
+                                placeholder="Ej: No servir hielo en el agua, rodajas de limón disponibles..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!-- Exceptions & Proof (Lower Grid) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Exceptions -->
+                    <div class="bg-surface-container-lowest p-8 shadow-sm space-y-4">
+                        <h4 class="serif text-xl font-bold text-on-surface border-b border-outline-variant pb-2"
+                            style="">Excepciones alimentarias</h4>
+                        <textarea
+                            class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary/50 text-sm py-4 px-4 min-h-[120px] italic"
+                            placeholder="Ej: 3 personas sin gluten, 1 persona alérgica a los frutos secos..."></textarea>
+                    </div>
+                    <!-- Prueba de Plato Highlighted (RQF-014) -->
+                    <div class="bg-primary/5 p-8 shadow-sm border border-primary/20 space-y-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10">
+                            <span class="material-symbols-outlined text-6xl" style="font-size: 80px;">restaurant</span>
+                        </div>
+                        <h4 class="serif text-xl font-bold text-primary border-b border-primary/20 pb-2 flex items-center gap-2"
+                            style="">
+                            <span class="" style=""><br /></span> Prueba de plato (opcional)
+                        </h4>
+                        <div class="space-y-5 relative z-10">
+                            <p class="text-sm text-on-surface-variant" style="">Agende una sesión de degustación para
+                                finalizar los detalles del sabor y la presentación antes del evento.</p>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="space-y-1.5">
+                                    <label "="" class=" label-md font-label text-xs uppercase tracking-wider
+                                        text-on-surface-variant font-bold" style="">Fecha y hora sugerida</label>
+                                    <input
+                                        class="w-full bg-white border border-primary/20 focus:ring-2 focus:ring-primary/30 rounded-sm text-sm py-3 px-4"
+                                        type="datetime-local" />
+                                </div>
+                                <button
+                                    class="w-full metallic-cta text-white px-6 py-3 text-sm font-bold shadow-md flex items-center justify-center gap-3"
+                                    style="">
+                                    <span class="material-symbols-outlined" style="">calendar_add_on</span>
+                                    Agendar en calendario
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 py-1">
+                                <span class="material-symbols-outlined text-primary text-sm" style="">info</span>
+                                <span class="text-[11px] italic text-primary font-medium" style="">Se enviará una
+                                    invitación a los organizadores</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Economic Summary Sidebar (Desktop) -->
+            <aside class="hidden lg:block w-[320px] sticky top-[120px] mt-10 mr-10 space-y-6">
+                <div class="bg-white p-6 shadow-md border border-neutral-100 rounded-sm">
+                    <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-4">
+                        <h5 class="serif font-bold text-lg text-yellow-900" style="">Resumen Económico</h5>
+                        <span class="text-xs font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded" style="">120
+                            pax</span>
+                    </div>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-neutral-500" style="">Entrada (Override)</span>
+                            <span class="font-medium text-neutral-800" style="">$28,500</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-neutral-400 italic">
+                            <span class="" style="">Consomé (Base)</span>
+                            <span class="" style="">$8,500</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-neutral-500" style="">Plato Fuerte (Base)</span>
+                            <span class="font-medium text-neutral-800" style="">$65,000</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-neutral-500" style="">Postre (Base)</span>
+                            <span class="font-medium text-neutral-800" style="">$12,000</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-neutral-500" style="">Bebidas (Base)</span>
+                            <span class="font-medium text-neutral-800" style="">$15,000</span>
+                        </div>
+                    </div>
+                    <div class="border-t-2 border-dashed border-neutral-100 pt-4 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider" style="">Total por
+                                persona</span>
+                            <span class="serif text-xl font-bold text-primary" style="">$129,000</span>
+                        </div>
+                        <div class="bg-primary/5 p-4 rounded-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold text-primary-container uppercase tracking-wider"
+                                    style="">Gran Total</span>
+                                <span class="serif text-2xl font-bold text-primary" style="">$15,480,000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+        <!-- Economic Summary Floating (Mobile) -->
+        <div
+            class="lg:hidden fixed bottom-[60px] left-0 w-full bg-[#191C1D] text-white p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] z-40">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase tracking-widest text-neutral-400 font-bold" style="">Total Estimado
+                        (120 Pax)</p>
+                    <p class="serif text-xl font-bold text-primary-fixed-dim" style="">$15,480,000</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-[10px] text-neutral-400" style="">Por persona</p>
+                        <p class="text-sm font-bold" style="">$129,000</p>
+                    </div>
+                    <button class="bg-white/10 p-2 rounded-full" style="">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">keyboard_arrow_up</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Sticky Footer Actions -->
+        <footer
+            class="fixed bottom-0 right-0 w-full md:w-[calc(100%-280px)] bg-surface-container-lowest/80 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
+            <div class="hidden sm:flex items-center gap-2 text-on-secondary-container">
+                <span class="material-symbols-outlined text-lg" data-icon="info" style="">info</span>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-neutral-500" style="">Resumen en tiempo
+                    real basado en selección actual</p>
+            </div>
+            <div class="flex gap-4 w-full sm:w-auto">
+                <button
+                    class="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors px-6 py-2.5 text-sm font-medium flex items-center justify-center gap-2"
+                    style="">
+                    <span class="material-symbols-outlined text-green-700 text-lg" data-icon="chat" style="">chat</span>
+                    Enviar propuesta por WhatsApp</button>
+                <button
+                    class="flex-1 sm:flex-none metallic-cta text-white px-8 py-2.5 text-sm font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
+                    style="">
+                    Guardar menú
+                </button>
+            </div>
+        </footer>
+        <!-- BottomNavBar (Mobile Only) -->
+        <nav
+            class="md:hidden fixed bottom-0 left-0 w-full bg-neutral-50/90 backdrop-blur-md z-[70] flex justify-around items-center pt-2 pb-safe px-4 border-t border-neutral-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+            <button class="flex flex-col items-center justify-center text-neutral-400 py-2" style="">
+                <span class="material-symbols-outlined" data-icon="analytics" style="">analytics</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight" style="">Resumen</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-[#705904] transform translate-y-[-2px] py-2"
+                style="">
+                <span class="material-symbols-outlined" data-icon="menu_book" style="">menu_book</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight" style="">Menú</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-neutral-400 py-2" style="">
+                <span class="material-symbols-outlined" data-icon="layers" style="">layers</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight" style="">Montaje</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-neutral-400 py-2" style="">
+                <span class="material-symbols-outlined" data-icon="group" style="">group</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight" style="">Invitados</span>
+            </button>
+        </nav>
+    </main>
+</body>
+
+</html>

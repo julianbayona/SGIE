@@ -269,7 +269,7 @@ const EventRequestPage: React.FC = () => {
           </p>
           <button
             type="button"
-            onClick={() => navigate('/events/EVT-041')}
+            onClick={() => navigate('/events/EVT-041/menu')}
             className="bg-primary-gold text-white px-8 py-4 rounded-sm font-bold flex items-center gap-3 hover:bg-primary transition-all shadow-lg active:scale-95"
           >
             Crear evento y continuar
