@@ -10,34 +10,32 @@ const tabs: QuotesTab[] = ['Recientes', 'Pendientes', 'Aprobadas'];
 
 const QuotesHeader: React.FC<QuotesHeaderProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h1 className="font-display text-4xl italic font-light text-on-surface">Listado de Cotizaciones</h1>
-          <p className="text-sm text-stone-500 mt-2 font-medium tracking-wide uppercase">
-            Historico Maestro de Ventas y Servicios
-          </p>
+          <h1 className="text-2xl font-display font-bold text-text1">Cotizaciones</h1>
+          <p className="text-sm text-text3 mt-1">Seguimiento económico de eventos y propuestas enviadas al cliente.</p>
         </div>
 
         <div className="flex gap-3">
           <button
             type="button"
-            className="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-stone-600 text-sm font-semibold rounded flex items-center gap-2 hover:bg-stone-50 transition-colors"
+            className="px-4 py-2 bg-surface border border-border text-text2 text-sm font-semibold rounded-md flex items-center gap-2 hover:bg-hover transition-colors"
           >
             <span className="material-symbols-outlined text-lg">filter_list</span>
-            Filtros Avanzados
+            Filtros
           </button>
           <button
             type="button"
-            className="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-stone-600 text-sm font-semibold rounded flex items-center gap-2 hover:bg-stone-50 transition-colors"
+            className="px-4 py-2 bg-surface border border-border text-text2 text-sm font-semibold rounded-md flex items-center gap-2 hover:bg-hover transition-colors"
           >
             <span className="material-symbols-outlined text-lg">download</span>
-            Exportar Excel
+            Exportar
           </button>
         </div>
       </div>
 
-      <nav className="flex gap-6 border-b border-outline-variant/30">
+      <nav className="flex gap-8 border-b border-border/80">
         {tabs.map((tab) => {
           const isActive = tab === activeTab;
 
@@ -46,10 +44,10 @@ const QuotesHeader: React.FC<QuotesHeaderProps> = ({ activeTab, onTabChange }) =
               key={tab}
               type="button"
               onClick={() => onTabChange(tab)}
-              className={`pb-2 text-sm font-medium transition-colors ${
+              className={`pb-3 px-1 border-b-2 text-sm transition-colors ${
                 isActive
-                  ? 'text-primary-gold font-bold border-b-2 border-primary-gold'
-                  : 'text-stone-600 hover:text-primary-gold'
+                  ? 'border-gold text-gold font-bold'
+                  : 'border-transparent text-text2 font-medium hover:text-gold'
               }`}
             >
               {tab}

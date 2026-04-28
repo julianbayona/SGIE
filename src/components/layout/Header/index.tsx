@@ -10,7 +10,7 @@ const Header: React.FC = () => {
           </span>
           <input
             className="w-full bg-surface-container-low border-none rounded py-2 pl-10 pr-4 text-sm focus:ring-0 placeholder-stone-400"
-            placeholder="Buscar eventos, socios, cotizaciones..."
+            placeholder="Buscar cliente, evento o cotización..."
             type="text"
           />
         </div>
@@ -22,7 +22,7 @@ const Header: React.FC = () => {
         </button>
         <div className="h-8 w-px bg-stone-200/50"></div>
         <button className="text-stone-600 hover:text-primary-gold transition-colors flex items-center gap-2">
-          <span className="text-sm font-medium">Administrator</span>
+          <span className="text-sm font-medium">Administrador</span>
           <span className="material-symbols-outlined">person</span>
         </button>
       </div>

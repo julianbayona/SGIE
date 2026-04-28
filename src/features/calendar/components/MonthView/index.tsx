@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isToday } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday } from 'date-fns';
 import { useCalendarStore } from '@/store/calendarStore';
 import { useCalendar } from '../../hooks/useCalendar';
 import EventItem from '../EventItem';
@@ -10,33 +10,24 @@ const MonthView: React.FC = () => {
 
   const firstDayOfMonth = startOfMonth(selectedDate);
   const lastDayOfMonth = endOfMonth(selectedDate);
-
-  const daysInMonth = eachDayOfInterval({
-    start: firstDayOfMonth,
-    end: lastDayOfMonth,
-  });
-
-  // getDay() returns 0 for Sunday, 1 for Monday, etc. We want Monday to be 0.
+  const daysInMonth = eachDayOfInterval({ start: firstDayOfMonth, end: lastDayOfMonth });
   const startingDayIndex = (getDay(firstDayOfMonth) + 6) % 7;
 
   return (
     <div className="grid grid-cols-7">
-      {/* Headers */}
-      {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+      {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
         <div key={day} className="bg-stone-50 p-2 text-center border-b border-r border-outline-variant/10">
           <p className="text-[8px] font-bold text-stone-400 uppercase">{day}</p>
         </div>
       ))}
 
-      {/* Blank cells for days before the start of the month */}
       {Array.from({ length: startingDayIndex }).map((_, index) => (
         <div key={`empty-${index}`} className="calendar-cell-month bg-stone-50/30 border-r border-b border-outline-variant/10 min-h-[120px]"></div>
       ))}
 
-      {/* Month days */}
       {daysInMonth.map((day) => {
         const isCurrentDay = isToday(day);
-        const dayEvents = events.filter(e => format(e.start, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
+        const dayEvents = events.filter((event) => format(event.start, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'));
 
         return (
           <div key={day.toString()} className={`p-2 border-r border-b border-outline-variant/10 min-h-[120px] ${isCurrentDay ? 'bg-primary-gold/[0.03]' : ''}`}>
@@ -44,11 +35,7 @@ const MonthView: React.FC = () => {
               {format(day, 'd')}
             </p>
             <div className="mt-1 flex flex-col gap-1">
-              {loading ? (
-                <p className="text-xs">Cargando...</p>
-              ) : (
-                dayEvents.map(event => <EventItem key={event.id} event={event} />)
-              )}
+              {loading ? <p className="text-xs">Cargando...</p> : dayEvents.map((event) => <EventItem key={event.id} event={event} />)}
             </div>
           </div>
         );

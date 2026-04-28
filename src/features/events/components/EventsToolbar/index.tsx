@@ -6,13 +6,13 @@ interface EventsToolbarProps {
   onTabChange: (tab: EventsTab) => void;
 }
 
-const tabs: EventsTab[] = ['Historial', 'Activos'];
+const tabs: EventsTab[] = ['Todos', 'Activos', 'Pendientes', 'Confirmados', 'Cancelados'];
 
 const EventsToolbar: React.FC<EventsToolbarProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="p-6 pb-0">
+    <div className="p-5 pb-0">
       <div className="flex flex-wrap items-center gap-3 border-b border-border">
-        <div className="flex gap-8">
+        <div className="flex gap-6 overflow-x-auto">
           {tabs.map((tab) => {
             const isActive = tab === activeTab;
 
@@ -21,7 +21,7 @@ const EventsToolbar: React.FC<EventsToolbarProps> = ({ activeTab, onTabChange })
                 key={tab}
                 type="button"
                 onClick={() => onTabChange(tab)}
-                className={`pb-4 border-b-2 text-sm transition-colors ${
+                className={`pb-4 border-b-2 text-sm whitespace-nowrap transition-colors ${
                   isActive
                     ? 'border-gold text-gold font-bold'
                     : 'border-transparent text-text3 hover:text-gold'
@@ -33,7 +33,14 @@ const EventsToolbar: React.FC<EventsToolbarProps> = ({ activeTab, onTabChange })
           })}
         </div>
 
-        <div className="ml-auto pb-3">
+        <div className="ml-auto pb-3 flex items-center gap-2">
+          <button
+            type="button"
+            className="p-2 bg-panel text-text2 rounded flex items-center gap-2 text-xs font-semibold hover:bg-hover transition-colors"
+          >
+            <span className="material-symbols-outlined text-sm">tune</span>
+            Filtros
+          </button>
           <button
             type="button"
             className="p-2 bg-panel text-text2 rounded flex items-center gap-2 text-xs font-semibold hover:bg-hover transition-colors"

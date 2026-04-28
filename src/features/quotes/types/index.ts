@@ -1,4 +1,4 @@
-export type QuoteStatus = 'Aceptada' | 'Enviada' | 'Borrador' | 'Desactualizada' | 'Rechazada';
+export type QuoteStatus = 'Borrador' | 'Generada' | 'Enviada' | 'Aceptada' | 'Rechazada' | 'Desactualizada';
 export type QuoteCustomerType = 'Socio' | 'No Socio';
 export type QuotesTab = 'Recientes' | 'Pendientes' | 'Aprobadas';
 

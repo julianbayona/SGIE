@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { getEventSummaryById } from '@/features/events/data/eventSummary';
+import type { QuoteStatus } from '@/features/quotes/types';
 
 type PricingMode = 'servicio' | 'unidad';
 
@@ -11,7 +13,7 @@ interface QuoteItem {
   pricingMode: PricingMode;
   quantity: number;
   unitBasePrice: number;
-  unitOverridePrice: number;
+  unitAdjustedPrice: number;
   notes?: string;
 }
 
@@ -33,64 +35,64 @@ const EventQuotePage: React.FC = () => {
     return [
       {
         id: 'venue',
-        concept: 'Alquiler salon principal (4h)',
+        concept: 'Alquiler salón principal (4h)',
         pricingMode: 'servicio',
         quantity: 1,
         unitBasePrice: 1200000,
-        unitOverridePrice: 1200000,
+        unitAdjustedPrice: 1200000,
       },
       {
         id: 'menu-entrada',
-        concept: 'Menu · Entrada',
+        concept: 'Menú · Entrada',
         pricingMode: 'unidad',
         quantity: guests,
         unitBasePrice: 25000,
-        unitOverridePrice: 25000,
+        unitAdjustedPrice: 25000,
         notes: 'Carpaccio de res con alcaparras',
       },
       {
         id: 'menu-consome',
-        concept: 'Menu · Consome',
+        concept: 'Menú · Consomé',
         pricingMode: 'unidad',
         quantity: guests,
         unitBasePrice: 8500,
-        unitOverridePrice: 8500,
-        notes: 'Crema de esparragos',
+        unitAdjustedPrice: 8500,
+        notes: 'Crema de espárragos',
       },
       {
         id: 'menu-plato-fuerte',
-        concept: 'Menu · Plato fuerte',
+        concept: 'Menú · Plato fuerte',
         pricingMode: 'unidad',
         quantity: guests,
         unitBasePrice: 65000,
-        unitOverridePrice: 65000,
-        notes: 'Medallon de lomo en salsa pimienta',
+        unitAdjustedPrice: 65000,
+        notes: 'Medallón de lomo en salsa pimienta',
       },
       {
         id: 'menu-postre',
-        concept: 'Menu · Postre',
+        concept: 'Menú · Postre',
         pricingMode: 'unidad',
         quantity: guests,
         unitBasePrice: 12000,
-        unitOverridePrice: 12000,
+        unitAdjustedPrice: 12000,
         notes: 'Mousse de chocolate al 70%',
       },
       {
         id: 'menu-bebidas',
-        concept: 'Menu · Bebidas',
+        concept: 'Menú · Bebidas',
         pricingMode: 'unidad',
         quantity: guests,
         unitBasePrice: 15000,
-        unitOverridePrice: 15000,
-        notes: 'Jugo natural + Agua',
+        unitAdjustedPrice: 15000,
+        notes: 'Jugo natural + agua',
       },
       {
-        id: 'montage-base',
+        id: 'montaje-base',
         concept: 'Montaje base y textiles',
         pricingMode: 'servicio',
         quantity: 1,
         unitBasePrice: 420000,
-        unitOverridePrice: 420000,
+        unitAdjustedPrice: 420000,
       },
       {
         id: 'adicional-tarimas',
@@ -98,7 +100,7 @@ const EventQuotePage: React.FC = () => {
         pricingMode: 'unidad',
         quantity: 2,
         unitBasePrice: 180000,
-        unitOverridePrice: 180000,
+        unitAdjustedPrice: 180000,
       },
       {
         id: 'adicional-audiovisuales',
@@ -106,25 +108,17 @@ const EventQuotePage: React.FC = () => {
         pricingMode: 'servicio',
         quantity: 1,
         unitBasePrice: 450000,
-        unitOverridePrice: 450000,
-      },
-      {
-        id: 'adicional-luces-arbol',
-        concept: 'Adicional · Luces arbol',
-        pricingMode: 'servicio',
-        quantity: 1,
-        unitBasePrice: 260000,
-        unitOverridePrice: 260000,
+        unitAdjustedPrice: 450000,
       },
     ];
   });
 
   const [advancePercent, setAdvancePercent] = useState(20);
-  const [quoteStatus, setQuoteStatus] = useState<'Borrador' | 'Enviada' | 'Aceptada'>('Aceptada');
+  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('Aceptada');
 
-  const history = [
-    { id: 'COT-041-02', date: '10 jun 2025', status: 'Aceptada' },
-    { id: 'COT-041-01', date: '2 jun 2025', status: 'Desactualizada' },
+  const history: Array<{ id: string; date: string; status: QuoteStatus; active: boolean }> = [
+    { id: 'COT-041-02', date: '10 jun 2025', status: 'Aceptada', active: true },
+    { id: 'COT-041-01', date: '2 jun 2025', status: 'Desactualizada', active: false },
   ];
 
   const updateQuoteItem = (itemId: string, updater: (item: QuoteItem) => QuoteItem) => {
@@ -135,13 +129,13 @@ const EventQuotePage: React.FC = () => {
     return quoteItems.reduce((sum, item) => sum + item.quantity * item.unitBasePrice, 0);
   }, [quoteItems]);
 
-  const overrideTotal = useMemo(() => {
-    return quoteItems.reduce((sum, item) => sum + item.quantity * item.unitOverridePrice, 0);
+  const adjustedTotal = useMemo(() => {
+    return quoteItems.reduce((sum, item) => sum + item.quantity * item.unitAdjustedPrice, 0);
   }, [quoteItems]);
 
-  const deltaTotal = overrideTotal - baseTotal;
-  const advanceValue = Math.round((overrideTotal * advancePercent) / 100);
-  const remainingValue = overrideTotal - advanceValue;
+  const deltaTotal = adjustedTotal - baseTotal;
+  const advanceValue = Math.round((adjustedTotal * advancePercent) / 100);
+  const remainingValue = adjustedTotal - advanceValue;
 
   const requestedMenuItems = useMemo(() => {
     return quoteItems.filter((item) => item.id.startsWith('menu-'));
@@ -152,29 +146,19 @@ const EventQuotePage: React.FC = () => {
   }, [quoteItems]);
 
   return (
-    <section className="space-y-8 pb-32">
+    <section className="space-y-8 pb-28">
       <EventDetailHeaderTabs event={event} activeTab="cotizacion" />
 
       <div className="lg:flex lg:items-start gap-6">
-        <div className="flex-1 space-y-6 mb-24">
-          <div className="bg-surface-container-lowest border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="flex-1 space-y-6 mb-20">
+          <div className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-outline-variant/20 flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Cotizacion activa</p>
+                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Cotización activa</p>
                 <h3 className="font-display text-2xl font-bold text-on-surface mt-1">#{event.id.replace('EVT', 'COT').replace('EV-', 'COT-')}</h3>
                 <p className="text-sm text-on-surface-variant mt-1">{event.title.replace(' - ', ' · ')} · {event.dateLabel}</p>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  quoteStatus === 'Aceptada'
-                    ? 'bg-green-bg text-green-text'
-                    : quoteStatus === 'Enviada'
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-surface-container-high text-on-surface'
-                }`}
-              >
-                {quoteStatus}
-              </span>
+              <StatusBadge type="quote" status={quoteStatus} size="md" />
             </div>
 
             <div className="overflow-x-auto">
@@ -185,13 +169,13 @@ const EventQuotePage: React.FC = () => {
                     <th className="px-4 py-3">Cobro</th>
                     <th className="px-4 py-3 text-right">Cantidad</th>
                     <th className="px-4 py-3 text-right">Precio base</th>
-                    <th className="px-4 py-3 text-right">Precio override</th>
+                    <th className="px-4 py-3 text-right">Precio ajustado</th>
                     <th className="px-6 py-3 text-right">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/20">
                   {quoteItems.map((item) => {
-                    const hasOverride = item.unitOverridePrice !== item.unitBasePrice;
+                    const hasAdjustment = item.unitAdjustedPrice !== item.unitBasePrice;
 
                     return (
                       <tr key={item.id}>
@@ -227,23 +211,23 @@ const EventQuotePage: React.FC = () => {
                         <td className="px-4 py-4 text-right">
                           <input
                             className={`w-28 bg-surface-container-low border rounded-md px-2 py-1.5 text-sm text-right ${
-                              hasOverride ? 'border-primary-gold/60' : 'border-outline-variant/40'
+                              hasAdjustment ? 'border-primary-gold/60' : 'border-outline-variant/40'
                             }`}
                             type="number"
                             min={0}
                             step={1000}
-                            value={item.unitOverridePrice}
+                            value={item.unitAdjustedPrice}
                             onChange={(eventTarget) => {
                               const next = Number(eventTarget.target.value);
                               updateQuoteItem(item.id, (prev) => ({
                                 ...prev,
-                                unitOverridePrice: Math.max(0, Number.isNaN(next) ? 0 : next),
+                                unitAdjustedPrice: Math.max(0, Number.isNaN(next) ? 0 : next),
                               }));
                             }}
                           />
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-on-surface">
-                          {formatCurrency(item.quantity * item.unitOverridePrice)}
+                          {formatCurrency(item.quantity * item.unitAdjustedPrice)}
                         </td>
                       </tr>
                     );
@@ -253,7 +237,7 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-6 shadow-sm">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
             <h4 className="font-display text-lg font-bold text-on-surface mb-4">Condiciones de pago</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
@@ -284,7 +268,7 @@ const EventQuotePage: React.FC = () => {
         </div>
 
         <aside className="lg:w-[330px] space-y-6 lg:sticky lg:top-[92px]">
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm space-y-4">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
             <h4 className="font-display font-bold text-lg text-on-surface">Resumen financiero</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -292,8 +276,8 @@ const EventQuotePage: React.FC = () => {
                 <span className="font-medium text-on-surface">{formatCurrency(baseTotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-on-surface-variant">Total override</span>
-                <span className="font-medium text-on-surface">{formatCurrency(overrideTotal)}</span>
+                <span className="text-on-surface-variant">Total ajustado</span>
+                <span className="font-medium text-on-surface">{formatCurrency(adjustedTotal)}</span>
               </div>
               <div className="flex justify-between border-t border-outline-variant/20 pt-2">
                 <span className="text-on-surface-variant">Ajuste neto</span>
@@ -304,14 +288,14 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm space-y-4">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
             <h4 className="font-display font-bold text-lg text-on-surface">Detalle solicitado</h4>
 
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Menu solicitado</p>
+              <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Menú solicitado</p>
               {requestedMenuItems.map((item) => (
                 <div key={item.id} className="text-sm">
-                  <p className="font-semibold text-on-surface">{item.concept.replace('Menu · ', '')}</p>
+                  <p className="font-semibold text-on-surface">{item.concept.replace('Menú · ', '')}</p>
                   <p className="text-on-surface-variant text-xs">{item.notes ?? 'Sin detalle'} · {item.quantity} pax</p>
                 </div>
               ))}
@@ -330,70 +314,51 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm space-y-4">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
             <h4 className="font-display font-bold text-lg text-on-surface">Historial cotizaciones</h4>
             <div className="space-y-3">
               {history.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-on-surface">#{item.id}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-on-surface">#{item.id}</p>
+                      {item.active ? <span className="text-[10px] font-bold text-gold">Activa</span> : null}
+                    </div>
                     <p className="text-xs text-on-surface-variant">{item.date}</p>
                   </div>
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                      item.status === 'Aceptada'
-                        ? 'bg-green-bg text-green-text'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {item.status}
-                  </span>
+                  <StatusBadge type="quote" status={item.status} />
                 </div>
               ))}
-            </div>
-
-            <div className="space-y-2 pt-2 border-t border-outline-variant/20">
-              <button
-                type="button"
-                className="w-full border border-outline-variant/50 hover:bg-surface-container-low transition-colors px-4 py-2.5 text-sm font-medium text-left"
-              >
-                Descargar PDF
-              </button>
-              <button
-                type="button"
-                className="w-full border border-green-text/40 text-green-text hover:bg-green-bg transition-colors px-4 py-2.5 text-sm font-medium text-left"
-              >
-                Reenviar por WhatsApp
-              </button>
-              <button
-                type="button"
-                className="w-full border border-outline-variant/50 hover:bg-surface-container-low transition-colors px-4 py-2.5 text-sm font-medium text-left"
-              >
-                Registrar ajuste manual
-              </button>
             </div>
           </div>
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/80 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
+      <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/90 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
         <div className="hidden sm:flex items-center gap-2 text-on-secondary-container">
           <span className="material-symbols-outlined text-lg">info</span>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">La cotizacion se recalcula en tiempo real con cada ajuste</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">La cotización se recalcula en tiempo real con cada ajuste</p>
         </div>
-        <div className="flex gap-4 w-full sm:w-auto">
+        <div className="flex gap-3 w-full sm:w-auto">
           <button
-            className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors px-6 py-2.5 text-sm font-medium"
+            className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors rounded-md px-5 py-2.5 text-sm font-semibold"
+            type="button"
+          >
+            Guardar borrador
+          </button>
+          <button
+            className="flex-1 sm:flex-none border border-green-text/40 text-green-text hover:bg-green-bg transition-colors rounded-md px-5 py-2.5 text-sm font-semibold"
             type="button"
             onClick={() => setQuoteStatus('Enviada')}
           >
-            Marcar como enviada
+            Enviar por WhatsApp
           </button>
           <button
-            className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-primary-gold text-white px-8 py-2.5 text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-6 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors"
             type="button"
+            onClick={() => setQuoteStatus('Aceptada')}
           >
-            Guardar cotizacion
+            Registrar aceptación
           </button>
         </div>
       </footer>

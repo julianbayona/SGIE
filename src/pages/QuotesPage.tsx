@@ -8,7 +8,7 @@ const quotesData: QuoteRecord[] = [
   {
     id: 'COT-8422',
     eventName: 'Boda Alicia Morales',
-    eventMeta: 'Salon Principal • 200 Invitados',
+    eventMeta: 'Salón Principal · 200 invitados',
     customerName: 'Alicia Morales',
     customerType: 'Socio',
     createdAt: '12 Oct 2023',
@@ -18,8 +18,8 @@ const quotesData: QuoteRecord[] = [
   {
     id: 'COT-8421',
     eventName: 'Cena Corporativa Bancolombia',
-    eventMeta: 'Terraza Club • 50 Invitados',
-    customerName: 'Roberto Velez',
+    eventMeta: 'Terraza Club · 50 invitados',
+    customerName: 'Roberto Vélez',
     customerType: 'No Socio',
     createdAt: '10 Oct 2023',
     totalValue: '$ 3.200.000',
@@ -28,7 +28,7 @@ const quotesData: QuoteRecord[] = [
   {
     id: 'COT-8420',
     eventName: 'Aniversario Familia Pineda',
-    eventMeta: 'Salon VIP • 15 Invitados',
+    eventMeta: 'Salón VIP · 15 invitados',
     customerName: 'Juan Pineda',
     customerType: 'Socio',
     createdAt: '08 Oct 2023',
@@ -37,9 +37,9 @@ const quotesData: QuoteRecord[] = [
   },
   {
     id: 'COT-8419',
-    eventName: 'Graduacion Colegio Mayor',
-    eventMeta: 'Salon Imperial • 400 Invitados',
-    customerName: 'Secretaria Academica',
+    eventName: 'Graduación Colegio Mayor',
+    eventMeta: 'Salón Imperial · 400 invitados',
+    customerName: 'Secretaría Académica',
     customerType: 'No Socio',
     createdAt: '01 Oct 2023',
     totalValue: '$ 28.900.000',
@@ -47,8 +47,8 @@ const quotesData: QuoteRecord[] = [
   },
   {
     id: 'COT-8418',
-    eventName: 'Despedida de Ano IBM',
-    eventMeta: 'Area Social • 120 Invitados',
+    eventName: 'Despedida de Año IBM',
+    eventMeta: 'Área Social · 120 invitados',
     customerName: 'Recursos Humanos',
     customerType: 'No Socio',
     createdAt: '25 Sep 2023',
@@ -76,7 +76,7 @@ const QuotesPage: React.FC = () => {
     <section className="space-y-6">
       <QuotesHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-stone-200/40">
+      <div className="bg-surface rounded-lg overflow-hidden shadow-sm border border-border">
         <QuotesTable quotes={visibleQuotes} />
         <QuotesTablePagination from={1} to={visibleQuotes.length} total={156} />
       </div>

@@ -6,51 +6,50 @@ type VenueStatus = 'Disponible' | 'Parcial';
 interface Venue {
   id: string;
   name: string;
-  description: string;
+  capacity: string;
+  features: string;
   status: VenueStatus;
   pendingText?: string;
-  image: string;
 }
 
 const venues: Venue[] = [
   {
     id: 'jade',
-    name: 'Salon Jade',
-    description: 'Ambiente senorial con acabados en marmol.',
+    name: 'Salón Jade',
+    capacity: 'Hasta 120 personas',
+    features: 'Ambiente señorial, montaje social o corporativo.',
     status: 'Parcial',
-    pendingText: '2 eventos pendientes por confirmar',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAVCDtfd-K8nw7ygwy_MbhMgOfwIBbc9Dkw34Tc6AsB4Rv7NFtlkYBRffYpIpfNb2PgANL7d0WGiFP4aPCYoaCvmlc3DKLBZniQ_bIAyH6PwDFvZLqH2FYIU-5E-s9szEhVnZjPqQvhMf35lcux12g90eH-RRTtmcs42v6sVlzntBmWyzkRPN915gIIgN3EnJ0niZZ_n9p5yQrLc4VKvDrjftILyaEVSjx7wkr9wM0eUlbXiLdQmeIDpsCqPPjd9KVzalOZZgP7l28',
+    pendingText: '2 cotizaciones pendientes en el mismo rango',
   },
   {
     id: 'versalles',
     name: 'Versalles',
-    description: 'Estilo clasico frances con iluminacion natural.',
+    capacity: 'Hasta 220 personas',
+    features: 'Salón principal para bodas, grados y eventos amplios.',
     status: 'Parcial',
-    pendingText: '1 evento pendiente por confirmar',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBe_wM7RQKcxVSOeaPXhR2Lk1hnv5rs6F_ydUQHWGKRH05HiZIvGJsdv5lznT7hghlN5PpxU5gj9lz30Cu2NVvZPIi7rbJeXAZHKjNNM6roNMpgkTl4e85Zq5Vck1DPD96XHd0PZ08Pwn7LfIdS1J9R1D9WpAij7jsKcnuVztNhAEaFv_RR_WZ1PT0_vX7EWA2Fi_yZtzHVV9F7XgVpW72HO7cow3DXjW7I1EW_LQXFyLGcXyJbATg5OaJ5pmZMYQACslArgizH7mI',
+    pendingText: '1 cotización pendiente por confirmar',
   },
   {
     id: 'terraza',
-    name: 'Terraza',
-    description: 'Espacio al aire libre con vista panoramica.',
+    name: 'Terraza Mirador',
+    capacity: 'Hasta 80 personas',
+    features: 'Espacio abierto para almuerzos, onces y eventos sociales.',
     status: 'Disponible',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBlhkbo3iRv6XLLtTGMWEJQGM-yxca-BoZ0mwIcCjKwIwUsQWuyxKE7uMATiUInpQ9gxNiqPurAOiBLi0kaFgenTH_QSW8SamTsT5Qej12gWKkVYau7a2hviscogWWFXlqAFUym5zvy88Mc38ejZqd0Aq66MxHOtr1Rr8GPvY3bCiCGYEtWsUlP8ByJYQzEK4e52wzFHfjeSoyUUdg8H9z_Uj-FFFpYLlpx_cVdOYcvyB6IiNNCFbB-RFhH5aSo2XyFGeVCjCqIx60',
   },
   {
     id: 'biblioteca',
     name: 'Biblioteca',
-    description: 'Privacidad absoluta rodeada de historia.',
+    capacity: 'Hasta 35 personas',
+    features: 'Espacio reservado para reuniones pequeñas.',
     status: 'Disponible',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCx4tke91bXcbIlUMqsoj7YzpxR8GfQJ3YTlABYPJkqjtg5kVG6eXs8GtpHoe1eluVYv75BZFw2Tl-VyfRMVdqTJVv2aU48yiijsD03c4Nge-Ea7ARTkSK59euo18-ySCL-Vc12ybL4yYCZtT0Rg7sEJtAayDu3cuxqbkzW-p9WBScwBK-m1ulNEoSG2V1ulqJM0XD7Ch-YUQJlH8twtl4zMiInHssz4l6eZOhekHR5R4oWng0EQrgz4C4XlaDiPMwv7Jvr35PCP9o',
   },
 ];
 
 const labelClass =
   'block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2';
+
+const inputClass =
+  'w-full bg-surface-container-lowest border border-outline-variant/30 px-4 py-2.5 text-sm rounded-md shadow-sm focus:border-primary-gold focus:ring-1 focus:ring-primary-gold/20';
 
 const EventRequestPage: React.FC = () => {
   const navigate = useNavigate();
@@ -63,7 +62,7 @@ const EventRequestPage: React.FC = () => {
 
     if (query.includes('mauricio') || query.includes('alarcon')) {
       return {
-        name: 'Mauricio Alejandro de Alarcon',
+        name: 'Mauricio Alejandro de Alarcón',
         type: 'Socio',
       };
     }
@@ -71,206 +70,225 @@ const EventRequestPage: React.FC = () => {
     return null;
   }, [customerQuery]);
 
+  const selectedVenue = venues.find((venue) => venue.id === selectedVenueId);
+
   return (
-    <section className="space-y-12 pb-40">
+    <section className="space-y-8 pb-36">
       <div>
-        <p className="text-primary-gold tracking-widest text-xs uppercase mb-2">Solicitud de Registro</p>
-        <h1 className="text-4xl font-display italic text-on-surface">Crear Solicitud de Evento</h1>
+        <p className="text-primary-gold tracking-widest text-xs uppercase mb-2">Solicitud de evento</p>
+        <h1 className="text-2xl font-display font-bold text-on-surface">Crear solicitud de evento</h1>
+        <p className="text-sm text-on-surface-variant mt-1">
+          Registra cliente, horario y salón antes de completar menú, montaje y cotización.
+        </p>
       </div>
 
-      <section>
-        <div className="flex items-baseline gap-4 mb-6">
-          <h2 className="text-2xl font-display text-on-surface">Informacion del Cliente</h2>
-          <div className="flex-1 h-px bg-stone-200"></div>
-        </div>
-
-        <div className="bg-surface-container-low p-8 rounded-lg">
-          <div className="space-y-6">
-            <div className="w-full max-w-2xl">
-              <label className={labelClass}>Busqueda de Socio / Cliente</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary-gold text-sm">
-                  person_search
-                </span>
-                <input
-                  className="w-full bg-surface-container-lowest border border-outline-variant/30 pl-10 pr-4 py-3 text-sm focus:ring-1 focus:ring-primary-gold focus:border-primary-gold transition-all rounded-sm shadow-sm"
-                  placeholder="Buscar cliente (nombre o cedula)"
-                  type="text"
-                  value={customerQuery}
-                  onChange={(event) => setCustomerQuery(event.target.value)}
-                />
-              </div>
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+        <div className="space-y-6">
+          <section className="bg-surface-container-low p-6 rounded-lg border border-border">
+            <div className="flex items-baseline gap-4 mb-5">
+              <h2 className="text-lg font-display font-bold text-on-surface">Cliente</h2>
+              <div className="flex-1 h-px bg-stone-200"></div>
             </div>
 
-            {matchedCustomer ? (
-              <div className="flex items-center justify-between p-4 bg-primary-gold/10 border border-primary-gold/30 rounded-sm">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-primary-gold">person</span>
-                  <div>
-                    <p className="font-display text-lg text-on-surface">{matchedCustomer.name}</p>
-                    <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary-gold text-white rounded-full">
-                      {matchedCustomer.type}
-                    </span>
-                  </div>
-                </div>
-                <button className="text-on-surface-variant hover:text-primary-gold transition-colors" type="button">
-                  <span className="material-symbols-outlined">edit</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="flex items-center gap-2 text-primary-gold font-bold text-sm hover:underline transition-all group"
-              >
-                <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
-                  add_circle
-                </span>
-                Registrar Nuevo Cliente
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div className="flex items-baseline gap-4 mb-6">
-          <h2 className="text-2xl font-display text-on-surface">Detalles del Evento</h2>
-          <div className="flex-1 h-px bg-stone-200"></div>
-        </div>
-
-        <div className="bg-surface-container-low p-8 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-            <div>
-              <label className={labelClass}>Fecha</label>
-              <input className="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 text-sm rounded-sm shadow-sm" type="date" />
-            </div>
-
-            <div>
-              <label className={labelClass}>Hora</label>
-              <input className="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 text-sm rounded-sm shadow-sm" type="time" />
-            </div>
-
-            <div>
-              <label className={labelClass}>Duracion</label>
-              <select className="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 text-sm rounded-sm shadow-sm">
-                <option>2 Horas</option>
-                <option>4 Horas</option>
-                <option>6 Horas</option>
-                <option>Jornada Completa</option>
-              </select>
-            </div>
-
-            <div>
-              <label className={labelClass}>Numero de Asistentes</label>
-              <input
-                className="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 text-sm rounded-sm shadow-sm"
-                placeholder="0"
-                type="number"
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Tipo de Evento</label>
-              <select className="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 text-sm rounded-sm shadow-sm">
-                <option>Ceremonia Social</option>
-                <option>Conferencia Corporativa</option>
-                <option>Gala de Beneficencia</option>
-                <option>Almuerzo Privado</option>
-              </select>
-            </div>
-
-            <div>
-              <label className={labelClass}>Tipo de Comida</label>
-              <select className="w-full bg-surface-container-lowest border border-outline-variant/30 px-4 text-sm rounded-sm shadow-sm">
-                <option>Sin Servicio</option>
-                <option>Buffet Internacional</option>
-                <option>Banquete de Pasos</option>
-                <option>Coctel / Pasabocas</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div className="flex items-baseline gap-4 mb-6">
-          <h2 className="text-2xl font-display text-on-surface">Seleccion de Salon</h2>
-          <div className="flex-1 h-px bg-stone-200"></div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {venues.map((venue) => {
-            const isSelected = selectedVenueId === venue.id;
-            const isPartial = venue.status === 'Parcial';
-
-            return (
-              <button
-                key={venue.id}
-                type="button"
-                onClick={() => setSelectedVenueId(venue.id)}
-                className={`group relative p-4 flex gap-4 transition-all duration-300 text-left shadow-sm ${
-                  isSelected
-                    ? 'bg-[#fdf9f0] border-4 border-[#c29d4d]'
-                    : 'bg-surface-container-lowest border-2 border-transparent hover:border-primary-container'
-                }`}
-              >
-                <div className="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden rounded-sm">
-                  <img
-                    alt={venue.name}
-                    className={`w-full h-full object-cover transition-all ${
-                      isSelected ? 'grayscale-0' : 'grayscale group-hover:grayscale-0'
-                    }`}
-                    src={venue.image}
+            <div className="space-y-5">
+              <div className="w-full max-w-2xl">
+                <label className={labelClass}>Búsqueda de socio / cliente</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary-gold text-sm">
+                    person_search
+                  </span>
+                  <input
+                    className={`${inputClass} pl-10`}
+                    placeholder="Buscar por nombre, cédula o teléfono"
+                    type="text"
+                    value={customerQuery}
+                    onChange={(event) => setCustomerQuery(event.target.value)}
                   />
                 </div>
+              </div>
 
-                <div>
-                  <h3 className="text-lg font-display mb-1 text-on-surface">{venue.name}</h3>
-                  <p className="text-xs text-on-surface-variant mb-3">{venue.description}</p>
+              {matchedCustomer ? (
+                <div className="flex items-center justify-between p-4 bg-primary-gold/10 border border-primary-gold/30 rounded-md">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary-gold">person</span>
+                    <div>
+                      <p className="font-semibold text-on-surface">{matchedCustomer.name}</p>
+                      <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary-gold text-white rounded-full">
+                        {matchedCustomer.type}
+                      </span>
+                    </div>
+                  </div>
+                  <button className="text-on-surface-variant hover:text-primary-gold transition-colors" type="button">
+                    <span className="material-symbols-outlined">edit</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-primary-gold font-bold text-sm hover:underline transition-all group"
+                >
+                  <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
+                    add_circle
+                  </span>
+                  Registrar nuevo cliente
+                </button>
+              )}
+            </div>
+          </section>
 
-                  <span
-                    className={`text-xs mt-1 font-semibold flex items-center gap-1 ${
-                      isPartial ? 'text-amber-600' : 'text-green-700'
+          <section className="bg-surface-container-low p-6 rounded-lg border border-border">
+            <div className="flex items-baseline gap-4 mb-5">
+              <h2 className="text-lg font-display font-bold text-on-surface">Detalles del evento</h2>
+              <div className="flex-1 h-px bg-stone-200"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+              <div>
+                <label className={labelClass}>Fecha</label>
+                <input className={inputClass} type="date" />
+              </div>
+
+              <div>
+                <label className={labelClass}>Hora de inicio</label>
+                <input className={inputClass} type="time" />
+              </div>
+
+              <div>
+                <label className={labelClass}>Duración</label>
+                <select className={inputClass}>
+                  <option>2 horas</option>
+                  <option>3 horas</option>
+                  <option>4 horas</option>
+                  <option>5 horas</option>
+                  <option>6 horas</option>
+                  <option>7 horas</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Número de personas</label>
+                <input className={inputClass} placeholder="0" type="number" min={1} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Tipo de evento</label>
+                <select className={inputClass}>
+                  <option>Boda</option>
+                  <option>Cumpleaños</option>
+                  <option>Bautizo</option>
+                  <option>Grado</option>
+                  <option>Evento corporativo</option>
+                  <option>Otro evento social</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Tipo de comida</label>
+                <select className={inputClass}>
+                  <option>Desayuno</option>
+                  <option>Almuerzo</option>
+                  <option>Cena</option>
+                  <option>Onces</option>
+                  <option>Coctel / pasabocas</option>
+                  <option>Sin servicio de comida</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-surface-container-low p-6 rounded-lg border border-border">
+            <div className="flex items-baseline gap-4 mb-5">
+              <h2 className="text-lg font-display font-bold text-on-surface">Selección de salón</h2>
+              <div className="flex-1 h-px bg-stone-200"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {venues.map((venue) => {
+                const isSelected = selectedVenueId === venue.id;
+                const isPartial = venue.status === 'Parcial';
+
+                return (
+                  <button
+                    key={venue.id}
+                    type="button"
+                    onClick={() => setSelectedVenueId(venue.id)}
+                    className={`relative p-4 text-left rounded-lg border transition-colors ${
+                      isSelected
+                        ? 'bg-gold-bg border-gold shadow-sm'
+                        : 'bg-surface-container-lowest border-border hover:border-gold/50'
                     }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${isPartial ? 'bg-amber-600' : 'bg-green-700'}`}></span>
-                    {venue.status}
-                  </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-on-surface">{venue.name}</h3>
+                        <p className="text-xs text-on-surface-variant mt-1">{venue.capacity}</p>
+                        <p className="text-xs text-on-surface-variant mt-2 leading-snug">{venue.features}</p>
+                      </div>
+                      {isSelected ? (
+                        <span className="material-symbols-outlined text-primary-gold">check_circle</span>
+                      ) : null}
+                    </div>
 
-                  {venue.pendingText ? (
-                    <p className="text-[10px] text-on-surface-variant mt-1">{venue.pendingText}</p>
-                  ) : null}
-                </div>
+                    <div className="mt-3">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold ${
+                          isPartial ? 'bg-gold-bg2 text-gold-d' : 'bg-green-bg text-green-text'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${isPartial ? 'bg-gold' : 'bg-green'}`}></span>
+                        {venue.status}
+                      </span>
 
-                <div className={`absolute top-4 right-4 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                  <span className={`material-symbols-outlined text-2xl ${isSelected ? 'text-[#c29d4d]' : 'text-primary-gold'}`}>
-                    check_circle
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+                      {venue.pendingText ? (
+                        <p className="text-[11px] text-on-surface-variant mt-2">{venue.pendingText}</p>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         </div>
-      </section>
 
-      <footer className="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white/90 backdrop-blur-md border-t border-outline-variant/30 py-6 px-10 flex items-center justify-between z-30">
+        <aside className="bg-surface-container-lowest border border-border rounded-lg p-5 h-fit sticky top-24 space-y-4">
+          <h3 className="font-display font-bold text-lg text-on-surface">Resumen de solicitud</h3>
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-text3 font-bold">Cliente</p>
+              <p className="font-semibold text-text1">{matchedCustomer?.name ?? 'Sin cliente seleccionado'}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-text3 font-bold">Salón</p>
+              <p className="font-semibold text-text1">{selectedVenue?.name}</p>
+              <p className="text-xs text-text3">{selectedVenue?.capacity}</p>
+            </div>
+            {selectedVenue?.status === 'Parcial' ? (
+              <div className="rounded-md border border-gold/25 bg-gold-bg p-3 text-xs text-gold-d">
+                Hay cotizaciones superpuestas. Se permite crear la solicitud, pero debe advertirse al confirmar.
+              </div>
+            ) : null}
+          </div>
+        </aside>
+      </div>
+
+      <footer className="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white/90 backdrop-blur-md border-t border-outline-variant/30 py-4 px-8 flex items-center justify-between z-30">
         <button
           type="button"
           onClick={() => navigate('/events')}
-          className="text-sm font-bold text-on-surface hover:text-error hover:bg-error/10 bg-[#f5f2ed] border-2 border-outline-variant px-8 py-3.5 rounded-sm transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+          className="text-sm font-bold text-on-surface hover:bg-hover bg-[#f5f2ed] border border-outline-variant px-5 py-2.5 rounded-md transition-all flex items-center gap-2 active:scale-95"
         >
           <span className="material-symbols-outlined text-xl">close</span>
-          Cancelar Registro
+          Cancelar
         </button>
 
         <div className="flex items-center gap-4">
-          <p className="text-xs text-on-surface-variant italic max-w-[220px] text-right leading-tight mr-2">
-            Se creara el evento y podras completar los detalles despues
+          <p className="text-xs text-on-surface-variant max-w-[260px] text-right leading-tight">
+            Se creará el evento en estado Pendiente para continuar con menú y cotización.
           </p>
           <button
             type="button"
             onClick={() => navigate('/events/EVT-041/menu')}
-            className="bg-primary-gold text-white px-8 py-4 rounded-sm font-bold flex items-center gap-3 hover:bg-primary transition-all shadow-lg active:scale-95"
+            className="bg-primary-gold text-white px-6 py-3 rounded-md font-bold flex items-center gap-3 hover:bg-primary transition-all shadow-sm active:scale-95"
           >
             Crear evento y continuar
             <span className="material-symbols-outlined">chevron_right</span>

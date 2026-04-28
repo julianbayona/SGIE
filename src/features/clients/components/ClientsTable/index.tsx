@@ -11,14 +11,14 @@ const ClientsTable: React.FC<ClientsTableProps> = ({ clients, onEditClient }) =>
   return (
     <table className="w-full text-left border-collapse">
       <thead>
-        <tr className="bg-stone-50">
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest">Cédula</th>
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest">Nombre Completo</th>
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest">Teléfono</th>
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest">Correo Electrónico</th>
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest">Tipo</th>
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest text-center">Estado</th>
-          <th className="px-6 py-4 text-[11px] font-bold text-stone-400 uppercase tracking-widest text-right">Acciones</th>
+        <tr className="bg-stone-50/70 border-b border-border">
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3">Cédula</th>
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3">Nombre completo</th>
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3">Teléfono</th>
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3">Correo electrónico</th>
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3">Tipo</th>
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3 text-center">Estado</th>
+          <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-bold text-text3 text-right">Acciones</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-stone-100">

@@ -11,14 +11,14 @@ const CalendarPage: React.FC = () => {
     <>
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-serif-italic text-primary-gold">Dashboard Principal</h1>
+          <h1 className="text-2xl font-display font-bold text-on-surface">Calendario de eventos</h1>
           <p className="text-on-surface-variant font-medium text-xs mt-1 uppercase tracking-widest opacity-80">
             {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <Button onClick={() => navigate('/events/request')}>
           <span className="material-symbols-outlined text-base mr-2">add_circle</span>
-          Crear Solicitud
+          Crear solicitud de evento
         </Button>
       </div>
       

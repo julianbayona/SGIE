@@ -12,6 +12,7 @@ import EventMontagePage from './pages/EventMontagePage';
 import EventQuotePage from './pages/EventQuotePage';
 import EventPaymentsPage from './pages/EventPaymentsPage';
 import EventAgendaPage from './pages/EventAgendaPage';
+import CatalogsPage from './pages/CatalogsPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route index element={<CalendarPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="clients" element={<ClientsPage />} />
+          <Route path="catalogs" element={<CatalogsPage />} />
           <Route path="events" element={<EventsPage />} />
           <Route path="events/request" element={<EventRequestPage />} />
           <Route path="events/:eventId" element={<EventSummaryPage />} />

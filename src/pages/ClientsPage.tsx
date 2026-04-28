@@ -47,6 +47,7 @@ const initialClientsData: Client[] = [
 const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>(initialClientsData);
   const [activeTab, setActiveTab] = useState<ClientsTab>('Todos');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
 
@@ -123,22 +124,41 @@ const ClientsPage: React.FC = () => {
   };
 
   const visibleClients = useMemo(() => {
-    if (activeTab === 'Socios') {
-      return clients.filter((client) => client.category === 'Socio');
+    const filteredByTab = clients.filter((client) => {
+      if (activeTab === 'Socios') {
+        return client.category === 'Socio';
+      }
+
+      if (activeTab === 'No Socios') {
+        return client.category === 'No Socio';
+      }
+
+      return true;
+    });
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return filteredByTab;
     }
 
-    if (activeTab === 'No Socios') {
-      return clients.filter((client) => client.category === 'No Socio');
-    }
-
-    return clients;
-  }, [activeTab, clients]);
+    return filteredByTab.filter((client) => {
+      const searchable = `${client.idNumber} ${client.fullName} ${client.phone}`.toLowerCase();
+      return searchable.includes(normalizedQuery);
+    });
+  }, [activeTab, clients, searchQuery]);
 
   return (
     <section className="space-y-6 relative isolate min-h-[calc(100vh-10rem)]">
-      <ClientsHeader activeTab={activeTab} onTabChange={setActiveTab} onCreateClient={openCreateForm} />
+      <ClientsHeader
+        activeTab={activeTab}
+        searchQuery={searchQuery}
+        onTabChange={setActiveTab}
+        onSearchChange={setSearchQuery}
+        onCreateClient={openCreateForm}
+      />
 
-      <div className="bg-surface rounded-xl shadow-sm border border-border/80 overflow-hidden flex-1 flex flex-col">
+      <div className="bg-surface rounded-lg shadow-sm border border-border overflow-hidden flex-1 flex flex-col">
         <ClientsTable clients={visibleClients} onEditClient={openEditForm} />
         <ClientsTablePagination from={1} to={visibleClients.length} total={1245} />
       </div>

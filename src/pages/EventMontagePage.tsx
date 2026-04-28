@@ -25,8 +25,8 @@ interface FabricColor {
 }
 
 const tableTypes = ['Redonda', 'Rectangular', 'Imperial'];
-const chairTypes = ['Tiffany', 'Crossback', 'Napoleon'];
-const clothTypes = ['Lino premium', 'Algodon clasico', 'Raso ceremonial'];
+const chairTypes = ['Tiffany', 'Crossback', 'Napoleón'];
+const clothTypes = ['Lino premium', 'Algodón clásico', 'Raso ceremonial'];
 const topClothTypes = ['Organza', 'Encaje', 'Satinado'];
 
 const clothColorPalette: FabricColor[] = [
@@ -47,7 +47,7 @@ const topClothPalette: FabricColor[] = [
 
 const clothColorByType: Record<string, string[]> = {
   'Lino premium': ['marfil-real', 'blanco-perla', 'gris-piedra'],
-  'Algodon clasico': ['blanco-perla', 'champana-claro', 'verde-oliva'],
+  'Algodón clásico': ['blanco-perla', 'champana-claro', 'verde-oliva'],
   'Raso ceremonial': ['champana-claro', 'marfil-real', 'gris-piedra'],
 };
 
@@ -89,7 +89,7 @@ const EventMontagePage: React.FC = () => {
   const [infrastructure, setInfrastructure] = useState<InfrastructureItem[]>([
     { id: 'mesa_ponque', name: 'Mesa ponque', selected: false },
     { id: 'mesa_regalos', name: 'Mesa regalos', selected: false },
-    { id: 'espacio_musicos', name: 'Espacio musicos', selected: false },
+    { id: 'espacio_musicos', name: 'Espacio músicos', selected: false },
     { id: 'espacio_bombas', name: 'Espacio bombas', selected: false },
   ]);
 
@@ -120,7 +120,7 @@ const EventMontagePage: React.FC = () => {
     },
     {
       id: 'luces_arbol',
-      name: 'Luces arbol',
+      name: 'Luces árbol',
       billingType: 'servicio',
       selected: false,
       quantity: 1,
@@ -233,7 +233,7 @@ const EventMontagePage: React.FC = () => {
         <div className="flex-1 mb-24">
           <div className="bg-surface-container-lowest border border-border rounded-xl p-8 shadow-sm space-y-8">
             <section className="space-y-4">
-              <h3 className="text-xl font-display font-bold text-on-surface">Configuracion de mesas</h3>
+              <h3 className="text-xl font-display font-bold text-on-surface">Configuración de mesas</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-2">Tipo de mesa</label>
@@ -299,13 +299,13 @@ const EventMontagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Fajon</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Fajón</label>
                   <select
                     className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                     value={fajonEnabled ? 'true' : 'false'}
                     onChange={(eventTarget) => setFajonEnabled(eventTarget.target.value === 'true')}
                   >
-                    <option value="true">Si</option>
+                    <option value="true">Sí</option>
                     <option value="false">No</option>
                   </select>
                 </div>
@@ -509,8 +509,8 @@ const EventMontagePage: React.FC = () => {
                 <span className="font-semibold text-on-surface text-right">{dinnerware || 'Sin definir'}</span>
               </div>
               <div className="flex justify-between gap-3">
-                <span className="text-on-surface-variant">Fajon</span>
-                <span className="font-semibold text-on-surface">{fajonEnabled ? 'Si' : 'No'}</span>
+                <span className="text-on-surface-variant">Fajón</span>
+                <span className="font-semibold text-on-surface">{fajonEnabled ? 'Sí' : 'No'}</span>
               </div>
             </div>
 
@@ -576,7 +576,7 @@ const EventMontagePage: React.FC = () => {
         </div>
         <div className="flex gap-4 w-full sm:w-auto">
           <button
-            className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-primary-gold text-white px-8 py-2.5 text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-8 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors"
             type="button"
           >
             Guardar montaje

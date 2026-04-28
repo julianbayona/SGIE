@@ -1,6 +1,14 @@
-export type EventStatus = 'Confirmado' | 'Pendiente Anticipo' | 'Cotizacion Enviada';
-export type EventKind = 'Social' | 'Boda' | 'Corporativo';
-export type EventsTab = 'Historial' | 'Activos';
+export type EventStatus =
+  | 'Pendiente'
+  | 'Esperando selección de menú'
+  | 'Cotización enviada'
+  | 'Cotización aprobada'
+  | 'Pendiente anticipo'
+  | 'Confirmado'
+  | 'Cancelado';
+
+export type EventKind = 'Boda' | 'Cumpleaños' | 'Bautizo' | 'Corporativo' | 'Social';
+export type EventsTab = 'Todos' | 'Activos' | 'Pendientes' | 'Confirmados' | 'Cancelados';
 
 export interface EventRecord {
   id: string;
@@ -12,4 +20,5 @@ export interface EventRecord {
   eventKind: EventKind;
   status: EventStatus;
   isActive: boolean;
+  nextAction: string;
 }

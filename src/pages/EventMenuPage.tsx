@@ -33,18 +33,18 @@ const courseConfigs: CourseConfig[] = [
   },
   {
     key: 'consome',
-    title: 'Consome',
+    title: 'Consomé',
     options: [
-      { label: 'Crema de esparragos', price: 8500 },
-      { label: 'Consome de pavo artesanal', price: 9000 },
+      { label: 'Crema de espárragos', price: 8500 },
+      { label: 'Consomé de pavo artesanal', price: 9000 },
     ],
   },
   {
     key: 'platoFuerte',
-    title: 'Plato Fuerte',
+    title: 'Plato fuerte',
     options: [
-      { label: 'Medallon de lomo en salsa pimienta', price: 65000 },
-      { label: 'Salmon a la parrilla con finas hierbas', price: 68000 },
+      { label: 'Medallón de lomo en salsa pimienta', price: 65000 },
+      { label: 'Salmón a la parrilla con finas hierbas', price: 68000 },
     ],
   },
   {
@@ -146,7 +146,7 @@ const EventMenuPage: React.FC = () => {
       <div className="lg:flex lg:items-start max-w-[1400px] mx-auto w-full gap-6">
         <div className="space-y-8 flex-1 mb-32 md:mb-20">
           <div className="bg-surface-container-lowest p-8 shadow-sm space-y-10">
-            <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Seleccion de Menu Principal</h4>
+            <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Selección de menú principal</h4>
 
             {courseConfigs.map((course, index) => {
               const courseState = courses[course.key]!;
@@ -158,7 +158,7 @@ const EventMenuPage: React.FC = () => {
                   </div>
 
                   <div className="lg:col-span-4">
-                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Seleccion</label>
+                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Selección</label>
                     <select
                       className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 px-3 italic"
                       value={courseState.selectedLabel}
@@ -249,10 +249,10 @@ const EventMenuPage: React.FC = () => {
           </div>
 
           <div className="bg-surface-container-lowest p-8 shadow-sm space-y-6">
-            <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Gestion de Bebidas</h4>
+            <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Gestión de bebidas</h4>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start">
               <div className="lg:col-span-5">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Bebida Seleccionada</label>
+                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Bebida seleccionada</label>
                 <select
                   className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 px-3 italic"
                   value={beverage.selectedLabel}
@@ -323,10 +323,10 @@ const EventMenuPage: React.FC = () => {
               </div>
 
               <div className="lg:col-span-12">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Especificaciones del Servicio de Bebidas</label>
+                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Especificaciones del servicio de bebidas</label>
                 <textarea
                   className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-3 px-3 min-h-[80px]"
-                  placeholder="Ej: No servir hielo en el agua, rodajas de limon disponibles..."
+                  placeholder="Ej: No servir hielo en el agua, rodajas de limón disponibles..."
                   value={beverage.notes}
                   onChange={(eventTarget) => {
                     setBeverage((prev) => ({
@@ -344,7 +344,7 @@ const EventMenuPage: React.FC = () => {
               <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Excepciones alimentarias</h4>
               <textarea
                 className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-4 px-4 min-h-[120px] italic"
-                placeholder="Ej: 3 personas sin gluten, 1 persona alergica a frutos secos..."
+                placeholder="Ej: 3 personas sin gluten, 1 persona alérgica a frutos secos..."
                 value={exceptionsText}
                 onChange={(eventTarget) => setExceptionsText(eventTarget.target.value)}
               ></textarea>
@@ -357,18 +357,18 @@ const EventMenuPage: React.FC = () => {
               <h4 className="font-display text-xl font-bold text-primary-gold border-b border-primary-gold/20 pb-2">Agenda y recordatorios</h4>
               <div className="space-y-5 relative z-10">
                 <p className="text-sm text-on-surface-variant">
-                  Gestiona aqui solo la propuesta gastronomica. Las pruebas de plato y recordatorios de anticipo se programan en la Agenda del evento, donde puedes crear multiples registros.
+                  Gestiona aquí solo la propuesta gastronómica. Las pruebas de plato y recordatorios de anticipo se programan en la Agenda del evento, donde puedes crear múltiples registros.
                 </p>
                 <div className="space-y-3">
                   <Link
-                    className="w-full bg-gradient-to-r from-primary to-primary-gold text-white px-6 py-3 text-sm font-bold shadow-md flex items-center justify-center gap-3 hover:opacity-95 transition-opacity"
+                    className="w-full bg-primary-gold text-white px-6 py-3 rounded-md text-sm font-bold shadow-sm flex items-center justify-center gap-3 hover:bg-primary transition-colors"
                     to={`/events/${event.id}/agenda`}
                   >
                     <span className="material-symbols-outlined">calendar_add_on</span>
                     Ir a Agenda del evento
                   </Link>
                   <p className="text-[11px] italic text-primary-gold font-medium">
-                    Alli podras registrar varias degustaciones y multiples recordatorios para cada anticipo.
+                    Allí podrás registrar varias degustaciones y múltiples recordatorios para cada anticipo.
                   </p>
                 </div>
               </div>
@@ -379,7 +379,7 @@ const EventMenuPage: React.FC = () => {
         <aside className="hidden lg:block w-[320px] sticky top-[92px] mt-2 space-y-6">
           <div className="bg-white p-6 shadow-md border border-neutral-100 rounded-sm">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-4">
-              <h5 className="font-display font-bold text-lg text-primary-gold">Resumen Economico</h5>
+              <h5 className="font-display font-bold text-lg text-primary-gold">Resumen económico</h5>
               <span className="text-xs font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">{event.guests} pax</span>
             </div>
 
@@ -392,7 +392,7 @@ const EventMenuPage: React.FC = () => {
 
               <div className="space-y-2">
               {economicPreviewLines.length === 0 ? (
-                <p className="text-sm text-neutral-400 italic">Aun no hay items agregados al resumen.</p>
+                <p className="text-sm text-neutral-400 italic">Aún no hay ítems agregados al resumen.</p>
               ) : (
                 economicPreviewLines.map((line) => (
                   <div key={line.id} className="grid grid-cols-[1fr_auto_auto] gap-3 text-sm items-start">
@@ -426,15 +426,15 @@ const EventMenuPage: React.FC = () => {
       <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/80 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
         <div className="hidden sm:flex items-center gap-2 text-on-secondary-container">
           <span className="material-symbols-outlined text-lg">info</span>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Resumen en tiempo real basado en seleccion actual</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Resumen en tiempo real basado en la selección actual</p>
         </div>
         <div className="flex gap-4 w-full sm:w-auto">
           <button className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors px-6 py-2.5 text-sm font-medium flex items-center justify-center gap-2" type="button">
             <span className="material-symbols-outlined text-green-700 text-lg">chat</span>
             Enviar propuesta por WhatsApp
           </button>
-          <button className="flex-1 sm:flex-none bg-gradient-to-r from-primary to-primary-gold text-white px-8 py-2.5 text-sm font-bold shadow-lg hover:opacity-90 transition-opacity" type="button">
-            Guardar menu
+          <button className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-8 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors" type="button">
+            Guardar menú
           </button>
         </div>
       </footer>

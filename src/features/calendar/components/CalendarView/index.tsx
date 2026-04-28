@@ -1,4 +1,5 @@
 import React from 'react';
+import { eventStatuses, StatusBadge } from '@/components/ui/StatusBadge';
 import { useCalendarStore } from '@/store/calendarStore';
 import CalendarHeader from '../CalendarHeader';
 import MonthView from '../MonthView';
@@ -27,7 +28,12 @@ const CalendarView: React.FC = () => {
       <div className="overflow-y-auto max-h-[600px] custom-scrollbar">
         {renderView()}
       </div>
-      {/* Aquí podría ir el CalendarLegend si se decide hacerlo un componente separado */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-outline-variant/20 px-4 py-3 bg-surface-container-lowest">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-text3 mr-1">Estados</span>
+        {eventStatuses.map((status) => (
+          <StatusBadge key={status} type="event" status={status} />
+        ))}
+      </div>
     </div>
   );
 };

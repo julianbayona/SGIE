@@ -1,9 +1,11 @@
+import type { EventStatus } from '@/features/events/types';
+
 export interface EventSummaryData {
   id: string;
   title: string;
   dateLabel: string;
   timeLabel: string;
-  status: 'Pendiente anticipo' | 'Confirmado' | 'Cotizacion Enviada';
+  status: EventStatus;
   customerName: string;
   customerPhone: string;
   eventType: string;
@@ -20,25 +22,25 @@ const summaryById: Record<string, EventSummaryData> = {
     dateLabel: '24 de Agosto, 2024',
     timeLabel: '18:00 - 02:00',
     status: 'Pendiente anticipo',
-    customerName: 'Carlos Ruiz Hernandez',
+    customerName: 'Carlos Ruiz Hernández',
     customerPhone: '301 456 7890',
     eventType: 'Boda / Social',
     guests: 120,
-    venue: 'Gran Salon Imperial',
+    venue: 'Gran Salón Imperial',
     venueCapacity: 'Capacidad: 150 pax',
     totalQuote: '$12.450.000',
   },
   'EV-2409': {
     id: 'EV-2409',
-    title: 'Evento - Ana Maria Rojas',
+    title: 'Evento - Ana María Rojas',
     dateLabel: '14 de Octubre, 2024',
     timeLabel: '18:00 - 22:00',
     status: 'Confirmado',
-    customerName: 'Ana Maria Rojas',
+    customerName: 'Ana María Rojas',
     customerPhone: '312 456 7890',
     eventType: 'Social',
     guests: 80,
-    venue: 'Salon Jade',
+    venue: 'Salón Jade',
     venueCapacity: 'Capacidad: 100 pax',
     totalQuote: '$8.250.000',
   },
@@ -67,12 +69,12 @@ export const getEventSummaryById = (eventId?: string): EventSummaryData => {
       title: `Evento - ${normalizedId}`,
       dateLabel: 'Por confirmar',
       timeLabel: 'Por confirmar',
-      status: 'Cotizacion Enviada',
+      status: 'Cotización enviada',
       customerName: 'Cliente por confirmar',
-      customerPhone: 'Sin telefono',
+      customerPhone: 'Sin teléfono',
       eventType: 'Sin definir',
       guests: 0,
-      venue: 'Sin salon asignado',
+      venue: 'Sin salón asignado',
       venueCapacity: 'Capacidad por confirmar',
       totalQuote: '$0',
     }
