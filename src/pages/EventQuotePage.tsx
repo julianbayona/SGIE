@@ -7,7 +7,14 @@ import cotizacionesApi from '@/api/cotizaciones';
 import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
-import type { EventoResponse, CotizacionResponse, EstadoCotizacion, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
+import type {
+  EventoResponse,
+  CotizacionResponse,
+  EstadoCotizacion,
+  ClienteResponse,
+  SalonResponse,
+  CatalogoBasicoResponse,
+} from '@/api/types';
 import type { QuoteStatus } from '@/features/quotes/types';
 
 const estadoMap: Record<EstadoCotizacion, QuoteStatus> = {
@@ -19,34 +26,32 @@ const estadoMap: Record<EstadoCotizacion, QuoteStatus> = {
   DESACTUALIZADA: 'Desactualizada',
 };
 
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-CO', {
+const formatCurrency = (value: number): string =>
+  new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
     maximumFractionDigits: 0,
   }).format(value);
-};
 
 const EventQuotePage: React.FC = () => {
   const { eventId } = useParams();
-  
+
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cotizacion, setCotizacion] = useState<CotizacionResponse | null>(null);
+  const [reservaRaizId, setReservaRaizId] = useState<string | null>(null);
   const [cliente, setCliente] = useState<ClienteResponse | null>(null);
   const [salon, setSalon] = useState<SalonResponse | null>(null);
   const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [advancePercent, setAdvancePercent] = useState(20);
 
-  // Cargar evento y cotización
   useEffect(() => {
     if (!eventId) return;
-    
+
     let cancelled = false;
-    
+
     (async () => {
       try {
         setLoading(true);
@@ -54,9 +59,10 @@ const EventQuotePage: React.FC = () => {
 
         const eventoData = await eventosApi.obtenerPorId(eventId);
         if (cancelled) return;
+
         setEvento(eventoData);
 
-        const reserva = eventoData.reservas.find(r => r.vigente);
+        const reserva = eventoData.reservas.find((item) => item.vigente);
         if (!reserva) {
           setError('No hay reserva activa para este evento');
           setLoading(false);
@@ -64,8 +70,8 @@ const EventQuotePage: React.FC = () => {
         }
 
         const reservaId = reserva.reservaRaizId || reserva.id;
+        setReservaRaizId(reservaId);
 
-        // Cargar datos relacionados en paralelo
         const [clienteData, tipoEventoData, salonData] = await Promise.all([
           clientesApi.obtenerPorId(eventoData.clienteId),
           catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
@@ -73,32 +79,19 @@ const EventQuotePage: React.FC = () => {
         ]);
 
         if (cancelled) return;
+
         setCliente(clienteData);
         setTipoEvento(tipoEventoData);
         setSalon(salonData);
 
-        // Intentar cargar cotización existente
         try {
-          // Usar reservaRaizId para obtener la cotización vigente
           const cotizacionData = await cotizacionesApi.obtenerVigente(reservaId);
-          
-          if (cancelled) return;
-          setCotizacion(cotizacionData);
-        } catch (cotErr) {
-          console.log('No hay cotización vigente, intentando generar...');
-          
-          // Si no existe, generar cotización
-          try {
-            const cotizacionData = await cotizacionesApi.generar(reservaId, {
-              descuento: 0,
-              observaciones: null,
-            });
-            
-            if (cancelled) return;
+          if (!cancelled) {
             setCotizacion(cotizacionData);
-          } catch (genErr) {
-            console.log('Error al generar cotización:', genErr);
-            setError('No se pudo generar la cotización. Asegúrate de haber configurado el menú y montaje.');
+          }
+        } catch {
+          if (!cancelled) {
+            setCotizacion(null);
           }
         }
       } catch (err) {
@@ -106,11 +99,15 @@ const EventQuotePage: React.FC = () => {
           setError(err instanceof Error ? err.message : 'Error al cargar datos');
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   const isDraft = cotizacion?.estado === 'BORRADOR';
@@ -122,15 +119,13 @@ const EventQuotePage: React.FC = () => {
   const advanceValue = Math.round((adjustedTotal * advancePercent) / 100);
   const remainingValue = adjustedTotal - advanceValue;
 
-  // Mapear items de cotización a formato de UI
   const quoteItems = useMemo(() => {
     if (!cotizacion) return [];
-    
-    return cotizacion.items.map(item => {
-      // Determinar origen y modo de cobro desde tipoConcepto
+
+    return cotizacion.items.map((item) => {
       let source: 'salon' | 'menu' | 'montaje' = 'montaje';
       let pricingMode: 'servicio' | 'unidad' = 'unidad';
-      
+
       if (item.tipoConcepto.includes('SALON') || item.tipoConcepto.includes('ALQUILER')) {
         source = 'salon';
         pricingMode = 'servicio';
@@ -139,7 +134,6 @@ const EventQuotePage: React.FC = () => {
         pricingMode = 'unidad';
       } else if (item.tipoConcepto.includes('MONTAJE') || item.tipoConcepto.includes('ADICIONAL')) {
         source = 'montaje';
-        // Los adicionales pueden ser por servicio o por unidad
         pricingMode = item.cantidad === 1 ? 'servicio' : 'unidad';
       }
 
@@ -151,31 +145,88 @@ const EventQuotePage: React.FC = () => {
         quantity: item.cantidad,
         unitBasePrice: item.precioBase,
         unitAdjustedPrice: item.precioOverride ?? item.precioBase,
-        notes: null,
       };
     });
   }, [cotizacion]);
 
-  // Separar items de menú y montaje para el sidebar
-  const menuItems = useMemo(() => {
-    return quoteItems.filter(item => item.source === 'menu');
-  }, [quoteItems]);
+  const menuItems = useMemo(() => quoteItems.filter((item) => item.source === 'menu'), [quoteItems]);
+  const montageItems = useMemo(() => quoteItems.filter((item) => item.source === 'montaje'), [quoteItems]);
 
-  const montageItems = useMemo(() => {
-    return quoteItems.filter(item => item.source === 'montaje');
-  }, [quoteItems]);
+  const handleGenerarBorrador = async () => {
+    if (!reservaRaizId) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const nuevaCotizacion = await cotizacionesApi.generar(reservaRaizId, {
+        descuento: 0,
+        observaciones: null,
+      });
+
+      setCotizacion(nuevaCotizacion);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al generar borrador');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGenerarNuevaVersion = async () => {
+    if (!reservaRaizId || !cotizacion) return;
+
+    const continuar = window.confirm(
+      'Se generará un nuevo borrador editable y la cotización actual dejará de ser la versión vigente. ¿Deseas continuar?'
+    );
+
+    if (!continuar) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const nuevaCotizacion = await cotizacionesApi.generar(reservaRaizId, {
+        descuento: cotizacion.descuento,
+        observaciones: cotizacion.observaciones,
+      });
+
+      setCotizacion(nuevaCotizacion);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al generar una nueva versión');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGenerarCotizacion = async () => {
+    if (!cotizacion) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const cotizacionActualizada = await cotizacionesApi.generarDocumento(cotizacion.id);
+      setCotizacion(cotizacionActualizada);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al generar la cotización');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const updateAdjustedPrice = async (itemId: string, nuevoPrecio: number) => {
     if (!cotizacion || !isDraft) return;
 
     try {
       setSaving(true);
-      await cotizacionesApi.actualizarItem(cotizacion.id, itemId, {
+      setError(null);
+
+      const cotizacionActualizada = await cotizacionesApi.actualizarItem(cotizacion.id, itemId, {
         precioOverride: nuevoPrecio,
       });
 
-      // Recargar cotización
-      const cotizacionActualizada = await cotizacionesApi.obtenerPorId(cotizacion.id);
       setCotizacion(cotizacionActualizada);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al ajustar precio');
@@ -189,6 +240,8 @@ const EventQuotePage: React.FC = () => {
 
     try {
       setSaving(true);
+      setError(null);
+
       const cotizacionActualizada = await cotizacionesApi.enviar(cotizacion.id);
       setCotizacion(cotizacionActualizada);
       alert('Cotización enviada exitosamente');
@@ -199,22 +252,6 @@ const EventQuotePage: React.FC = () => {
     }
   };
 
-  const handleAceptarCotizacion = async () => {
-    if (!cotizacion) return;
-
-    try {
-      setSaving(true);
-      const cotizacionActualizada = await cotizacionesApi.aceptar(cotizacion.id);
-      setCotizacion(cotizacionActualizada);
-      alert('Cotización aceptada exitosamente');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al aceptar cotización');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Crear objeto event compatible con EventDetailHeaderTabs
   const event = useMemo(() => {
     if (!evento) {
       return {
@@ -233,9 +270,9 @@ const EventQuotePage: React.FC = () => {
       };
     }
 
-    const reserva = evento.reservas.find(r => r.vigente);
+    const reserva = evento.reservas.find((item) => item.vigente);
     const inicio = new Date(evento.fechaHoraInicio);
-    
+
     return {
       id: evento.id,
       title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
@@ -250,7 +287,7 @@ const EventQuotePage: React.FC = () => {
       venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
       totalQuote: formatCurrency(adjustedTotal),
     };
-  }, [evento, cliente, salon, tipoEvento, eventId, adjustedTotal]);
+  }, [adjustedTotal, cliente, eventId, evento, salon, tipoEvento]);
 
   if (loading) {
     return (
@@ -262,18 +299,10 @@ const EventQuotePage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && !evento) {
     return (
       <section className="space-y-8 pb-28">
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-        <Link
-          to={`/events/${eventId}/menu`}
-          className="inline-flex items-center gap-2 text-primary-gold font-bold hover:underline"
-        >
-          ← Volver a configurar menú
-        </Link>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       </section>
     );
   }
@@ -281,8 +310,40 @@ const EventQuotePage: React.FC = () => {
   if (!cotizacion) {
     return (
       <section className="space-y-8 pb-28">
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          No hay cotización disponible. Configura el menú y montaje primero.
+        <EventDetailHeaderTabs event={event} activeTab="cotizacion" />
+
+        {error && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        )}
+
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-5 text-sm text-amber-800">
+          <p className="font-semibold">No hay cotización vigente para esta reserva.</p>
+          <p className="mt-1">
+            Menú y Montaje ya guardan lo solicitado para el evento, pero la cotización solo existe cuando generas un
+            borrador. Si editaste esos apartados después de una versión previa, esa cotización quedó sin vigencia.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              className="rounded-md bg-primary-gold px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary disabled:opacity-50"
+              type="button"
+              onClick={handleGenerarBorrador}
+              disabled={saving || !reservaRaizId}
+            >
+              {saving ? 'Generando...' : 'Generar borrador'}
+            </button>
+            <Link
+              to={`/events/${eventId}/menu`}
+              className="rounded-md border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Revisar Menú
+            </Link>
+            <Link
+              to={`/events/${eventId}/montaje`}
+              className="rounded-md border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Revisar Montaje
+            </Link>
+          </div>
         </div>
       </section>
     );
@@ -292,17 +353,21 @@ const EventQuotePage: React.FC = () => {
     <section className="space-y-8 pb-28">
       <EventDetailHeaderTabs event={event} activeTab="cotizacion" />
 
-      <div className="lg:flex lg:items-start gap-6">
-        <div className="flex-1 space-y-6 mb-20">
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
+
+      <div className="gap-6 lg:flex lg:items-start">
+        <div className="mb-20 flex-1 space-y-6">
+          <div className="rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Cotización activa</p>
-                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Cotización activa</p>
+                <h3 className="mt-1 font-display text-2xl font-bold text-on-surface">
                   #{event.id.replace('EVT', 'COT').replace('EV-', 'COT-')}
                 </h3>
-                <p className="text-sm text-on-surface-variant mt-1">
-                  {event.title.replace(' - ', ' - ')} - {event.dateLabel}
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  {event.title} - {event.dateLabel}
                 </p>
               </div>
               <StatusBadge type="quote" status={quoteStatus} size="md" />
@@ -314,8 +379,8 @@ const EventQuotePage: React.FC = () => {
               <div>
                 <h4 className="font-display text-base font-bold text-blue-900">Origen de los datos</h4>
                 <p className="mt-1 max-w-3xl text-sm text-blue-900">
-                  Esta cotización se genera desde el menú y montaje del evento. Para cambiar platos, cantidades o
-                  adicionales, edita esas pestañas; aquí solo se revisan precios, descuento, anticipo y envío.
+                  Esta cotización se genera desde Menú y Montaje. Para cambiar platos, cantidades o adicionales, edita
+                  esas pestañas; aquí solo se revisan precios, anticipo y acciones de la versión.
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
@@ -335,19 +400,27 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-outline-variant/20 flex flex-wrap items-center justify-between gap-3">
+          {!isDraft && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Esta cotización está en estado <strong>{cotizacion.estado}</strong>. Los precios ya no se pueden editar
+              sobre esta versión. Si necesitas ajustarlos, genera un nuevo borrador.
+            </div>
+          )}
+
+          <div className="overflow-hidden rounded-lg border border-border bg-surface-container-lowest shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-6 py-4">
               <div>
                 <h4 className="font-display text-lg font-bold text-on-surface">Detalle económico</h4>
-                <p className="text-sm text-on-surface-variant mt-1">
-                  Las cantidades son de solo lectura porque pertenecen a Menú y Montaje.
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Las cantidades son de solo lectura porque pertenecen a Menú y Montaje. Los precios solo se ajustan
+                  mientras la cotización esté en borrador.
                 </p>
               </div>
-              {!isDraft ? (
+              {!isDraft && (
                 <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-bold text-stone-600">
                   Documento no editable
                 </span>
-              ) : null}
+              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -371,7 +444,6 @@ const EventQuotePage: React.FC = () => {
                       <tr key={item.id}>
                         <td className="px-6 py-4">
                           <p className="font-semibold text-on-surface">{item.concept}</p>
-                          {item.notes ? <p className="text-xs text-on-surface-variant mt-1">{item.notes}</p> : null}
                         </td>
                         <td className="px-4 py-4">
                           <span className="rounded-full bg-surface-container-low px-2.5 py-1 text-xs font-bold text-on-surface-variant">
@@ -392,7 +464,7 @@ const EventQuotePage: React.FC = () => {
                             className={`w-28 rounded-md border px-2 py-1.5 text-right text-sm ${
                               isDraft
                                 ? 'bg-surface-container-low'
-                                : 'bg-surface-container text-on-surface-variant cursor-not-allowed'
+                                : 'cursor-not-allowed bg-surface-container text-on-surface-variant'
                             } ${hasAdjustment ? 'border-primary-gold/60' : 'border-outline-variant/40'}`}
                             type="number"
                             min={0}
@@ -413,13 +485,13 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
-            <h4 className="font-display text-lg font-bold text-on-surface mb-4">Condiciones de pago</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
+            <h4 className="mb-4 font-display text-lg font-bold text-on-surface">Condiciones de pago</h4>
+            <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-2">Anticipo (%)</label>
+                <label className="mb-2 block text-xs font-bold text-neutral-700">Anticipo (%)</label>
                 <input
-                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                  className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                   type="number"
                   min={0}
                   max={100}
@@ -432,20 +504,20 @@ const EventQuotePage: React.FC = () => {
                 />
               </div>
               <div>
-                <p className="text-xs font-bold text-neutral-700 mb-2">Anticipo requerido</p>
-                <p className="text-xl font-display font-bold text-green-text">{formatCurrency(advanceValue)}</p>
+                <p className="mb-2 text-xs font-bold text-neutral-700">Anticipo requerido</p>
+                <p className="font-display text-xl font-bold text-green-text">{formatCurrency(advanceValue)}</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-neutral-700 mb-2">Saldo restante</p>
-                <p className="text-xl font-display font-bold text-on-surface">{formatCurrency(remainingValue)}</p>
+                <p className="mb-2 text-xs font-bold text-neutral-700">Saldo restante</p>
+                <p className="font-display text-xl font-bold text-on-surface">{formatCurrency(remainingValue)}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <aside className="lg:w-[330px] space-y-6 lg:sticky lg:top-[92px]">
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
-            <h4 className="font-display font-bold text-lg text-on-surface">Resumen financiero</h4>
+        <aside className="space-y-6 lg:sticky lg:top-[92px] lg:w-[330px]">
+          <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm">
+            <h4 className="font-display text-lg font-bold text-on-surface">Resumen financiero</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-on-surface-variant">Total base</span>
@@ -465,16 +537,16 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
-            <h4 className="font-display font-bold text-lg text-on-surface">Detalle solicitado</h4>
+          <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm">
+            <h4 className="font-display text-lg font-bold text-on-surface">Detalle solicitado</h4>
 
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Menú solicitado</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Menú solicitado</p>
               {menuItems.length > 0 ? (
                 menuItems.map((item) => (
                   <div key={item.id} className="text-sm">
                     <p className="font-semibold text-on-surface">{item.concept}</p>
-                    <p className="text-on-surface-variant text-xs">
+                    <p className="text-xs text-on-surface-variant">
                       {item.quantity} pax - {formatCurrency(item.unitAdjustedPrice)} c/u
                     </p>
                   </div>
@@ -484,13 +556,13 @@ const EventQuotePage: React.FC = () => {
               )}
             </div>
 
-            <div className="space-y-2 pt-2 border-t border-outline-variant/20">
-              <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Montaje y adicionales</p>
+            <div className="space-y-2 border-t border-outline-variant/20 pt-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Montaje y adicionales</p>
               {montageItems.length > 0 ? (
                 montageItems.map((item) => (
-                  <div key={item.id} className="text-sm flex items-center justify-between gap-3">
+                  <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
                     <p className="font-semibold text-on-surface">{item.concept}</p>
-                    <p className="text-on-surface-variant text-xs">
+                    <p className="text-xs text-on-surface-variant">
                       {item.pricingMode === 'unidad' ? `x${item.quantity}` : '1 servicio'}
                     </p>
                   </div>
@@ -501,56 +573,57 @@ const EventQuotePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
-            <h4 className="font-display font-bold text-lg text-on-surface">Historial cotizaciones</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-on-surface">#{cotizacion.id.slice(0, 8).toUpperCase()}</p>
-                    <span className="text-[10px] font-bold text-gold">Activa</span>
-                  </div>
-                  <p className="text-xs text-on-surface-variant">
-                    {new Date().toLocaleDateString('es-CO')}
-                  </p>
+          <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm">
+            <h4 className="font-display text-lg font-bold text-on-surface">Versión actual</h4>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-on-surface">#{cotizacion.id.slice(0, 8).toUpperCase()}</p>
+                  <span className="text-[10px] font-bold text-gold">Vigente</span>
                 </div>
-                <StatusBadge type="quote" status={quoteStatus} />
+                <p className="text-xs text-on-surface-variant">{new Date().toLocaleDateString('es-CO')}</p>
               </div>
+              <StatusBadge type="quote" status={quoteStatus} />
             </div>
           </div>
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/90 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
-        <div className="hidden sm:flex items-center gap-2 text-on-secondary-container">
+      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-surface-container bg-surface-container-lowest/90 px-6 py-4 backdrop-blur-md md:w-[calc(100%-16rem)]">
+        <div className="hidden items-center gap-2 text-on-secondary-container sm:flex">
           <span className="material-symbols-outlined text-lg">info</span>
           <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
             Solo el borrador permite ajustar precios; las cantidades se corrigen en Menú o Montaje
           </p>
         </div>
-        <div className="flex gap-3 w-full sm:w-auto">
+        <div className="flex w-full gap-3 sm:w-auto">
+          {isDraft ? (
+            <button
+              className="flex-1 rounded-md border border-outline-variant px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+              type="button"
+              onClick={handleGenerarCotizacion}
+              disabled={saving}
+            >
+              Generar cotización
+            </button>
+          ) : (
+            <button
+              className="flex-1 rounded-md border border-outline-variant px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+              type="button"
+              onClick={handleGenerarNuevaVersion}
+              disabled={saving || !reservaRaizId}
+            >
+              Nuevo borrador
+            </button>
+          )}
+
           <button
-            className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors rounded-md px-5 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            type="button"
-            disabled={saving}
-          >
-            Guardar borrador
-          </button>
-          <button
-            className="flex-1 sm:flex-none border border-green-text/40 text-green-text hover:bg-green-bg transition-colors rounded-md px-5 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 rounded-md border border-green-text/40 px-5 py-2.5 text-sm font-semibold text-green-text transition-colors hover:bg-green-bg disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
             type="button"
             onClick={handleEnviarCotizacion}
-            disabled={saving || !isDraft}
+            disabled={saving || cotizacion.estado !== 'GENERADA'}
           >
             Enviar por WhatsApp
-          </button>
-          <button
-            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-6 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            type="button"
-            onClick={handleAceptarCotizacion}
-            disabled={saving || cotizacion?.estado !== 'ENVIADA'}
-          >
-            Registrar aceptación
           </button>
         </div>
       </footer>

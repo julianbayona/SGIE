@@ -7,6 +7,9 @@ import type {
   SalonResponse,
   PlatoResponse,
   TipoMomentoMenuResponse,
+  ColorResponse,
+  MantelResponse,
+  SobremantelResponse,
 } from '@/api/types';
 
 type CatalogKey =
@@ -33,9 +36,9 @@ const catalogTabs: CatalogTab[] = [
   { key: 'tipo_comida', label: 'Tipos de comida', description: 'Servicios de alimentacion disponibles.' },
   { key: 'tipo_mesa', label: 'Tipos de mesa', description: 'Catalogo usado en el montaje de mesas.' },
   { key: 'tipo_silla', label: 'Tipos de silla', description: 'Sillas disponibles para montaje.' },
-  { key: 'mantel', label: 'Manteles', description: 'Manteles asociados a colores del catalogo.' },
-  { key: 'sobremantel', label: 'Sobremanteles', description: 'Sobremanteles asociados a colores.' },
-  { key: 'color', label: 'Colores', description: 'Colores reutilizados por manteles y sobremanteles.' },
+  { key: 'mantel', label: 'Manteles', description: 'Cada mantel debe quedar asociado a un color.' },
+  { key: 'sobremantel', label: 'Sobremanteles', description: 'Cada sobremantel debe quedar asociado a un color.' },
+  { key: 'color', label: 'Colores', description: 'Catalogo de colores con nombre y codigo hex.' },
   { key: 'tipo_adicional', label: 'Tipos de adicional', description: 'Adicionales del montaje con modo de cobro y precio base.' },
   { key: 'plato', label: 'Platos', description: 'Catalogo base de platos disponibles para menu.' },
   { key: 'tipo_momento_menu', label: 'Momentos de menu', description: 'Momentos configurables del flujo gastronomico.' },
@@ -47,14 +50,22 @@ type GenericRow =
   | TipoAdicionalResponse
   | SalonResponse
   | PlatoResponse
-  | TipoMomentoMenuResponse;
+  | TipoMomentoMenuResponse
+  | ColorResponse
+  | MantelResponse
+  | SobremantelResponse;
 
 const formatCOP = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
 
+const getRowColorId = (row: MantelResponse | SobremantelResponse): string | null => {
+  return row.colorId ?? row.idColor ?? row.color?.id ?? null;
+};
+
 const CatalogsPage: React.FC = () => {
   const [activeCatalog, setActiveCatalog] = useState<CatalogKey>('tipo_evento');
   const [rows, setRows] = useState<GenericRow[]>([]);
+  const [colors, setColors] = useState<ColorResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,12 +74,16 @@ const CatalogsPage: React.FC = () => {
   const [formCapacidad, setFormCapacidad] = useState(0);
   const [formModoCobro, setFormModoCobro] = useState<'UNIDAD' | 'SERVICIO'>('SERVICIO');
   const [formPrecioBase, setFormPrecioBase] = useState(0);
+  const [formCodigoHex, setFormCodigoHex] = useState('#C9A46A');
+  const [formColorId, setFormColorId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const isSalon = activeCatalog === 'salon';
   const isTipoAdicional = activeCatalog === 'tipo_adicional';
   const isPlato = activeCatalog === 'plato';
   const isTipoMomentoMenu = activeCatalog === 'tipo_momento_menu';
+  const isColor = activeCatalog === 'color';
+  const isTextil = activeCatalog === 'mantel' || activeCatalog === 'sobremantel';
   const activeTab = catalogTabs.find((tab) => tab.key === activeCatalog)!;
 
   const resetForm = () => {
@@ -78,6 +93,8 @@ const CatalogsPage: React.FC = () => {
     setFormCapacidad(0);
     setFormModoCobro('SERVICIO');
     setFormPrecioBase(0);
+    setFormCodigoHex('#C9A46A');
+    setFormColorId(colors[0]?.id ?? '');
   };
 
   const loadCatalog = async (key: CatalogKey) => {
@@ -85,23 +102,31 @@ const CatalogsPage: React.FC = () => {
     setError(null);
 
     try {
-      let data: GenericRow[] = [];
+      const needsColors = key === 'color' || key === 'mantel' || key === 'sobremantel';
+      const colorPromise = needsColors ? catalogosApi.colores.listar() : Promise.resolve([] as ColorResponse[]);
+
+      let dataPromise: Promise<GenericRow[]>;
 
       switch (key) {
-        case 'tipo_evento': data = await catalogosApi.tiposEvento.listar(); break;
-        case 'tipo_comida': data = await catalogosApi.tiposComida.listar(); break;
-        case 'tipo_mesa': data = await catalogosApi.tiposMesa.listar(); break;
-        case 'tipo_silla': data = await catalogosApi.tiposSilla.listar(); break;
-        case 'mantel': data = await catalogosApi.manteles.listar(); break;
-        case 'sobremantel': data = await catalogosApi.sobremanteles.listar(); break;
-        case 'color': data = await catalogosApi.colores.listar(); break;
-        case 'tipo_adicional': data = await catalogosApi.tiposAdicional.listar(); break;
-        case 'plato': data = await catalogosApi.platos.listar(); break;
-        case 'tipo_momento_menu': data = await catalogosApi.tiposMomentoMenu.listar(); break;
-        case 'salon': data = await salonesApi.listar(); break;
+        case 'tipo_evento': dataPromise = catalogosApi.tiposEvento.listar(); break;
+        case 'tipo_comida': dataPromise = catalogosApi.tiposComida.listar(); break;
+        case 'tipo_mesa': dataPromise = catalogosApi.tiposMesa.listar(); break;
+        case 'tipo_silla': dataPromise = catalogosApi.tiposSilla.listar(); break;
+        case 'mantel': dataPromise = catalogosApi.manteles.listar(); break;
+        case 'sobremantel': dataPromise = catalogosApi.sobremanteles.listar(); break;
+        case 'color': dataPromise = catalogosApi.colores.listar(); break;
+        case 'tipo_adicional': dataPromise = catalogosApi.tiposAdicional.listar(); break;
+        case 'plato': dataPromise = catalogosApi.platos.listar(); break;
+        case 'tipo_momento_menu': dataPromise = catalogosApi.tiposMomentoMenu.listar(); break;
+        case 'salon': dataPromise = salonesApi.listar(); break;
       }
 
+      const [data, colorData] = await Promise.all([dataPromise, colorPromise]);
       setRows(data);
+      setColors(colorData);
+      if ((key === 'mantel' || key === 'sobremantel') && colorData.length > 0) {
+        setFormColorId((current) => current || colorData[0]!.id);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el catalogo.');
     } finally {
@@ -111,7 +136,14 @@ const CatalogsPage: React.FC = () => {
 
   useEffect(() => {
     loadCatalog(activeCatalog);
-    resetForm();
+    setEditingId(null);
+    setFormNombre('');
+    setFormDescripcion('');
+    setFormCapacidad(0);
+    setFormModoCobro('SERVICIO');
+    setFormPrecioBase(0);
+    setFormCodigoHex('#C9A46A');
+    setFormColorId('');
   }, [activeCatalog]);
 
   const startEdit = (row: GenericRow) => {
@@ -120,11 +152,21 @@ const CatalogsPage: React.FC = () => {
     setFormDescripcion('descripcion' in row ? row.descripcion ?? '' : '');
     setFormCapacidad('capacidad' in row ? (row as SalonResponse).capacidad : 0);
     setFormModoCobro('modoCobro' in row ? (row as TipoAdicionalResponse).modoCobro : 'SERVICIO');
-    setFormPrecioBase('precioBase' in row ? Number((row as TipoAdicionalResponse).precioBase) : 0);
+    setFormPrecioBase('precioBase' in row ? Number((row as TipoAdicionalResponse | PlatoResponse).precioBase) : 0);
+    setFormCodigoHex('codigoHex' in row ? (row as ColorResponse).codigoHex : '#C9A46A');
+    setFormColorId(
+      activeCatalog === 'mantel' || activeCatalog === 'sobremantel'
+        ? getRowColorId(row as MantelResponse | SobremantelResponse) ?? ''
+        : ''
+    );
   };
 
   const handleSave = async () => {
     if (!formNombre.trim()) {
+      return;
+    }
+
+    if (isTextil && !formColorId) {
       return;
     }
 
@@ -150,6 +192,14 @@ const CatalogsPage: React.FC = () => {
       const tipoMomentoMenuData = {
         nombre: formNombre.trim(),
       };
+      const colorData = {
+        nombre: formNombre.trim(),
+        codigoHex: formCodigoHex.trim(),
+      };
+      const textilData = {
+        nombre: formNombre.trim(),
+        colorId: formColorId,
+      };
 
       if (editingId) {
         switch (activeCatalog) {
@@ -157,9 +207,9 @@ const CatalogsPage: React.FC = () => {
           case 'tipo_comida': await catalogosApi.tiposComida.actualizar(editingId, basicData); break;
           case 'tipo_mesa': await catalogosApi.tiposMesa.actualizar(editingId, basicData); break;
           case 'tipo_silla': await catalogosApi.tiposSilla.actualizar(editingId, basicData); break;
-          case 'mantel': await catalogosApi.manteles.actualizar(editingId, basicData); break;
-          case 'sobremantel': await catalogosApi.sobremanteles.actualizar(editingId, basicData); break;
-          case 'color': await catalogosApi.colores.actualizar(editingId, basicData); break;
+          case 'mantel': await catalogosApi.manteles.actualizar(editingId, textilData); break;
+          case 'sobremantel': await catalogosApi.sobremanteles.actualizar(editingId, textilData); break;
+          case 'color': await catalogosApi.colores.actualizar(editingId, colorData); break;
           case 'tipo_adicional': await catalogosApi.tiposAdicional.actualizar(editingId, tipoAdicionalData); break;
           case 'plato': await catalogosApi.platos.actualizar(editingId, platoData); break;
           case 'tipo_momento_menu': await catalogosApi.tiposMomentoMenu.actualizar(editingId, tipoMomentoMenuData); break;
@@ -171,9 +221,9 @@ const CatalogsPage: React.FC = () => {
           case 'tipo_comida': await catalogosApi.tiposComida.crear(basicData); break;
           case 'tipo_mesa': await catalogosApi.tiposMesa.crear(basicData); break;
           case 'tipo_silla': await catalogosApi.tiposSilla.crear(basicData); break;
-          case 'mantel': await catalogosApi.manteles.crear(basicData); break;
-          case 'sobremantel': await catalogosApi.sobremanteles.crear(basicData); break;
-          case 'color': await catalogosApi.colores.crear(basicData); break;
+          case 'mantel': await catalogosApi.manteles.crear(textilData); break;
+          case 'sobremantel': await catalogosApi.sobremanteles.crear(textilData); break;
+          case 'color': await catalogosApi.colores.crear(colorData); break;
           case 'tipo_adicional': await catalogosApi.tiposAdicional.crear(tipoAdicionalData); break;
           case 'plato': await catalogosApi.platos.crear(platoData); break;
           case 'tipo_momento_menu': await catalogosApi.tiposMomentoMenu.crear(tipoMomentoMenuData); break;
@@ -211,6 +261,8 @@ const CatalogsPage: React.FC = () => {
       alert(err instanceof Error ? err.message : 'Error al desactivar.');
     }
   };
+
+  const colorById = new Map(colors.map((color) => [color.id, color]));
 
   return (
     <section className="space-y-6">
@@ -258,11 +310,13 @@ const CatalogsPage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[560px]">
+              <table className="w-full text-left min-w-[640px]">
                 <thead className="bg-surface-container-low text-[11px] uppercase tracking-wider text-neutral-500">
                   <tr>
                     <th className="px-4 py-3">Nombre</th>
                     {isSalon ? <th className="px-4 py-3">Capacidad</th> : null}
+                    {isTextil ? <th className="px-4 py-3">Color</th> : null}
+                    {isColor ? <th className="px-4 py-3">Codigo hex</th> : null}
                     {isTipoAdicional ? <th className="px-4 py-3">Modo cobro</th> : null}
                     {isTipoAdicional ? <th className="px-4 py-3">Precio base</th> : null}
                     {isPlato ? <th className="px-4 py-3">Precio base</th> : null}
@@ -273,6 +327,12 @@ const CatalogsPage: React.FC = () => {
                 <tbody className="divide-y divide-outline-variant/20">
                   {rows.map((row) => {
                     const isActive = 'activo' in row ? row.activo : true;
+                    const textilColor =
+                      isTextil
+                        ? colorById.get(getRowColorId(row as MantelResponse | SobremantelResponse) ?? '') ??
+                          (row as MantelResponse | SobremantelResponse).color ??
+                          null
+                        : null;
 
                     return (
                       <tr key={row.id} className="hover:bg-stone-50/70">
@@ -285,6 +345,32 @@ const CatalogsPage: React.FC = () => {
                         {isSalon ? (
                           <td className="px-4 py-3 text-sm text-on-surface-variant">
                             {(row as SalonResponse).capacidad} pax
+                          </td>
+                        ) : null}
+                        {isTextil ? (
+                          <td className="px-4 py-3 text-sm text-on-surface-variant">
+                            {textilColor ? (
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="inline-block h-4 w-4 rounded-full border border-black/10"
+                                  style={{ backgroundColor: textilColor.codigoHex }}
+                                ></span>
+                                <span>{textilColor.nombre}</span>
+                              </div>
+                            ) : (
+                              'Sin color'
+                            )}
+                          </td>
+                        ) : null}
+                        {isColor ? (
+                          <td className="px-4 py-3 text-sm text-on-surface-variant">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="inline-block h-4 w-4 rounded-full border border-black/10"
+                                style={{ backgroundColor: (row as ColorResponse).codigoHex }}
+                              ></span>
+                              <span>{(row as ColorResponse).codigoHex}</span>
+                            </div>
                           </td>
                         ) : null}
                         {isTipoAdicional ? (
@@ -339,7 +425,7 @@ const CatalogsPage: React.FC = () => {
                   })}
                   {rows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-on-surface-variant">
+                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-on-surface-variant">
                         No hay registros en este catalogo.
                       </td>
                     </tr>
@@ -370,7 +456,7 @@ const CatalogsPage: React.FC = () => {
               />
             </div>
 
-            {!isSalon && !isTipoAdicional && !isTipoMomentoMenu ? (
+            {!isSalon && !isTipoAdicional && !isTipoMomentoMenu && !isTextil && !isColor ? (
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-2">Descripcion</label>
                 <input
@@ -408,6 +494,45 @@ const CatalogsPage: React.FC = () => {
               </>
             ) : null}
 
+            {isColor ? (
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-2">Codigo hex *</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    className="h-10 w-12 rounded border border-outline-variant/40 bg-surface-container-low p-1"
+                    type="color"
+                    value={formCodigoHex}
+                    onChange={(e) => setFormCodigoHex(e.target.value)}
+                  />
+                  <input
+                    className="flex-1 bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                    type="text"
+                    value={formCodigoHex}
+                    onChange={(e) => setFormCodigoHex(e.target.value)}
+                    placeholder="#C9A46A"
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {isTextil ? (
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-2">Color asociado *</label>
+                <select
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                  value={formColorId}
+                  onChange={(e) => setFormColorId(e.target.value)}
+                >
+                  <option value="">Selecciona un color</option>
+                  {colors.map((color) => (
+                    <option key={color.id} value={color.id}>
+                      {color.nombre} - {color.codigoHex}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
             {isTipoAdicional ? (
               <>
                 <div>
@@ -435,16 +560,28 @@ const CatalogsPage: React.FC = () => {
             ) : null}
 
             {isPlato ? (
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-2">Precio base *</label>
-                <input
-                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
-                  type="number"
-                  min={0}
-                  value={formPrecioBase}
-                  onChange={(e) => setFormPrecioBase(Number(e.target.value) || 0)}
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Descripcion</label>
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                    type="text"
+                    value={formDescripcion}
+                    onChange={(e) => setFormDescripcion(e.target.value)}
+                    placeholder="Opcional"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Precio base *</label>
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                    type="number"
+                    min={0}
+                    value={formPrecioBase}
+                    onChange={(e) => setFormPrecioBase(Number(e.target.value) || 0)}
+                  />
+                </div>
+              </>
             ) : null}
           </div>
 
@@ -463,7 +600,9 @@ const CatalogsPage: React.FC = () => {
                 !formNombre.trim() ||
                 saving ||
                 (isSalon && formCapacidad < 1) ||
-                ((isTipoAdicional || isPlato) && formPrecioBase < 0)
+                ((isTipoAdicional || isPlato) && formPrecioBase < 0) ||
+                (isTextil && !formColorId) ||
+                (isColor && !formCodigoHex.trim())
               }
               className="px-5 py-2 rounded-md bg-primary-gold text-white text-sm font-bold hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed"
             >

@@ -6,6 +6,7 @@ import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
 import menusApi from '@/api/menus';
+import cotizacionesApi from '@/api/cotizaciones';
 import type {
   EventoResponse,
   ClienteResponse,
@@ -13,12 +14,10 @@ import type {
   CatalogoBasicoResponse,
   PlatoResponse,
   TipoMomentoMenuResponse,
+  EstadoCotizacion,
 } from '@/api/types';
 
-// ─── tipos locales ────────────────────────────────────────────────────────────
-
 interface ItemLocal {
-  /** id temporal solo para React key */
   localId: string;
   platoId: string;
   platoNombre: string;
@@ -32,47 +31,43 @@ interface SeleccionLocal {
   items: ItemLocal[];
 }
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(value);
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-
-// ─── componente ──────────────────────────────────────────────────────────────
 
 const EventMenuPage: React.FC = () => {
   const { eventId } = useParams();
 
-  // datos del evento
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cliente, setCliente] = useState<ClienteResponse | null>(null);
   const [salon, setSalon] = useState<SalonResponse | null>(null);
   const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
-
-  // catálogos
   const [platos, setPlatos] = useState<PlatoResponse[]>([]);
   const [momentos, setMomentos] = useState<TipoMomentoMenuResponse[]>([]);
-
-  // estado del formulario
   const [selecciones, setSelecciones] = useState<SeleccionLocal[]>([]);
   const [notasGenerales, setNotasGenerales] = useState('');
+  const [quoteState, setQuoteState] = useState<EstadoCotizacion | null>(null);
 
-  // controles de UI
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // formulario para agregar un ítem
   const [addMomentoId, setAddMomentoId] = useState('');
   const [addPlatoId, setAddPlatoId] = useState('');
   const [addCantidad, setAddCantidad] = useState(1);
   const [addExcepciones, setAddExcepciones] = useState('');
 
-  const guests = evento?.reservas.find(r => r.vigente)?.numInvitados ?? 0;
+  const guests = evento?.reservas.find((r) => r.vigente)?.numInvitados ?? 0;
 
-  // ── carga inicial ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!eventId) return;
+
     let cancelled = false;
 
     (async () => {
@@ -90,17 +85,18 @@ const EventMenuPage: React.FC = () => {
           catalogosApi.tiposMomentoMenu.listar(),
         ]);
 
-        const platosData = platosApiData.filter((plato) => plato.activo);
-        const momentosData = momentosApiData.filter((momento) => momento.activo);
+        const platosActivos = platosApiData.filter((plato) => plato.activo);
+        const momentosActivos = momentosApiData.filter((momento) => momento.activo);
 
-        setPlatos(platosData);
-        setMomentos(momentosData);
+        if (cancelled) return;
 
-        // inicializar selector con el primer momento disponible
-        if (momentosData.length > 0) setAddMomentoId(momentosData[0]!.id);
-        if (platosData.length > 0) setAddPlatoId(platosData[0]!.id);
+        setPlatos(platosActivos);
+        setMomentos(momentosActivos);
 
-        const reserva = eventoData.reservas.find(r => r.vigente);
+        if (momentosActivos.length > 0) setAddMomentoId(momentosActivos[0]!.id);
+        if (platosActivos.length > 0) setAddPlatoId(platosActivos[0]!.id);
+
+        const reserva = eventoData.reservas.find((r) => r.vigente);
         if (!reserva) {
           setError('No hay reserva activa para este evento');
           setLoading(false);
@@ -109,63 +105,82 @@ const EventMenuPage: React.FC = () => {
 
         const reservaId = reserva.reservaRaizId || reserva.id;
 
-        // cargar datos relacionados
         const [clienteData, tipoEventoData, salonData] = await Promise.all([
           clientesApi.obtenerPorId(eventoData.clienteId),
           catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
           salonesApi.obtenerPorId(reserva.salonId),
         ]);
+
         if (cancelled) return;
+
         setCliente(clienteData);
         setTipoEvento(tipoEventoData);
         setSalon(salonData);
 
-        // intentar cargar menú existente
         try {
           const menuExistente = await menusApi.obtener(reservaId);
-          if (cancelled) return;
-          setNotasGenerales(menuExistente.notasGenerales ?? '');
-          // reconstruir selecciones locales desde la respuesta
-          const sels: SeleccionLocal[] = menuExistente.selecciones.map(sel => ({
-            tipoMomentoId: sel.tipoMomentoId,
-            items: sel.items.map(it => {
-              const plato = platosData.find(p => p.id === it.platoId);
-              return {
-                localId: uid(),
-                platoId: it.platoId,
-                platoNombre: plato?.nombre ?? it.platoId,
-                precioBase: plato?.precioBase ?? 0,
-                cantidad: it.cantidad,
-                excepciones: it.excepciones ?? '',
-              };
-            }),
-          }));
-          setSelecciones(sels);
+          if (!cancelled) {
+            setNotasGenerales(menuExistente.notasGenerales ?? '');
+            setSelecciones(
+              menuExistente.selecciones.map((seleccion) => ({
+                tipoMomentoId: seleccion.tipoMomentoId,
+                items: seleccion.items.map((item) => {
+                  const plato = platosActivos.find((candidate) => candidate.id === item.platoId);
+                  return {
+                    localId: uid(),
+                    platoId: item.platoId,
+                    platoNombre: plato?.nombre ?? item.platoId,
+                    precioBase: plato?.precioBase ?? 0,
+                    cantidad: item.cantidad,
+                    excepciones: item.excepciones ?? '',
+                  };
+                }),
+              }))
+            );
+          }
         } catch {
-          // no hay menú aún — empezar vacío
+          if (!cancelled) {
+            setSelecciones([]);
+          }
+        }
+
+        try {
+          const cotizacionVigente = await cotizacionesApi.obtenerVigente(reservaId);
+          if (!cancelled) {
+            setQuoteState(cotizacionVigente.estado);
+          }
+        } catch {
+          if (!cancelled) {
+            setQuoteState(null);
+          }
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Error al cargar datos');
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar datos');
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
-  // ── helpers ──────────────────────────────────────────────────────────────
-
   const totalMenu = useMemo(
-    () => selecciones.flatMap(s => s.items).reduce((acc, it) => acc + it.precioBase * it.cantidad, 0),
-    [selecciones],
+    () => selecciones.flatMap((seleccion) => seleccion.items).reduce((acc, item) => acc + item.precioBase * item.cantidad, 0),
+    [selecciones]
   );
 
   const costoPorInvitado = guests > 0 ? Math.round(totalMenu / guests) : 0;
 
   const agregarItem = () => {
     if (!addMomentoId || !addPlatoId) return;
-    const plato = platos.find(p => p.id === addPlatoId);
+
+    const plato = platos.find((candidate) => candidate.id === addPlatoId);
     if (!plato) return;
 
     const nuevoItem: ItemLocal = {
@@ -177,82 +192,110 @@ const EventMenuPage: React.FC = () => {
       excepciones: addExcepciones.trim(),
     };
 
-    setSelecciones(prev => {
-      const idx = prev.findIndex(s => s.tipoMomentoId === addMomentoId);
-      if (idx >= 0) {
-        const copia = [...prev];
-        copia[idx] = { ...copia[idx]!, items: [...copia[idx]!.items, nuevoItem] };
-        return copia;
+    setSelecciones((prev) => {
+      const current = prev.find((seleccion) => seleccion.tipoMomentoId === addMomentoId);
+      if (!current) {
+        return [...prev, { tipoMomentoId: addMomentoId, items: [nuevoItem] }];
       }
-      return [...prev, { tipoMomentoId: addMomentoId, items: [nuevoItem] }];
+
+      return prev.map((seleccion) =>
+        seleccion.tipoMomentoId === addMomentoId
+          ? { ...seleccion, items: [...seleccion.items, nuevoItem] }
+          : seleccion
+      );
     });
 
-    // reset campos de agregar
     setAddCantidad(guests || 1);
     setAddExcepciones('');
     setError(null);
   };
 
   const quitarItem = (momentoId: string, localId: string) => {
-    setSelecciones(prev =>
+    setSelecciones((prev) =>
       prev
-        .map(s =>
-          s.tipoMomentoId === momentoId
-            ? { ...s, items: s.items.filter(it => it.localId !== localId) }
-            : s,
+        .map((seleccion) =>
+          seleccion.tipoMomentoId === momentoId
+            ? { ...seleccion, items: seleccion.items.filter((item) => item.localId !== localId) }
+            : seleccion
         )
-        .filter(s => s.items.length > 0),
+        .filter((seleccion) => seleccion.items.length > 0)
     );
   };
 
   const actualizarCantidad = (momentoId: string, localId: string, cantidad: number) => {
-    setSelecciones(prev =>
-      prev.map(s =>
-        s.tipoMomentoId === momentoId
-          ? { ...s, items: s.items.map(it => it.localId === localId ? { ...it, cantidad: Math.max(1, cantidad) } : it) }
-          : s,
-      ),
+    setSelecciones((prev) =>
+      prev.map((seleccion) =>
+        seleccion.tipoMomentoId === momentoId
+          ? {
+              ...seleccion,
+              items: seleccion.items.map((item) =>
+                item.localId === localId ? { ...item, cantidad: Math.max(1, cantidad) } : item
+              ),
+            }
+          : seleccion
+      )
     );
   };
 
   const actualizarExcepciones = (momentoId: string, localId: string, excepciones: string) => {
-    setSelecciones(prev =>
-      prev.map(s =>
-        s.tipoMomentoId === momentoId
-          ? { ...s, items: s.items.map(it => it.localId === localId ? { ...it, excepciones } : it) }
-          : s,
-      ),
+    setSelecciones((prev) =>
+      prev.map((seleccion) =>
+        seleccion.tipoMomentoId === momentoId
+          ? {
+              ...seleccion,
+              items: seleccion.items.map((item) =>
+                item.localId === localId ? { ...item, excepciones } : item
+              ),
+            }
+          : seleccion
+      )
     );
   };
 
-  // ── guardar ──────────────────────────────────────────────────────────────
-
   const handleGuardarMenu = async () => {
     if (!evento) return;
-    const reserva = evento.reservas.find(r => r.vigente);
-    if (!reserva) { setError('No hay reserva activa'); return; }
-    const reservaId = reserva.reservaRaizId || reserva.id;
-    if (selecciones.length === 0) { setError('Agrega al menos un plato antes de guardar'); return; }
+
+    const reserva = evento.reservas.find((r) => r.vigente);
+    if (!reserva) {
+      setError('No hay reserva activa');
+      return;
+    }
+
+    if (selecciones.length === 0) {
+      setError('Agrega al menos un plato antes de guardar');
+      return;
+    }
+
+    if (quoteState && quoteState !== 'BORRADOR') {
+      const continuar = window.confirm(
+        `Este evento ya tiene una cotización en estado ${quoteState}. Si guardas cambios en Menú, esa cotización dejará de estar vigente y tendrás que generar una nueva.`
+      );
+
+      if (!continuar) {
+        return;
+      }
+    }
 
     try {
       setSaving(true);
       setSavedOk(false);
       setError(null);
 
-      await menusApi.configurar(reservaId, {
+      await menusApi.configurar(reserva.reservaRaizId || reserva.id, {
         notasGenerales: notasGenerales.trim() || undefined,
-        selecciones: selecciones.map(s => ({
-          tipoMomentoId: s.tipoMomentoId,
-          items: s.items.map(it => ({
-            platoId: it.platoId,
-            cantidad: it.cantidad,
-            excepciones: it.excepciones || undefined,
+        selecciones: selecciones.map((seleccion) => ({
+          tipoMomentoId: seleccion.tipoMomentoId,
+          items: seleccion.items.map((item) => ({
+            platoId: item.platoId,
+            cantidad: item.cantidad,
+            excepciones: item.excepciones || undefined,
           })),
         })),
       });
 
+      setQuoteState(null);
       setSavedOk(true);
-      setTimeout(() => setSavedOk(false), 3000);
+      window.setTimeout(() => setSavedOk(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar menú');
     } finally {
@@ -260,14 +303,27 @@ const EventMenuPage: React.FC = () => {
     }
   };
 
-  // ── objeto event para el header ──────────────────────────────────────────
-
   const event = useMemo(() => {
     if (!evento) {
-      return { id: eventId ?? '', title: 'Cargando...', dateLabel: '', timeLabel: '', status: 'Pendiente' as const, customerName: '', customerPhone: '', eventType: '', guests: 0, venue: '', venueCapacity: '', totalQuote: '$0' };
+      return {
+        id: eventId ?? '',
+        title: 'Cargando...',
+        dateLabel: '',
+        timeLabel: '',
+        status: 'Pendiente' as const,
+        customerName: '',
+        customerPhone: '',
+        eventType: '',
+        guests: 0,
+        venue: '',
+        venueCapacity: '',
+        totalQuote: '$0',
+      };
     }
-    const reserva = evento.reservas.find(r => r.vigente);
+
+    const reserva = evento.reservas.find((r) => r.vigente);
     const inicio = new Date(evento.fechaHoraInicio);
+
     return {
       id: evento.id,
       title: `${tipoEvento?.nombre ?? 'Evento'} - ${cliente?.nombreCompleto ?? 'Cliente'}`,
@@ -282,9 +338,9 @@ const EventMenuPage: React.FC = () => {
       venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
       totalQuote: '$0',
     };
-  }, [evento, cliente, salon, tipoEvento, eventId]);
+  }, [cliente, eventId, evento, salon, tipoEvento]);
 
-  // ── render ────────────────────────────────────────────────────────────────
+  const momentoNombre = (id: string) => momentos.find((momento) => momento.id === id)?.nombre ?? id;
 
   if (loading) {
     return (
@@ -304,51 +360,53 @@ const EventMenuPage: React.FC = () => {
     );
   }
 
-  const momentoNombre = (id: string) => momentos.find(m => m.id === id)?.nombre ?? id;
-
   return (
     <section className="space-y-8 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="menu" />
 
-      <div className="lg:flex lg:items-start gap-6">
-        <div className="flex-1 space-y-6 mb-24">
-
-          {/* banner de error */}
+      <div className="gap-6 lg:flex lg:items-start">
+        <div className="mb-24 flex-1 space-y-6">
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
           )}
 
-          {/* banner de éxito */}
           {savedOk && (
-            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 font-semibold">
-              ✓ Menú guardado correctamente
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+              Menú guardado correctamente
             </div>
           )}
 
-          {/* cabecera */}
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
+          <div className="rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Ficha gastronómica</p>
-                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">Menú del evento</h3>
-                <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">
-                  Selecciona los platos del catálogo para cada momento. La cotización toma estas cantidades como fuente de verdad.
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Ficha gastronómica</p>
+                <h3 className="mt-1 font-display text-2xl font-bold text-on-surface">Menú del evento</h3>
+                <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
+                  Aquí defines exactamente qué se pidió para la reserva. La cotización toma estos platos y cantidades
+                  como fuente de verdad.
                 </p>
               </div>
               <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                En edición
+                {quoteState && quoteState !== 'BORRADOR' ? `Cotización ${quoteState.toLowerCase()}` : 'En edición'}
               </span>
             </div>
           </div>
 
-          {/* tabla de items actuales */}
-          <div className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-outline-variant/20">
+          {quoteState && quoteState !== 'BORRADOR' && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Este menú ya respalda una cotización en estado <strong>{quoteState}</strong>. Si cambias platos,
+              cantidades o excepciones y guardas, esa versión se invalidará y tendrás que generar una nueva desde
+              Cotización.
+            </div>
+          )}
+
+          <div className="overflow-hidden rounded-lg border border-border bg-surface-container-lowest shadow-sm">
+            <div className="border-b border-outline-variant/20 px-6 py-4">
               <h4 className="font-display text-lg font-bold text-on-surface">Items del menú</h4>
-              <p className="text-sm text-on-surface-variant mt-1">
+              <p className="mt-1 text-sm text-on-surface-variant">
                 {selecciones.length === 0
-                  ? 'Aún no hay platos. Usa el formulario de abajo para agregar.'
-                  : `${selecciones.flatMap(s => s.items).length} plato(s) en ${selecciones.length} momento(s)`}
+                  ? 'Aún no hay platos. Usa el formulario de abajo para agregarlos.'
+                  : `${selecciones.flatMap((seleccion) => seleccion.items).length} plato(s) en ${selecciones.length} momento(s)`}
               </p>
             </div>
 
@@ -366,45 +424,49 @@ const EventMenuPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20">
-                    {selecciones.flatMap(sel =>
-                      sel.items.map(it => (
-                        <tr key={it.localId}>
+                    {selecciones.flatMap((seleccion) =>
+                      seleccion.items.map((item) => (
+                        <tr key={item.localId}>
                           <td className="px-6 py-4 text-sm font-semibold text-on-surface">
-                            {momentoNombre(sel.tipoMomentoId)}
+                            {momentoNombre(seleccion.tipoMomentoId)}
                           </td>
-                          <td className="px-4 py-4 text-sm font-semibold text-on-surface">{it.platoNombre}</td>
+                          <td className="px-4 py-4 text-sm font-semibold text-on-surface">{item.platoNombre}</td>
                           <td className="px-4 py-4 text-right text-sm text-on-surface-variant">
-                            {formatCurrency(it.precioBase)}
+                            {formatCurrency(item.precioBase)}
                           </td>
                           <td className="px-4 py-4 text-right">
                             <input
                               className="w-20 rounded-md border border-outline-variant/40 bg-surface-container-low px-2 py-1.5 text-right text-sm"
                               type="number"
                               min={1}
-                              value={it.cantidad}
-                              onChange={e => actualizarCantidad(sel.tipoMomentoId, it.localId, Number(e.target.value))}
+                              value={item.cantidad}
+                              onChange={(eventTarget) =>
+                                actualizarCantidad(seleccion.tipoMomentoId, item.localId, Number(eventTarget.target.value))
+                              }
                             />
                           </td>
                           <td className="px-4 py-4">
                             <input
                               className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-sm"
                               type="text"
-                              value={it.excepciones}
+                              value={item.excepciones}
                               placeholder="Sin observaciones"
-                              onChange={e => actualizarExcepciones(sel.tipoMomentoId, it.localId, e.target.value)}
+                              onChange={(eventTarget) =>
+                                actualizarExcepciones(seleccion.tipoMomentoId, item.localId, eventTarget.target.value)
+                              }
                             />
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
                               className="text-sm font-semibold text-red-700 hover:text-red-800"
                               type="button"
-                              onClick={() => quitarItem(sel.tipoMomentoId, it.localId)}
+                              onClick={() => quitarItem(seleccion.tipoMomentoId, item.localId)}
                             >
                               Quitar
                             </button>
                           </td>
                         </tr>
-                      )),
+                      ))
                     )}
                   </tbody>
                 </table>
@@ -412,65 +474,64 @@ const EventMenuPage: React.FC = () => {
             )}
           </div>
 
-          {/* formulario agregar ítem */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_0.6fr] gap-6">
-            <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm space-y-5">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_0.6fr]">
+            <div className="space-y-5 rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
               <div>
                 <h4 className="font-display text-lg font-bold text-on-surface">Agregar plato al menú</h4>
-                <p className="text-sm text-on-surface-variant mt-1">Selecciona el momento y el plato del catálogo.</p>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Selecciona el momento, el plato y la cantidad solicitada para el evento.
+                </p>
               </div>
 
               {platos.length === 0 || momentos.length === 0 ? (
                 <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                   {platos.length === 0
-                    ? 'No hay platos en el catálogo. Agrega platos desde la sección de Catálogos.'
-                    : 'No hay momentos de menú en el catálogo.'}
+                    ? 'No hay platos en el catálogo. Agrégalos primero desde Catálogos.'
+                    : 'No hay momentos de menú disponibles en el catálogo.'}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                  {/* momento */}
+                <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
                   <div className="md:col-span-3">
-                    <label className="block text-xs font-bold text-neutral-700 mb-2">Momento</label>
+                    <label className="mb-2 block text-xs font-bold text-neutral-700">Momento</label>
                     <select
                       className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                       value={addMomentoId}
-                      onChange={e => setAddMomentoId(e.target.value)}
+                      onChange={(eventTarget) => setAddMomentoId(eventTarget.target.value)}
                     >
-                      {momentos.map(m => (
-                        <option key={m.id} value={m.id}>{m.nombre}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* plato */}
-                  <div className="md:col-span-4">
-                    <label className="block text-xs font-bold text-neutral-700 mb-2">Plato</label>
-                    <select
-                      className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                      value={addPlatoId}
-                      onChange={e => setAddPlatoId(e.target.value)}
-                    >
-                      {platos.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} — {formatCurrency(Number(p.precioBase))}
+                      {momentos.map((momento) => (
+                        <option key={momento.id} value={momento.id}>
+                          {momento.nombre}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* cantidad */}
+                  <div className="md:col-span-4">
+                    <label className="mb-2 block text-xs font-bold text-neutral-700">Plato</label>
+                    <select
+                      className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                      value={addPlatoId}
+                      onChange={(eventTarget) => setAddPlatoId(eventTarget.target.value)}
+                    >
+                      {platos.map((plato) => (
+                        <option key={plato.id} value={plato.id}>
+                          {plato.nombre} - {formatCurrency(Number(plato.precioBase))}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-neutral-700 mb-2">Cantidad</label>
+                    <label className="mb-2 block text-xs font-bold text-neutral-700">Cantidad</label>
                     <input
                       className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                       type="number"
                       min={1}
                       value={addCantidad}
-                      onChange={e => setAddCantidad(Number(e.target.value) || 1)}
+                      onChange={(eventTarget) => setAddCantidad(Number(eventTarget.target.value) || 1)}
                     />
                   </div>
 
-                  {/* botón */}
                   <div className="md:col-span-3">
                     <button
                       className="w-full rounded-md bg-primary-gold px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary disabled:opacity-50"
@@ -478,44 +539,39 @@ const EventMenuPage: React.FC = () => {
                       onClick={agregarItem}
                       disabled={!addMomentoId || !addPlatoId}
                     >
-                      + Agregar
+                      Agregar
                     </button>
                   </div>
 
-                  {/* excepciones (fila completa) */}
                   <div className="md:col-span-12">
-                    <label className="block text-xs font-bold text-neutral-700 mb-2">
-                      Excepciones para este plato (opcional)
-                    </label>
+                    <label className="mb-2 block text-xs font-bold text-neutral-700">Excepciones para este plato</label>
                     <input
                       className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                       type="text"
                       value={addExcepciones}
-                      placeholder="Ej: sin cebolla, sin gluten..."
-                      onChange={e => setAddExcepciones(e.target.value)}
+                      placeholder="Ej: sin cebolla, sin gluten"
+                      onChange={(eventTarget) => setAddExcepciones(eventTarget.target.value)}
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* notas generales */}
-            <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm space-y-4">
+            <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
               <h4 className="font-display text-lg font-bold text-on-surface">Notas generales</h4>
               <textarea
                 className="min-h-[140px] w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-3 text-sm"
                 value={notasGenerales}
-                placeholder="Ej: personas vegetarianas, alergias, menú infantil..."
-                onChange={e => setNotasGenerales(e.target.value)}
+                placeholder="Ej: menú infantil, personas vegetarianas, alergias"
+                onChange={(eventTarget) => setNotasGenerales(eventTarget.target.value)}
               />
             </div>
           </div>
         </div>
 
-        {/* sidebar */}
-        <aside className="lg:w-[330px] space-y-6 lg:sticky lg:top-[92px]">
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
-            <h4 className="font-display font-bold text-lg text-on-surface">Resumen del menú</h4>
+        <aside className="space-y-6 lg:sticky lg:top-[92px] lg:w-[330px]">
+          <div className="space-y-4 rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm">
+            <h4 className="font-display text-lg font-bold text-on-surface">Resumen del menú</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Invitados</span>
@@ -524,7 +580,7 @@ const EventMenuPage: React.FC = () => {
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Platos definidos</span>
                 <span className="font-semibold text-on-surface">
-                  {selecciones.flatMap(s => s.items).length}
+                  {selecciones.flatMap((seleccion) => seleccion.items).length}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
@@ -538,32 +594,32 @@ const EventMenuPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 shadow-sm space-y-3">
-            <h4 className="font-display font-bold text-base text-amber-800">Impacto en cotización</h4>
+          <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
+            <h4 className="font-display text-base font-bold text-amber-800">Impacto en cotización</h4>
             <p className="text-sm text-amber-800">
-              Guarda el menú antes de ir a cotización. Los cambios aquí recalculan el documento si está en borrador.
+              Guarda el menú antes de ir a Cotización. Si ya existe una cotización generada o enviada, guardar aquí la
+              dejará sin vigencia y luego tendrás que crear otra.
             </p>
             <Link
               className="inline-flex w-full items-center justify-center rounded-md border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-100"
               to={`/events/${event.id}/cotizacion`}
             >
-              Ir a cotización
+              Ir a Cotización
             </Link>
           </div>
         </aside>
       </div>
 
-      {/* footer fijo */}
       <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-surface-container bg-surface-container-lowest/90 px-6 py-4 backdrop-blur-md md:w-[calc(100%-16rem)]">
-        <div className="hidden sm:flex items-center gap-2">
+        <div className="hidden items-center gap-2 sm:flex">
           <span className="material-symbols-outlined text-lg text-neutral-400">info</span>
           <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            Menús y cantidades se editan aquí, no dentro de la cotización
+            Menú y cantidades se editan aquí, no dentro de la cotización
           </p>
         </div>
         <div className="flex w-full gap-3 sm:w-auto">
           <button
-            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary sm:flex-none disabled:opacity-50"
+            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary disabled:opacity-50 sm:flex-none"
             type="button"
             onClick={handleGuardarMenu}
             disabled={saving || selecciones.length === 0}

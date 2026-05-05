@@ -6,11 +6,16 @@ import montajesApi from '@/api/montajes';
 import catalogosApi from '@/api/catalogos';
 import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
-import type { 
-  EventoResponse, 
-  CatalogoBasicoResponse, 
+import cotizacionesApi from '@/api/cotizaciones';
+import type {
+  EventoResponse,
+  CatalogoBasicoResponse,
+  ColorResponse,
+  MantelResponse,
+  SobremantelResponse,
+  EstadoCotizacion,
   ClienteResponse,
-  SalonResponse
+  SalonResponse,
 } from '@/api/types';
 
 interface InfrastructureItem {
@@ -29,38 +34,41 @@ interface AdditionalItem {
   basePrice: number;
 }
 
-const copCurrencyFormatter = new Intl.NumberFormat('es-CO', {
+const currencyFormatter = new Intl.NumberFormat('es-CO', {
   style: 'currency',
   currency: 'COP',
   maximumFractionDigits: 0,
 });
 
+const getTextilColorId = (textil: MantelResponse | SobremantelResponse | undefined): string | null => {
+  if (!textil) return null;
+  return textil.colorId ?? textil.idColor ?? textil.color?.id ?? null;
+};
+
 const EventMontagePage: React.FC = () => {
   const { eventId } = useParams();
-  
-  // Estados para datos del API
+
   const [evento, setEvento] = useState<EventoResponse | null>(null);
   const [cliente, setCliente] = useState<ClienteResponse | null>(null);
   const [salon, setSalon] = useState<SalonResponse | null>(null);
   const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
   const [tiposMesa, setTiposMesa] = useState<CatalogoBasicoResponse[]>([]);
   const [tiposSilla, setTiposSilla] = useState<CatalogoBasicoResponse[]>([]);
-  const [manteles, setManteles] = useState<CatalogoBasicoResponse[]>([]);
-  const [sobremanteles, setSobremanteles] = useState<CatalogoBasicoResponse[]>([]);
-  const [colores, setColores] = useState<CatalogoBasicoResponse[]>([]);
+  const [manteles, setManteles] = useState<MantelResponse[]>([]);
+  const [sobremanteles, setSobremanteles] = useState<SobremantelResponse[]>([]);
+  const [colores, setColores] = useState<ColorResponse[]>([]);
+  const [quoteState, setQuoteState] = useState<EstadoCotizacion | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados del formulario
   const [tableType, setTableType] = useState('');
   const [chairType, setChairType] = useState('');
   const [peoplePerTable, setPeoplePerTable] = useState(10);
   const [tableCount, setTableCount] = useState(12);
   const [clothType, setClothType] = useState('');
-  const [clothColor, setClothColor] = useState('');
   const [topClothType, setTopClothType] = useState('');
-  const [topClothColor, setTopClothColor] = useState('');
   const [dinnerware, setDinnerware] = useState(false);
   const [fajonEnabled, setFajonEnabled] = useState(true);
 
@@ -73,52 +81,43 @@ const EventMontagePage: React.FC = () => {
 
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>([]);
 
-  // Cargar datos del API al montar
   useEffect(() => {
     if (!eventId) return;
-    
+
     let cancelled = false;
-    
+
     (async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Cargar evento y catálogos en paralelo
-        const [
-          eventoData,
-          mesasData,
-          sillasData,
-          mantelesData,
-          sobremantelesData,
-          coloresData,
-          adicionalesData
-        ] = await Promise.all([
-          eventosApi.obtenerPorId(eventId),
-          catalogosApi.tiposMesa.listar(),
-          catalogosApi.tiposSilla.listar(),
-          catalogosApi.manteles.listar(),
-          catalogosApi.sobremanteles.listar(),
-          catalogosApi.colores.listar(),
-          catalogosApi.tiposAdicional.listar(),
-        ]);
+        const [eventoData, mesasData, sillasData, mantelesData, sobremantelesData, coloresData, adicionalesData] =
+          await Promise.all([
+            eventosApi.obtenerPorId(eventId),
+            catalogosApi.tiposMesa.listar(),
+            catalogosApi.tiposSilla.listar(),
+            catalogosApi.manteles.listar(),
+            catalogosApi.sobremanteles.listar(),
+            catalogosApi.colores.listar(),
+            catalogosApi.tiposAdicional.listar(),
+          ]);
 
         if (cancelled) return;
 
-        setEvento(eventoData);
-        setTiposMesa(mesasData);
-        setTiposSilla(sillasData);
-        setManteles(mantelesData);
-        setSobremanteles(sobremantelesData);
-        setColores(coloresData);
-        const reservaActual = eventoData.reservas.find(r => r.vigente);
+        const reservaActual = eventoData.reservas.find((reserva) => reserva.vigente);
         if (!reservaActual) {
           setError('No hay reserva activa para este evento');
           setLoading(false);
           return;
         }
 
-        // Cargar datos relacionados del evento
+        const mesasActivas = mesasData.filter((item) => item.activo);
+        const sillasActivas = sillasData.filter((item) => item.activo);
+        const mantelesActivos = mantelesData.filter((item) => item.activo);
+        const sobremantelesActivos = sobremantelesData.filter((item) => item.activo);
+        const coloresActivos = coloresData.filter((item) => item.activo);
+        const adicionalesActivos = adicionalesData.filter((item) => item.activo);
+
         const [clienteData, tipoEventoData, salonData] = await Promise.all([
           clientesApi.obtenerPorId(eventoData.clienteId),
           catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
@@ -126,70 +125,49 @@ const EventMontagePage: React.FC = () => {
         ]);
 
         if (cancelled) return;
+
+        setEvento(eventoData);
         setCliente(clienteData);
         setTipoEvento(tipoEventoData);
         setSalon(salonData);
-
-        if (cancelled) return;
-
-        setEvento(eventoData);
-        
-        const mesasActivas = mesasData.filter(m => m.activo);
-        const sillasActivas = sillasData.filter(s => s.activo);
-        const mantelesActivos = mantelesData.filter(m => m.activo);
-        const sobremantelesActivos = sobremantelesData.filter(s => s.activo);
-        const coloresActivos = coloresData.filter(c => c.activo);
-        const adicionalesActivos = adicionalesData.filter(a => a.activo);
-
         setTiposMesa(mesasActivas);
         setTiposSilla(sillasActivas);
         setManteles(mantelesActivos);
         setSobremanteles(sobremantelesActivos);
         setColores(coloresActivos);
-        // Inicializar valores por defecto
+
         if (mesasActivas.length > 0) setTableType(mesasActivas[0]!.id);
         if (sillasActivas.length > 0) setChairType(sillasActivas[0]!.id);
         if (mantelesActivos.length > 0) setClothType(mantelesActivos[0]!.id);
-        if (coloresActivos.length > 0) setClothColor(coloresActivos[0]!.id);
         if (sobremantelesActivos.length > 0) setTopClothType(sobremantelesActivos[0]!.id);
-        if (coloresActivos.length > 0) setTopClothColor(coloresActivos[0]!.id);
 
-        // Convertir adicionales a formato del formulario
-        const adicionalesFormato: AdditionalItem[] = adicionalesActivos.map(a => ({
-          id: `adicional-${a.id}`,
-          tipoAdicionalId: a.id,
-          name: a.nombre,
-          billingType: a.modoCobro,
-          selected: false,
-          quantity: 1,
-          basePrice: Number(a.precioBase),
-        }));
-        setAdditionalItems(adicionalesFormato);
+        setAdditionalItems(
+          adicionalesActivos.map((item) => ({
+            id: `adicional-${item.id}`,
+            tipoAdicionalId: item.id,
+            name: item.nombre,
+            billingType: item.modoCobro,
+            selected: false,
+            quantity: 1,
+            basePrice: Number(item.precioBase),
+          }))
+        );
 
-        // Intentar cargar montaje existente
-        const reserva = eventoData.reservas.find(r => r.vigente);
-        if (reserva) {
-          try {
-            const reservaIdActual = reserva.reservaRaizId || reserva.id;
-            const montaje = await montajesApi.obtener(reservaIdActual);
-            if (cancelled) return;
+        const reservaId = reservaActual.reservaRaizId || reservaActual.id;
 
-            // Poblar formulario con datos existentes
-            if (montaje.mesas.length > 0) {
-              const mesa = montaje.mesas[0];
-              if (mesa) {
-                setTableType(mesa.tipoMesaId);
-                setChairType(mesa.tipoSillaId);
-                setPeoplePerTable(mesa.sillaPorMesa);
-                setTableCount(mesa.cantidadMesas);
-                if (mesa.mantelId) setClothType(mesa.mantelId);
-                if (mesa.sobremantelId) setTopClothType(mesa.sobremantelId);
-                setDinnerware(mesa.vajilla);
-                setFajonEnabled(mesa.fajon);
-              }
-            }
+        try {
+          const montaje = await montajesApi.obtener(reservaId);
+          if (!cancelled && montaje.mesas.length > 0) {
+            const mesa = montaje.mesas[0]!;
+            setTableType(mesa.tipoMesaId);
+            setChairType(mesa.tipoSillaId);
+            setPeoplePerTable(mesa.sillaPorMesa);
+            setTableCount(mesa.cantidadMesas);
+            if (mesa.mantelId) setClothType(mesa.mantelId);
+            if (mesa.sobremantelId) setTopClothType(mesa.sobremantelId);
+            setDinnerware(mesa.vajilla);
+            setFajonEnabled(mesa.fajon);
 
-            // Poblar infraestructura
             setInfrastructure([
               { id: 'mesa_ponque', name: 'Mesa ponque', selected: montaje.infraestructura.mesaPonque },
               { id: 'mesa_regalos', name: 'Mesa regalos', selected: montaje.infraestructura.mesaRegalos },
@@ -197,21 +175,34 @@ const EventMontagePage: React.FC = () => {
               { id: 'espacio_bombas', name: 'Espacio bombas', selected: montaje.infraestructura.estanteBombas },
             ]);
 
-            // Poblar adicionales seleccionados
-            setAdditionalItems(prev => prev.map(item => {
-              const adicionalExistente = montaje.adicionales.find(a => a.tipoAdicionalId === item.tipoAdicionalId);
-              if (adicionalExistente) {
+            setAdditionalItems((prev) =>
+              prev.map((item) => {
+                const adicionalExistente = montaje.adicionales.find(
+                  (adicional) => adicional.tipoAdicionalId === item.tipoAdicionalId
+                );
+
+                if (!adicionalExistente) return item;
+
                 return {
                   ...item,
                   selected: true,
                   quantity: adicionalExistente.cantidad,
                 };
-              }
-              return item;
-            }));
-          } catch (montajeErr) {
-            // No hay montaje configurado aún, continuar con valores por defecto
-            console.log('No hay montaje configurado aún');
+              })
+            );
+          }
+        } catch {
+          // Sin montaje guardado todavía
+        }
+
+        try {
+          const cotizacionVigente = await cotizacionesApi.obtenerVigente(reservaId);
+          if (!cancelled) {
+            setQuoteState(cotizacionVigente.estado);
+          }
+        } catch {
+          if (!cancelled) {
+            setQuoteState(null);
           }
         }
       } catch (err) {
@@ -219,11 +210,15 @@ const EventMontagePage: React.FC = () => {
           setError(err instanceof Error ? err.message : 'Error al cargar datos');
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   const updateInfrastructureSelection = (itemId: string, checked: boolean) => {
@@ -250,23 +245,20 @@ const EventMontagePage: React.FC = () => {
     );
   };
 
-  // Función para guardar montaje
   const handleGuardarMontaje = async () => {
     if (!evento) {
       setError('No hay evento cargado');
       return;
     }
 
-    const reserva = evento.reservas.find(r => r.vigente);
+    const reserva = evento.reservas.find((item) => item.vigente);
     if (!reserva) {
       setError('No hay reserva activa para este evento');
       return;
     }
 
-    const reservaId = reserva.reservaRaizId || reserva.id;
-
     if (!clothType) {
-      setError('Debes seleccionar un tipo de mantel (es obligatorio)');
+      setError('Debes seleccionar un mantel');
       return;
     }
 
@@ -280,34 +272,47 @@ const EventMontagePage: React.FC = () => {
       return;
     }
 
+    if (quoteState && quoteState !== 'BORRADOR') {
+      const continuar = window.confirm(
+        `Este evento ya tiene una cotización en estado ${quoteState}. Si guardas cambios en Montaje, esa cotización dejará de estar vigente y tendrás que generar una nueva.`
+      );
+
+      if (!continuar) {
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      await montajesApi.configurar(reservaId, {
+      await montajesApi.configurar(reserva.reservaRaizId || reserva.id, {
         observaciones: undefined,
-        mesas: [{
-          tipoMesaId: tableType,
-          tipoSillaId: chairType,
-          sillaPorMesa: peoplePerTable,
-          cantidadMesas: tableCount,
-          mantelId: clothType,
-          sobremantelId: topClothType || undefined,
-          vajilla: dinnerware,
-          fajon: fajonEnabled,
-        }],
+        mesas: [
+          {
+            tipoMesaId: tableType,
+            tipoSillaId: chairType,
+            sillaPorMesa: peoplePerTable,
+            cantidadMesas: tableCount,
+            mantelId: clothType,
+            sobremantelId: topClothType || undefined,
+            vajilla: dinnerware,
+            fajon: fajonEnabled,
+          },
+        ],
         infraestructura: {
-          mesaPonque: infrastructure.find(i => i.id === 'mesa_ponque')?.selected || false,
-          mesaRegalos: infrastructure.find(i => i.id === 'mesa_regalos')?.selected || false,
-          espacioMusicos: infrastructure.find(i => i.id === 'espacio_musicos')?.selected || false,
-          estanteBombas: infrastructure.find(i => i.id === 'espacio_bombas')?.selected || false,
+          mesaPonque: infrastructure.find((item) => item.id === 'mesa_ponque')?.selected || false,
+          mesaRegalos: infrastructure.find((item) => item.id === 'mesa_regalos')?.selected || false,
+          espacioMusicos: infrastructure.find((item) => item.id === 'espacio_musicos')?.selected || false,
+          estanteBombas: infrastructure.find((item) => item.id === 'espacio_bombas')?.selected || false,
         },
-        adicionales: selectedAdditionalItems.map(item => ({
+        adicionales: selectedAdditionalItems.map((item) => ({
           tipoAdicionalId: item.tipoAdicionalId,
           cantidad: item.quantity,
         })),
       });
 
+      setQuoteState(null);
       alert('Montaje guardado exitosamente');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar montaje');
@@ -316,7 +321,6 @@ const EventMontagePage: React.FC = () => {
     }
   };
 
-  // Crear objeto event compatible con EventDetailHeaderTabs
   const event = useMemo(() => {
     if (!evento) {
       return {
@@ -335,9 +339,9 @@ const EventMontagePage: React.FC = () => {
       };
     }
 
-    const reserva = evento.reservas.find(r => r.vigente);
+    const reserva = evento.reservas.find((item) => item.vigente);
     const inicio = new Date(evento.fechaHoraInicio);
-    
+
     return {
       id: evento.id,
       title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
@@ -352,17 +356,29 @@ const EventMontagePage: React.FC = () => {
       venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
       totalQuote: '$0',
     };
-  }, [evento, cliente, salon, tipoEvento, eventId]);
+  }, [cliente, eventId, evento, salon, tipoEvento]);
 
-  const selectedClothColor = useMemo(
-    () => colores.find((color) => color.id === clothColor),
-    [clothColor, colores]
+  const selectedMantel = useMemo(
+    () => manteles.find((item) => item.id === clothType),
+    [clothType, manteles]
   );
 
-  const selectedTopClothColor = useMemo(
-    () => colores.find((color) => color.id === topClothColor),
-    [topClothColor, colores]
+  const selectedSobremantel = useMemo(
+    () => sobremanteles.find((item) => item.id === topClothType),
+    [sobremanteles, topClothType]
   );
+
+  const selectedClothColor = useMemo(() => {
+    const colorId = getTextilColorId(selectedMantel);
+    return colorId ? colores.find((color) => color.id === colorId) ?? selectedMantel?.color ?? null : selectedMantel?.color ?? null;
+  }, [colores, selectedMantel]);
+
+  const selectedTopClothColor = useMemo(() => {
+    const colorId = getTextilColorId(selectedSobremantel);
+    return colorId
+      ? colores.find((color) => color.id === colorId) ?? selectedSobremantel?.color ?? null
+      : selectedSobremantel?.color ?? null;
+  }, [colores, selectedSobremantel]);
 
   const selectedInfrastructureItems = useMemo(
     () => infrastructure.filter((item) => item.selected),
@@ -374,12 +390,14 @@ const EventMontagePage: React.FC = () => {
     [additionalItems]
   );
 
-  const additionalTotal = useMemo(() => {
-    return selectedAdditionalItems.reduce((sum, item) => {
-      const lineTotal = item.billingType === 'UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
-      return sum + lineTotal;
-    }, 0);
-  }, [selectedAdditionalItems]);
+  const additionalTotal = useMemo(
+    () =>
+      selectedAdditionalItems.reduce((sum, item) => {
+        const lineTotal = item.billingType === 'UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
+        return sum + lineTotal;
+      }, 0),
+    [selectedAdditionalItems]
+  );
 
   if (loading) {
     return (
@@ -394,9 +412,7 @@ const EventMontagePage: React.FC = () => {
   if (error && !evento) {
     return (
       <section className="space-y-10 pb-32">
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       </section>
     );
   }
@@ -405,32 +421,44 @@ const EventMontagePage: React.FC = () => {
     <section className="space-y-10 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="montaje" />
 
-      <div className="lg:flex lg:items-start gap-6">
-        <div className="flex-1 mb-24 space-y-6">
-          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
+      <div className="gap-6 lg:flex lg:items-start">
+        <div className="mb-24 flex-1 space-y-6">
+          {error && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          <div className="rounded-lg border border-border bg-surface-container-lowest p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Ficha operativa</p>
-                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">Montaje del evento</h3>
-                <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">
-                  Configura mesas, sillas, textiles, infraestructura y adicionales. La cotización toma estas
-                  cantidades como fuente de verdad.
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Ficha operativa</p>
+                <h3 className="mt-1 font-display text-2xl font-bold text-on-surface">Montaje del evento</h3>
+                <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
+                  Aquí defines lo solicitado para la reserva: mesas, sillas, textiles, infraestructura y adicionales.
+                  La cotización toma estos valores como fuente de verdad.
                 </p>
               </div>
               <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                En edición
+                {quoteState && quoteState !== 'BORRADOR' ? `Cotización ${quoteState.toLowerCase()}` : 'En edición'}
               </span>
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-8 shadow-sm space-y-8">
+          {quoteState && quoteState !== 'BORRADOR' && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Este montaje ya respalda una cotización en estado <strong>{quoteState}</strong>. Si cambias mesas,
+              textiles, infraestructura o adicionales y guardas, esa versión se invalidará y tendrás que generar una
+              nueva desde Cotización.
+            </div>
+          )}
+
+          <div className="space-y-8 rounded-xl border border-border bg-surface-container-lowest p-8 shadow-sm">
             <section className="space-y-4">
-              <h3 className="text-xl font-display font-bold text-on-surface">Configuración de mesas</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <h3 className="font-display text-xl font-bold text-on-surface">Configuración de mesas</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Tipo de mesa</label>
+                  <label className="mb-2 block text-xs font-bold text-neutral-700">Tipo de mesa</label>
                   <select
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     value={tableType}
                     onChange={(eventTarget) => setTableType(eventTarget.target.value)}
                     disabled={tiposMesa.length === 0}
@@ -445,9 +473,9 @@ const EventMontagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Tipo de silla</label>
+                  <label className="mb-2 block text-xs font-bold text-neutral-700">Tipo de silla</label>
                   <select
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     value={chairType}
                     onChange={(eventTarget) => setChairType(eventTarget.target.value)}
                     disabled={tiposSilla.length === 0}
@@ -462,9 +490,9 @@ const EventMontagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Personas por mesa</label>
+                  <label className="mb-2 block text-xs font-bold text-neutral-700">Personas por mesa</label>
                   <input
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     type="number"
                     min={1}
                     value={peoplePerTable}
@@ -473,9 +501,9 @@ const EventMontagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Cantidad de mesas</label>
+                  <label className="mb-2 block text-xs font-bold text-neutral-700">Cantidad de mesas</label>
                   <input
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     type="number"
                     min={1}
                     value={tableCount}
@@ -484,9 +512,9 @@ const EventMontagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Vajilla</label>
+                  <label className="mb-2 block text-xs font-bold text-neutral-700">Vajilla</label>
                   <select
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     value={dinnerware ? 'true' : 'false'}
                     onChange={(eventTarget) => setDinnerware(eventTarget.target.value === 'true')}
                   >
@@ -496,9 +524,9 @@ const EventMontagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Fajón</label>
+                  <label className="mb-2 block text-xs font-bold text-neutral-700">Fajón</label>
                   <select
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     value={fajonEnabled ? 'true' : 'false'}
                     onChange={(eventTarget) => setFajonEnabled(eventTarget.target.value === 'true')}
                   >
@@ -507,13 +535,13 @@ const EventMontagePage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="md:col-span-3 rounded-lg border border-outline-variant/30 bg-surface-container-low p-4">
-                  <p className="text-sm font-semibold text-on-surface mb-3">Textiles de mesa</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-md border border-outline-variant/30 bg-surface-container-lowest p-3 space-y-3">
+                <div className="rounded-lg border border-outline-variant/30 bg-surface-container-low p-4 md:col-span-3">
+                  <p className="mb-3 text-sm font-semibold text-on-surface">Textiles de mesa</p>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-3 rounded-md border border-outline-variant/30 bg-surface-container-lowest p-3">
                       <label className="block text-xs font-bold text-neutral-700">Mantel</label>
                       <select
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                        className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                         value={clothType}
                         onChange={(eventTarget) => setClothType(eventTarget.target.value)}
                         disabled={manteles.length === 0}
@@ -525,30 +553,15 @@ const EventMontagePage: React.FC = () => {
                           </option>
                         ))}
                       </select>
-
-                      <select
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
-                        value={clothColor}
-                        onChange={(eventTarget) => setClothColor(eventTarget.target.value)}
-                        disabled={colores.length === 0}
-                      >
-                        {colores.length === 0 && <option value="">Cargando...</option>}
-                        {colores.map((color) => (
-                          <option key={color.id} value={color.id}>
-                            {color.nombre}
-                          </option>
-                        ))}
-                      </select>
-
-                      <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                        <span className="text-sm">Color: {selectedClothColor?.nombre || 'Sin seleccionar'}</span>
+                      <div className="text-sm text-on-surface-variant">
+                        Color asociado: {selectedClothColor?.nombre || 'Sin seleccionar'}
                       </div>
                     </div>
 
-                    <div className="rounded-md border border-outline-variant/30 bg-surface-container-lowest p-3 space-y-3">
+                    <div className="space-y-3 rounded-md border border-outline-variant/30 bg-surface-container-lowest p-3">
                       <label className="block text-xs font-bold text-neutral-700">Sobremantel</label>
                       <select
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                        className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                         value={topClothType}
                         onChange={(eventTarget) => setTopClothType(eventTarget.target.value)}
                         disabled={sobremanteles.length === 0}
@@ -560,23 +573,8 @@ const EventMontagePage: React.FC = () => {
                           </option>
                         ))}
                       </select>
-
-                      <select
-                        className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
-                        value={topClothColor}
-                        onChange={(eventTarget) => setTopClothColor(eventTarget.target.value)}
-                        disabled={colores.length === 0}
-                      >
-                        {colores.length === 0 && <option value="">Cargando...</option>}
-                        {colores.map((color) => (
-                          <option key={color.id} value={color.id}>
-                            {color.nombre}
-                          </option>
-                        ))}
-                      </select>
-
-                      <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                        <span className="text-sm">Color: {selectedTopClothColor?.nombre || 'Sin seleccionar'}</span>
+                      <div className="text-sm text-on-surface-variant">
+                        Color asociado: {selectedTopClothColor?.nombre || 'Sin seleccionar'}
                       </div>
                     </div>
                   </div>
@@ -584,8 +582,8 @@ const EventMontagePage: React.FC = () => {
               </div>
             </section>
 
-            <section className="space-y-4 pt-2 border-t border-outline-variant/30">
-              <h3 className="text-xl font-display font-bold text-on-surface">Infraestructura</h3>
+            <section className="space-y-4 border-t border-outline-variant/30 pt-2">
+              <h3 className="font-display text-xl font-bold text-on-surface">Infraestructura</h3>
               <div className="overflow-hidden rounded-lg border border-outline-variant/30">
                 <table className="w-full text-left">
                   <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
@@ -600,12 +598,10 @@ const EventMontagePage: React.FC = () => {
                         <td className="px-5 py-3 font-semibold text-on-surface">{item.name}</td>
                         <td className="px-5 py-3 text-right">
                           <input
-                            className="w-4 h-4 rounded border-outline-variant text-primary-gold focus:ring-primary-gold"
+                            className="h-4 w-4 rounded border-outline-variant text-primary-gold"
                             type="checkbox"
                             checked={item.selected}
-                            onChange={(eventTarget) =>
-                              updateInfrastructureSelection(item.id, eventTarget.target.checked)
-                            }
+                            onChange={(eventTarget) => updateInfrastructureSelection(item.id, eventTarget.target.checked)}
                           />
                         </td>
                       </tr>
@@ -615,8 +611,8 @@ const EventMontagePage: React.FC = () => {
               </div>
             </section>
 
-            <section className="space-y-4 pt-2 border-t border-outline-variant/30">
-              <h3 className="text-xl font-display font-bold text-on-surface">Adicionales</h3>
+            <section className="space-y-4 border-t border-outline-variant/30 pt-2">
+              <h3 className="font-display text-xl font-bold text-on-surface">Adicionales</h3>
               <div className="overflow-hidden rounded-lg border border-outline-variant/30">
                 <table className="w-full text-left">
                   <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
@@ -638,7 +634,7 @@ const EventMontagePage: React.FC = () => {
                         <td className="px-5 py-3 text-right">
                           {item.billingType === 'UNIDAD' ? (
                             <input
-                              className="w-20 bg-surface-container-low border border-outline-variant/40 rounded-md px-2 py-1.5 text-sm text-right"
+                              className="w-20 rounded-md border border-outline-variant/40 bg-surface-container-low px-2 py-1.5 text-right text-sm"
                               type="number"
                               min={1}
                               value={item.quantity}
@@ -651,16 +647,14 @@ const EventMontagePage: React.FC = () => {
                           )}
                         </td>
                         <td className="px-5 py-3 text-right text-sm text-on-surface-variant">
-                          {copCurrencyFormatter.format(item.basePrice)}
+                          {currencyFormatter.format(item.basePrice)}
                         </td>
                         <td className="px-5 py-3 text-right">
                           <input
-                            className="w-4 h-4 rounded border-outline-variant text-primary-gold focus:ring-primary-gold"
+                            className="h-4 w-4 rounded border-outline-variant text-primary-gold"
                             type="checkbox"
                             checked={item.selected}
-                            onChange={(eventTarget) =>
-                              updateAdditionalSelection(item.id, eventTarget.target.checked)
-                            }
+                            onChange={(eventTarget) => updateAdditionalSelection(item.id, eventTarget.target.checked)}
                           />
                         </td>
                       </tr>
@@ -672,10 +666,9 @@ const EventMontagePage: React.FC = () => {
           </div>
         </div>
 
-        <aside className="hidden lg:block w-[320px] sticky top-[92px] mt-2 space-y-6">
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm space-y-4">
-            <h4 className="font-display font-bold text-lg text-primary-gold">Resumen de montaje</h4>
-
+        <aside className="mt-2 hidden w-[320px] space-y-6 lg:sticky lg:top-[92px] lg:block">
+          <div className="space-y-4 rounded-xl border border-border bg-surface-container-lowest p-5 shadow-sm">
+            <h4 className="font-display text-lg font-bold text-primary-gold">Resumen de montaje</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Mesas</span>
@@ -687,25 +680,26 @@ const EventMontagePage: React.FC = () => {
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Tipo mesa / silla</span>
-                <span className="font-semibold text-on-surface text-right">
-                  {tiposMesa.find(t => t.id === tableType)?.nombre || 'Sin definir'} · {tiposSilla.find(s => s.id === chairType)?.nombre || 'Sin definir'}
+                <span className="text-right font-semibold text-on-surface">
+                  {tiposMesa.find((item) => item.id === tableType)?.nombre || 'Sin definir'} ·{' '}
+                  {tiposSilla.find((item) => item.id === chairType)?.nombre || 'Sin definir'}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Mantel</span>
-                <span className="font-semibold text-on-surface text-right">
-                  {manteles.find(m => m.id === clothType)?.nombre || 'Sin definir'} · {selectedClothColor?.nombre || 'Sin color'}
+                <span className="text-right font-semibold text-on-surface">
+                  {selectedMantel?.nombre || 'Sin definir'} · {selectedClothColor?.nombre || 'Sin color'}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Sobremantel</span>
-                <span className="font-semibold text-on-surface text-right">
-                  {sobremanteles.find(s => s.id === topClothType)?.nombre || 'Sin definir'} · {selectedTopClothColor?.nombre || 'Sin color'}
+                <span className="text-right font-semibold text-on-surface">
+                  {selectedSobremantel?.nombre || 'Sin definir'} · {selectedTopClothColor?.nombre || 'Sin color'}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Vajilla</span>
-                <span className="font-semibold text-on-surface text-right">{dinnerware ? 'Sí' : 'No'}</span>
+                <span className="font-semibold text-on-surface">{dinnerware ? 'Sí' : 'No'}</span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Fajón</span>
@@ -714,7 +708,7 @@ const EventMontagePage: React.FC = () => {
             </div>
 
             <div className="border-t border-outline-variant/20 pt-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Infraestructura</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-neutral-500">Infraestructura</p>
               {selectedInfrastructureItems.length > 0 ? (
                 <ul className="space-y-1.5 text-sm text-on-surface">
                   {selectedInfrastructureItems.map((item) => (
@@ -727,35 +721,30 @@ const EventMontagePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest border border-border rounded-xl p-5 shadow-sm space-y-4">
-            <h4 className="font-display font-bold text-lg text-on-surface">Adicionales seleccionados</h4>
+          <div className="space-y-4 rounded-xl border border-border bg-surface-container-lowest p-5 shadow-sm">
+            <h4 className="font-display text-lg font-bold text-on-surface">Adicionales seleccionados</h4>
             {selectedAdditionalItems.length > 0 ? (
               <div className="space-y-3">
                 {selectedAdditionalItems.map((item) => {
-                  const lineTotal =
-                    item.billingType === 'UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
+                  const lineTotal = item.billingType === 'UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
 
                   return (
                     <div key={item.id} className="flex items-start justify-between gap-3 text-sm">
                       <div>
                         <p className="font-semibold text-on-surface">{item.name}</p>
-                        <p className="text-on-surface-variant text-xs">
+                        <p className="text-xs text-on-surface-variant">
                           {item.billingType === 'UNIDAD' ? `${item.quantity} unidades` : '1 servicio'}
                         </p>
                       </div>
-                      <p className="font-semibold text-on-surface">
-                        {copCurrencyFormatter.format(lineTotal)}
-                      </p>
+                      <p className="font-semibold text-on-surface">{currencyFormatter.format(lineTotal)}</p>
                     </div>
                   );
                 })}
 
-                <div className="flex justify-between items-center border-t border-outline-variant/20 pt-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-                    Total adicionales
-                  </span>
+                <div className="flex items-center justify-between border-t border-outline-variant/20 pt-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">Total adicionales</span>
                   <span className="font-display text-lg font-bold text-primary-gold">
-                    {copCurrencyFormatter.format(additionalTotal)}
+                    {currencyFormatter.format(additionalTotal)}
                   </span>
                 </div>
               </div>
@@ -766,16 +755,16 @@ const EventMontagePage: React.FC = () => {
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/80 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
-        <div className="hidden sm:flex items-center gap-2 text-on-secondary-container">
+      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-surface-container bg-surface-container-lowest/80 px-6 py-4 backdrop-blur-md md:w-[calc(100%-16rem)]">
+        <div className="hidden items-center gap-2 text-on-secondary-container sm:flex">
           <span className="material-symbols-outlined text-lg">info</span>
           <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            Cambios de montaje listos para guardar
+            Montaje y adicionales se editan aquí, no dentro de la cotización
           </p>
         </div>
-        <div className="flex gap-4 w-full sm:w-auto">
+        <div className="flex w-full gap-4 sm:w-auto">
           <button
-            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-8 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors disabled:opacity-50"
+            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary disabled:opacity-50 sm:flex-none"
             type="button"
             onClick={handleGuardarMontaje}
             disabled={saving || !evento}

@@ -2,6 +2,12 @@ import apiClient from './client';
 import type { 
   CatalogoBasicoResponse, 
   CatalogoBasicoRequest, 
+  ColorResponse,
+  ColorRequest,
+  MantelResponse,
+  MantelRequest,
+  SobremantelResponse,
+  SobremantelRequest,
   TipoAdicionalResponse,
   TipoAdicionalRequest,
   PlatoResponse,
@@ -38,9 +44,60 @@ const catalogosApi = {
   tiposComida: makeCatalogoBasico('/catalogos/tipos-comida'),
   tiposMesa: makeCatalogoBasico('/catalogos/tipos-mesa'),
   tiposSilla: makeCatalogoBasico('/catalogos/tipos-silla'),
-  colores: makeCatalogoBasico('/catalogos/colores'),
-  manteles: makeCatalogoBasico('/catalogos/manteles'),
-  sobremanteles: makeCatalogoBasico('/catalogos/sobremanteles'),
+
+  colores: {
+    listar(): Promise<ColorResponse[]> {
+      return apiClient.get<ColorResponse[]>('/catalogos/colores').then((r) => r.data);
+    },
+    obtenerPorId(id: string): Promise<ColorResponse> {
+      return apiClient.get<ColorResponse>(`/catalogos/colores/${id}`).then((r) => r.data);
+    },
+    crear(data: ColorRequest): Promise<ColorResponse> {
+      return apiClient.post<ColorResponse>('/catalogos/colores', data).then((r) => r.data);
+    },
+    actualizar(id: string, data: ColorRequest): Promise<ColorResponse> {
+      return apiClient.put<ColorResponse>(`/catalogos/colores/${id}`, data).then((r) => r.data);
+    },
+    desactivar(id: string): Promise<ColorResponse> {
+      return apiClient.delete<ColorResponse>(`/catalogos/colores/${id}`).then((r) => r.data);
+    },
+  },
+
+  manteles: {
+    listar(): Promise<MantelResponse[]> {
+      return apiClient.get<MantelResponse[]>('/catalogos/manteles').then((r) => r.data);
+    },
+    obtenerPorId(id: string): Promise<MantelResponse> {
+      return apiClient.get<MantelResponse>(`/catalogos/manteles/${id}`).then((r) => r.data);
+    },
+    crear(data: MantelRequest): Promise<MantelResponse> {
+      return apiClient.post<MantelResponse>('/catalogos/manteles', data).then((r) => r.data);
+    },
+    actualizar(id: string, data: MantelRequest): Promise<MantelResponse> {
+      return apiClient.put<MantelResponse>(`/catalogos/manteles/${id}`, data).then((r) => r.data);
+    },
+    desactivar(id: string): Promise<MantelResponse> {
+      return apiClient.delete<MantelResponse>(`/catalogos/manteles/${id}`).then((r) => r.data);
+    },
+  },
+
+  sobremanteles: {
+    listar(): Promise<SobremantelResponse[]> {
+      return apiClient.get<SobremantelResponse[]>('/catalogos/sobremanteles').then((r) => r.data);
+    },
+    obtenerPorId(id: string): Promise<SobremantelResponse> {
+      return apiClient.get<SobremantelResponse>(`/catalogos/sobremanteles/${id}`).then((r) => r.data);
+    },
+    crear(data: SobremantelRequest): Promise<SobremantelResponse> {
+      return apiClient.post<SobremantelResponse>('/catalogos/sobremanteles', data).then((r) => r.data);
+    },
+    actualizar(id: string, data: SobremantelRequest): Promise<SobremantelResponse> {
+      return apiClient.put<SobremantelResponse>(`/catalogos/sobremanteles/${id}`, data).then((r) => r.data);
+    },
+    desactivar(id: string): Promise<SobremantelResponse> {
+      return apiClient.delete<SobremantelResponse>(`/catalogos/sobremanteles/${id}`).then((r) => r.data);
+    },
+  },
 
   tiposAdicional: {
     listar(): Promise<TipoAdicionalResponse[]> {
@@ -155,13 +212,13 @@ const catalogosApi = {
   listarTiposSilla(): Promise<CatalogoBasicoResponse[]> {
     return this.tiposSilla.listar();
   },
-  listarColores(): Promise<CatalogoBasicoResponse[]> {
+  listarColores(): Promise<ColorResponse[]> {
     return this.colores.listar();
   },
-  listarManteles(): Promise<CatalogoBasicoResponse[]> {
+  listarManteles(): Promise<MantelResponse[]> {
     return this.manteles.listar();
   },
-  listarSobremanteles(): Promise<CatalogoBasicoResponse[]> {
+  listarSobremanteles(): Promise<SobremantelResponse[]> {
     return this.sobremanteles.listar();
   },
   listarTiposAdicional(): Promise<TipoAdicionalResponse[]> {

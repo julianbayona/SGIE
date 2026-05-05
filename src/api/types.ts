@@ -177,6 +177,46 @@ export interface CatalogoBasicoRequest {
   descripcion?: string;
 }
 
+export interface ColorResponse {
+  id: string;
+  nombre: string;
+  codigoHex: string;
+  activo: boolean;
+}
+
+export interface ColorRequest {
+  nombre: string;
+  codigoHex: string;
+}
+
+export interface MantelResponse {
+  id: string;
+  nombre: string;
+  colorId?: string;
+  idColor?: string;
+  color?: ColorResponse | null;
+  activo: boolean;
+}
+
+export interface MantelRequest {
+  nombre: string;
+  colorId: string;
+}
+
+export interface SobremantelResponse {
+  id: string;
+  nombre: string;
+  colorId?: string;
+  idColor?: string;
+  color?: ColorResponse | null;
+  activo: boolean;
+}
+
+export interface SobremantelRequest {
+  nombre: string;
+  colorId: string;
+}
+
 export interface TipoAdicionalResponse {
   id: string;
   nombre: string;
