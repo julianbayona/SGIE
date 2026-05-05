@@ -1,4 +1,5 @@
 import React from 'react';
+import UserMenu from '@/components/auth/UserMenu';
 
 const Header: React.FC = () => {
   return (
@@ -21,10 +22,7 @@ const Header: React.FC = () => {
           <span className="absolute top-0 right-0 w-2 h-2 bg-primary-gold rounded-full border-2 border-surface"></span>
         </button>
         <div className="h-8 w-px bg-stone-200/50"></div>
-        <button className="text-stone-600 hover:text-primary-gold transition-colors flex items-center gap-2">
-          <span className="text-sm font-medium">Administrador</span>
-          <span className="material-symbols-outlined">person</span>
-        </button>
+        <UserMenu />
       </div>
     </header>
   );

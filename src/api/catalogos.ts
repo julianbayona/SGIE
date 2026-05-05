@@ -1,5 +1,11 @@
 import apiClient from './client';
-import type { CatalogoBasicoResponse, CatalogoBasicoRequest, TipoAdicionalResponse } from './types';
+import type { 
+  CatalogoBasicoResponse, 
+  CatalogoBasicoRequest, 
+  TipoAdicionalResponse,
+  PlatoResponse,
+  TipoMomentoMenuResponse
+} from './types';
 
 /** Fábrica genérica para catálogos con estructura básica (nombre + descripción). */
 function makeCatalogoBasico(path: string) {
@@ -44,6 +50,32 @@ const catalogosApi = {
     },
   },
 
+  platos: {
+    listar(): Promise<PlatoResponse[]> {
+      return apiClient
+        .get<PlatoResponse[]>('/catalogos/platos')
+        .then((r) => r.data);
+    },
+    obtenerPorId(id: string): Promise<PlatoResponse> {
+      return apiClient
+        .get<PlatoResponse>(`/catalogos/platos/${id}`)
+        .then((r) => r.data);
+    },
+  },
+
+  tiposMomentoMenu: {
+    listar(): Promise<TipoMomentoMenuResponse[]> {
+      return apiClient
+        .get<TipoMomentoMenuResponse[]>('/catalogos/tipos-momento-menu')
+        .then((r) => r.data);
+    },
+    obtenerPorId(id: string): Promise<TipoMomentoMenuResponse> {
+      return apiClient
+        .get<TipoMomentoMenuResponse>(`/catalogos/tipos-momento-menu/${id}`)
+        .then((r) => r.data);
+    },
+  },
+
   // Métodos de conveniencia
   listarTiposEvento(): Promise<CatalogoBasicoResponse[]> {
     return this.tiposEvento.listar();
@@ -68,6 +100,12 @@ const catalogosApi = {
   },
   listarTiposAdicional(): Promise<TipoAdicionalResponse[]> {
     return this.tiposAdicional.listar();
+  },
+  listarPlatos(): Promise<PlatoResponse[]> {
+    return this.platos.listar();
+  },
+  listarTiposMomentoMenu(): Promise<TipoMomentoMenuResponse[]> {
+    return this.tiposMomentoMenu.listar();
   },
 };
 

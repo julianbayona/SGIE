@@ -123,6 +123,8 @@ const EventMontagePage: React.FC = () => {
           return;
         }
 
+        const reservaId = reservaActual.reservaRaizId || reservaActual.id;
+
         // Cargar datos relacionados del evento
         const [clienteData, tipoEventoData, salonData] = await Promise.all([
           clientesApi.obtenerPorId(eventoData.clienteId),
@@ -177,7 +179,8 @@ const EventMontagePage: React.FC = () => {
         const reserva = eventoData.reservas.find(r => r.vigente);
         if (reserva) {
           try {
-            const montaje = await montajesApi.obtener(reserva.reservaRaizId);
+            const reservaIdActual = reserva.reservaRaizId || reserva.id;
+            const montaje = await montajesApi.obtener(reservaIdActual);
             if (cancelled) return;
 
             // Poblar formulario con datos existentes
@@ -267,19 +270,35 @@ const EventMontagePage: React.FC = () => {
       return;
     }
 
+    const reservaId = reserva.reservaRaizId || reserva.id;
+
+    if (!clothType) {
+      setError('Debes seleccionar un tipo de mantel (es obligatorio)');
+      return;
+    }
+
+    if (!tableType) {
+      setError('Debes seleccionar un tipo de mesa');
+      return;
+    }
+
+    if (!chairType) {
+      setError('Debes seleccionar un tipo de silla');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      await montajesApi.configurar(reserva.reservaRaizId, {
-        usuarioId: '00000000-0000-0000-0000-000000000001', // TODO: Usuario autenticado
+      await montajesApi.configurar(reservaId, {
         observaciones: null,
         mesas: [{
           tipoMesaId: tableType,
           tipoSillaId: chairType,
           sillaPorMesa: peoplePerTable,
           cantidadMesas: tableCount,
-          mantelId: clothType || undefined,
+          mantelId: clothType,
           sobremantelId: topClothType || undefined,
           vajilla: dinnerware,
           fajon: fajonEnabled,

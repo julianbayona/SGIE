@@ -63,6 +63,8 @@ const EventQuotePage: React.FC = () => {
           return;
         }
 
+        const reservaId = reserva.reservaRaizId || reserva.id;
+
         // Cargar datos relacionados en paralelo
         const [clienteData, tipoEventoData, salonData] = await Promise.all([
           clientesApi.obtenerPorId(eventoData.clienteId),
@@ -77,22 +79,27 @@ const EventQuotePage: React.FC = () => {
 
         // Intentar cargar cotización existente
         try {
-          // TODO: Implementar endpoint para obtener cotización por reservaId
-          // const cotizacionData = await cotizacionesApi.obtenerPorReserva(reserva.id);
-          // setCotizacion(cotizacionData);
-          
-          // Por ahora, generar cotización si no existe
-          const cotizacionData = await cotizacionesApi.generar(reserva.id, {
-            usuarioId: '00000000-0000-0000-0000-000000000001',
-            descuento: 0,
-            observaciones: null,
-          });
+          // Usar reservaRaizId para obtener la cotización vigente
+          const cotizacionData = await cotizacionesApi.obtenerVigente(reservaId);
           
           if (cancelled) return;
           setCotizacion(cotizacionData);
         } catch (cotErr) {
-          console.log('Error al cargar/generar cotización:', cotErr);
-          setError('No se pudo cargar la cotización. Asegúrate de haber configurado el menú y montaje.');
+          console.log('No hay cotización vigente, intentando generar...');
+          
+          // Si no existe, generar cotización
+          try {
+            const cotizacionData = await cotizacionesApi.generar(reservaId, {
+              descuento: 0,
+              observaciones: null,
+            });
+            
+            if (cancelled) return;
+            setCotizacion(cotizacionData);
+          } catch (genErr) {
+            console.log('Error al generar cotización:', genErr);
+            setError('No se pudo generar la cotización. Asegúrate de haber configurado el menú y montaje.');
+          }
         }
       } catch (err) {
         if (!cancelled) {

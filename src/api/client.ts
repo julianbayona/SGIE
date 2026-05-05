@@ -10,6 +10,23 @@ const apiClient = axios.create({
   timeout: 15000,
 });
 
+// Interceptor de petición: agrega el token de autenticación
+apiClient.interceptors.request.use(
+  (config) => {
+    // Obtener token del localStorage
+    const token = localStorage.getItem('sgie_access_token');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Interceptor de respuesta: normaliza errores del backend
 apiClient.interceptors.response.use(
   (response) => response,
@@ -24,8 +41,23 @@ apiClient.interceptors.response.use(
 
     let message = 'Error inesperado. Intenta de nuevo.';
 
+    // Manejar error 401 (No autorizado)
+    if (status === 401) {
+      message = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
+      // Limpiar token del localStorage
+      localStorage.removeItem('sgie_access_token');
+      localStorage.removeItem('sgie_token_expiry');
+      // Redirigir al login (se puede mejorar con un evento)
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    // Manejar error 403 (Prohibido)
+    else if (status === 403) {
+      message = 'No tienes permisos para realizar esta acción.';
+    }
     // El backend devuelve { "mensaje": "...", "timestamp": "..." }
-    if (data?.mensaje) {
+    else if (data?.mensaje) {
       message = data.mensaje;
     } else if (data?.message) {
       message = data.message;

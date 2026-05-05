@@ -154,9 +154,8 @@ export interface CotizacionResponse {
 }
 
 export interface GenerarCotizacionRequest {
-  usuarioId: string;
   descuento?: number;
-  observaciones?: string;
+  observaciones?: string | null;
 }
 
 export interface ActualizarItemCotizacionRequest {
@@ -227,9 +226,53 @@ export interface SeleccionMenuRequest {
 }
 
 export interface ConfigurarMenuRequest {
-  usuarioId: string;
   notasGenerales?: string;
   selecciones: SeleccionMenuRequest[];
+}
+
+export interface SeleccionMenuRequest {
+  tipoMomentoId: string;
+  items: ItemMenuRequest[];
+}
+
+export interface ItemMenuRequest {
+  platoId: string;
+  cantidad: number;
+  excepciones?: string;
+}
+
+export interface MenuResponse {
+  id: string;
+  reservaId: string;
+  notasGenerales: string | null;
+  selecciones: SeleccionMenuResponse[];
+}
+
+export interface SeleccionMenuResponse {
+  id: string;
+  tipoMomentoId: string;
+  items: ItemMenuResponse[];
+}
+
+export interface ItemMenuResponse {
+  id: string;
+  platoId: string;
+  cantidad: number;
+  excepciones: string | null;
+}
+
+export interface TipoMomentoMenuResponse {
+  id: string;
+  nombre: string;
+  activo: boolean;
+}
+
+export interface PlatoResponse {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  precioBase: number;
+  activo: boolean;
 }
 
 // ─────────────────────────────────────────────
@@ -295,7 +338,6 @@ export interface AdicionalEventoRequest {
 }
 
 export interface ConfigurarMontajeRequest {
-  usuarioId: string;
   observaciones?: string;
   mesas: MontajeMesaReservaRequest[];
   infraestructura: InfraestructuraReservaRequest;
