@@ -1,13 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
-import { getEventSummaryById } from '@/features/events/data/eventSummary';
-
-interface MenuOption {
-  moment: string;
-  name: string;
-  price: number;
-}
+import eventosApi from '@/api/eventos';
+import clientesApi from '@/api/clientes';
+import salonesApi from '@/api/salones';
+import catalogosApi from '@/api/catalogos';
+import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 
 interface MenuLine {
   id: string;
@@ -26,77 +24,77 @@ const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-const menuOptions: MenuOption[] = [
-  { moment: 'Entrada', name: 'Carpaccio de res con alcaparras', price: 25000 },
-  { moment: 'Entrada', name: 'Ensalada de frutos del bosque', price: 22000 },
-  { moment: 'Consomé', name: 'Crema de espárragos', price: 8500 },
-  { moment: 'Consomé', name: 'Consomé de pavo artesanal', price: 9000 },
-  { moment: 'Plato fuerte', name: 'Medallón de lomo en salsa pimienta', price: 65000 },
-  { moment: 'Plato fuerte', name: 'Salmón a la parrilla con finas hierbas', price: 68000 },
-  { moment: 'Postre', name: 'Mousse de chocolate al 70%', price: 12000 },
-  { moment: 'Postre', name: 'Cheesecake de frutos amarillos', price: 13000 },
-  { moment: 'Bebidas', name: 'Jugo natural + agua', price: 15000 },
-  { moment: 'Bebidas', name: 'Vino de la casa', price: 26000 },
-];
-
 const createLineId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const EventMenuPage: React.FC = () => {
   const { eventId } = useParams();
-  const event = useMemo(() => getEventSummaryById(eventId), [eventId]);
-  const guests = event.guests || 0;
+  
+  const [evento, setEvento] = useState<EventoResponse | null>(null);
+  const [cliente, setCliente] = useState<ClienteResponse | null>(null);
+  const [salon, setSalon] = useState<SalonResponse | null>(null);
+  const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
+  const [menuLines, setMenuLines] = useState<MenuLine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [menuLines, setMenuLines] = useState<MenuLine[]>(() => [
-    {
-      id: 'menu-entrada',
-      moment: 'Entrada',
-      name: 'Carpaccio de res con alcaparras',
-      quantity: guests,
-      unitPrice: 25000,
-      notes: '',
-    },
-    {
-      id: 'menu-consome',
-      moment: 'Consomé',
-      name: 'Crema de espárragos',
-      quantity: guests,
-      unitPrice: 8500,
-      notes: '',
-    },
-    {
-      id: 'menu-plato-fuerte',
-      moment: 'Plato fuerte',
-      name: 'Medallón de lomo en salsa pimienta',
-      quantity: guests,
-      unitPrice: 65000,
-      notes: '',
-    },
-    {
-      id: 'menu-postre',
-      moment: 'Postre',
-      name: 'Mousse de chocolate al 70%',
-      quantity: guests,
-      unitPrice: 12000,
-      notes: '',
-    },
-    {
-      id: 'menu-bebidas',
-      moment: 'Bebidas',
-      name: 'Jugo natural + agua',
-      quantity: guests,
-      unitPrice: 15000,
-      notes: 'Sin hielo en el agua',
-    },
-  ]);
+  const guests = evento?.reservas.find(r => r.vigente)?.numInvitados || 0;
 
-  const [selectedOptionName, setSelectedOptionName] = useState(menuOptions[0]?.name ?? '');
-  const [selectedQuantity, setSelectedQuantity] = useState(guests);
-  const [selectedNotes, setSelectedNotes] = useState('');
-  const [exceptionsText, setExceptionsText] = useState('3 vegetarianos, 1 alergia a frutos secos');
+  const [newMoment, setNewMoment] = useState('Entrada');
+  const [newName, setNewName] = useState('');
+  const [newQuantity, setNewQuantity] = useState(guests);
+  const [newPrice, setNewPrice] = useState(0);
+  const [newNotes, setNewNotes] = useState('');
+  const [exceptionsText, setExceptionsText] = useState('');
 
-  const selectedOption = useMemo(() => {
-    return menuOptions.find((option) => option.name === selectedOptionName) ?? menuOptions[0]!;
-  }, [selectedOptionName]);
+  // Cargar evento al montar
+  useEffect(() => {
+    if (!eventId) return;
+    
+    let cancelled = false;
+    
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const eventoData = await eventosApi.obtenerPorId(eventId);
+        if (cancelled) return;
+        setEvento(eventoData);
+
+        const reservaActual = eventoData.reservas.find(r => r.vigente);
+        if (!reservaActual) {
+          setError('No hay reserva activa para este evento');
+          setLoading(false);
+          return;
+        }
+
+        // Cargar datos relacionados en paralelo
+        const [clienteData, tipoEventoData, salonData] = await Promise.all([
+          clientesApi.obtenerPorId(eventoData.clienteId),
+          catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
+          salonesApi.obtenerPorId(reservaActual.salonId),
+        ]);
+
+        if (cancelled) return;
+        setCliente(clienteData);
+        setTipoEvento(tipoEventoData);
+        setSalon(salonData);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar evento');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [eventId]);
+
+  // Actualizar cantidad sugerida cuando cambian los invitados
+  useEffect(() => {
+    setNewQuantity(guests);
+  }, [guests]);
 
   const menuTotal = useMemo(() => {
     return menuLines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
@@ -117,22 +115,99 @@ const EventMenuPage: React.FC = () => {
   };
 
   const addMenuLine = () => {
-    const quantity = Math.max(1, Number.isNaN(selectedQuantity) ? 1 : selectedQuantity);
+    if (!newName.trim() || newPrice <= 0) {
+      setError('Completa el nombre y precio del plato');
+      return;
+    }
+    
+    const quantity = Math.max(1, Number.isNaN(newQuantity) ? 1 : newQuantity);
 
     setMenuLines((prev) => [
       ...prev,
       {
         id: createLineId(),
-        moment: selectedOption.moment,
-        name: selectedOption.name,
+        moment: newMoment,
+        name: newName.trim(),
         quantity,
-        unitPrice: selectedOption.price,
-        notes: selectedNotes.trim(),
+        unitPrice: newPrice,
+        notes: newNotes.trim(),
       },
     ]);
-    setSelectedQuantity(guests);
-    setSelectedNotes('');
+    
+    setNewName('');
+    setNewPrice(0);
+    setNewQuantity(guests);
+    setNewNotes('');
+    setError(null);
   };
+
+  const handleSaveMenu = () => {
+    if (menuLines.length === 0) {
+      setError('Agrega al menos un plato al menú antes de guardar');
+      return;
+    }
+
+    // TODO: Implementar guardado cuando el backend tenga el endpoint configurado
+    alert('Menú guardado localmente. Pendiente: integración con backend.');
+  };
+
+  // Crear objeto event compatible con EventDetailHeaderTabs
+  const event = useMemo(() => {
+    if (!evento) {
+      return {
+        id: eventId || '',
+        title: 'Cargando...',
+        dateLabel: '',
+        timeLabel: '',
+        status: 'Pendiente' as const,
+        customerName: '',
+        customerPhone: '',
+        eventType: '',
+        guests: 0,
+        venue: '',
+        venueCapacity: '',
+        totalQuote: '$0',
+      };
+    }
+
+    const reserva = evento.reservas.find(r => r.vigente);
+    const inicio = new Date(evento.fechaHoraInicio);
+    
+    return {
+      id: evento.id,
+      title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
+      dateLabel: inicio.toLocaleDateString('es-CO'),
+      timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+      status: 'Pendiente' as const,
+      customerName: cliente?.nombreCompleto || 'Cargando...',
+      customerPhone: cliente?.telefono || '',
+      eventType: tipoEvento?.nombre || 'Cargando...',
+      guests: reserva?.numInvitados || 0,
+      venue: salon?.nombre || 'Sin salón',
+      venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
+      totalQuote: '$0',
+    };
+  }, [evento, cliente, salon, tipoEvento, eventId]);
+
+  if (loading) {
+    return (
+      <section className="space-y-8 pb-32">
+        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+          Cargando menú del evento...
+        </div>
+      </section>
+    );
+  }
+
+  if (error && !evento) {
+    return (
+      <section className="space-y-8 pb-32">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-8 pb-32">
@@ -140,6 +215,12 @@ const EventMenuPage: React.FC = () => {
 
       <div className="lg:flex lg:items-start gap-6">
         <div className="flex-1 space-y-6 mb-24">
+          {error && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -230,19 +311,40 @@ const EventMenuPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                <div className="md:col-span-5">
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Selección</label>
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Momento</label>
                   <select
                     className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                    value={selectedOptionName}
-                    onChange={(eventTarget) => setSelectedOptionName(eventTarget.target.value)}
+                    value={newMoment}
+                    onChange={(eventTarget) => setNewMoment(eventTarget.target.value)}
                   >
-                    {menuOptions.map((option) => (
-                      <option key={`${option.moment}-${option.name}`} value={option.name}>
-                        {option.moment} - {option.name}
-                      </option>
-                    ))}
+                    <option value="Entrada">Entrada</option>
+                    <option value="Consomé">Consomé</option>
+                    <option value="Plato fuerte">Plato fuerte</option>
+                    <option value="Postre">Postre</option>
+                    <option value="Bebidas">Bebidas</option>
                   </select>
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Nombre del plato</label>
+                  <input
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    type="text"
+                    value={newName}
+                    placeholder="Ej: Carpaccio de res"
+                    onChange={(eventTarget) => setNewName(eventTarget.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Precio</label>
+                  <input
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    type="number"
+                    min={0}
+                    value={newPrice || ''}
+                    placeholder="0"
+                    onChange={(eventTarget) => setNewPrice(Number(eventTarget.target.value) || 0)}
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-neutral-700 mb-2">Cantidad</label>
@@ -250,25 +352,16 @@ const EventMenuPage: React.FC = () => {
                     className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
                     type="number"
                     min={1}
-                    value={selectedQuantity}
-                    onChange={(eventTarget) => setSelectedQuantity(Number(eventTarget.target.value))}
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">Nota</label>
-                  <input
-                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
-                    type="text"
-                    value={selectedNotes}
-                    placeholder="Opcional"
-                    onChange={(eventTarget) => setSelectedNotes(eventTarget.target.value)}
+                    value={newQuantity}
+                    onChange={(eventTarget) => setNewQuantity(Number(eventTarget.target.value))}
                   />
                 </div>
                 <div className="md:col-span-2">
                   <button
-                    className="w-full rounded-md bg-primary-gold px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary"
+                    className="w-full rounded-md bg-primary-gold px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary disabled:opacity-50"
                     type="button"
                     onClick={addMenuLine}
+                    disabled={!newName.trim() || newPrice <= 0}
                   >
                     Agregar
                   </button>
@@ -342,8 +435,10 @@ const EventMenuPage: React.FC = () => {
             Enviar propuesta por WhatsApp
           </button>
           <button
-            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary sm:flex-none"
+            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary sm:flex-none disabled:opacity-50"
             type="button"
+            onClick={handleSaveMenu}
+            disabled={menuLines.length === 0}
           >
             Guardar menú
           </button>

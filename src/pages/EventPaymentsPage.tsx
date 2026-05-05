@@ -1,8 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
-import { getEventSummaryById } from '@/features/events/data/eventSummary';
+import eventosApi from '@/api/eventos';
+import clientesApi from '@/api/clientes';
+import salonesApi from '@/api/salones';
+import catalogosApi from '@/api/catalogos';
 import pagosApi from '@/api/pagos';
+import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 
 interface PaymentRecord {
   id: string;
@@ -28,25 +32,107 @@ const parseCurrency = (value: string): number => {
 
 const EventPaymentsPage: React.FC = () => {
   const { eventId } = useParams();
-  const event = useMemo(() => getEventSummaryById(eventId), [eventId]);
+  
+  // Estados para datos del API
+  const [evento, setEvento] = useState<EventoResponse | null>(null);
+  const [cliente, setCliente] = useState<ClienteResponse | null>(null);
+  const [salon, setSalon] = useState<SalonResponse | null>(null);
+  const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const totalEventAmount = event.id === 'EVT-041' ? 4230000 : parseCurrency(event.totalQuote);
+  const totalEventAmount = 0; // TODO: Obtener de cotización
 
-  const [payments, setPayments] = useState<PaymentRecord[]>([
-    {
-      id: 'pay-001',
-      date: '11 jun 2025',
-      concept: 'Anticipo inicial',
-      method: 'Transferencia',
-      amount: 846000,
-      registeredBy: 'P. Castro',
-    },
-  ]);
+  // Estado inicial vacío - sin datos hardcodeados
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
 
   const [newAmount, setNewAmount] = useState(0);
   const [newDate, setNewDate] = useState('');
   const [newMethod, setNewMethod] = useState('Transferencia');
   const [newConcept, setNewConcept] = useState('Anticipo');
+
+  // Cargar evento al montar
+  useEffect(() => {
+    if (!eventId) return;
+    
+    let cancelled = false;
+    
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const eventoData = await eventosApi.obtenerPorId(eventId);
+        if (cancelled) return;
+        setEvento(eventoData);
+
+        const reservaActual = eventoData.reservas.find(r => r.vigente);
+        if (!reservaActual) {
+          setError('No hay reserva activa para este evento');
+          setLoading(false);
+          return;
+        }
+
+        // Cargar datos relacionados en paralelo
+        const [clienteData, tipoEventoData, salonData] = await Promise.all([
+          clientesApi.obtenerPorId(eventoData.clienteId),
+          catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
+          salonesApi.obtenerPorId(reservaActual.salonId),
+        ]);
+
+        if (cancelled) return;
+        setCliente(clienteData);
+        setTipoEvento(tipoEventoData);
+        setSalon(salonData);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar evento');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [eventId]);
+
+  // Crear objeto event compatible con EventDetailHeaderTabs
+  const event = useMemo(() => {
+    if (!evento) {
+      return {
+        id: eventId || '',
+        title: 'Cargando...',
+        dateLabel: '',
+        timeLabel: '',
+        status: 'Pendiente' as const,
+        customerName: '',
+        customerPhone: '',
+        eventType: '',
+        guests: 0,
+        venue: '',
+        venueCapacity: '',
+        totalQuote: '$0',
+      };
+    }
+
+    const reserva = evento.reservas.find(r => r.vigente);
+    const inicio = new Date(evento.fechaHoraInicio);
+    
+    return {
+      id: evento.id,
+      title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
+      dateLabel: inicio.toLocaleDateString('es-CO'),
+      timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+      status: 'Pendiente' as const,
+      customerName: cliente?.nombreCompleto || 'Cargando...',
+      customerPhone: cliente?.telefono || '',
+      eventType: tipoEvento?.nombre || 'Cargando...',
+      guests: reserva?.numInvitados || 0,
+      venue: salon?.nombre || 'Sin salón',
+      venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
+      totalQuote: '$0', // TODO: Obtener de cotización
+    };
+  }, [evento, cliente, salon, tipoEvento, eventId]);
 
   const paidAmount = useMemo(
     () => payments.reduce((sum, payment) => sum + payment.amount, 0),
@@ -61,7 +147,7 @@ const EventPaymentsPage: React.FC = () => {
 
   // cotizacionId debe venir del contexto del evento; por ahora se usa un placeholder
   // que se reemplazará cuando EventSummaryPage cargue el evento real del backend.
-  const cotizacionId = (event as { cotizacionId?: string }).cotizacionId ?? '';
+  const cotizacionId = '';
 
   const registerPayment = async () => {
     if (newAmount <= 0 || !newDate || pendingAmount <= 0 || !newConcept.trim()) {
@@ -124,6 +210,26 @@ const EventPaymentsPage: React.FC = () => {
     setNewMethod('Transferencia');
     setNewConcept(pendingAmount - safeAmount <= 0 ? 'Abono final' : 'Anticipo');
   };
+
+  if (loading) {
+    return (
+      <section className="space-y-8 pb-24">
+        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+          Cargando información de pagos...
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-8 pb-24">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-8 pb-24">

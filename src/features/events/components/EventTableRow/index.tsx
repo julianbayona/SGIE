@@ -11,7 +11,7 @@ const EventTableRow: React.FC<EventTableRowProps> = ({ event, onViewEvent }) => 
   return (
     <tr className="hover:bg-stone-50/70 transition-colors">
       <td className="px-6 py-4">
-        <p className="font-bold text-text1 text-sm">#{event.id}</p>
+        <p className="font-bold text-text1 text-sm">#{event.id.slice(0, 8).toUpperCase()}</p>
         <p className="text-xs text-text3">{event.dateLabel}</p>
       </td>
 

@@ -6,7 +6,10 @@ import EventsTable from '@/features/events/components/EventsTable';
 import EventsTablePagination from '@/features/events/components/EventsTablePagination';
 import type { EventRecord, EventStatus, EventsTab } from '@/features/events/types';
 import eventosApi from '@/api/eventos';
-import type { EventoResponse, EstadoEvento } from '@/api/types';
+import clientesApi from '@/api/clientes';
+import salonesApi from '@/api/salones';
+import catalogosApi from '@/api/catalogos';
+import type { EventoResponse, EstadoEvento, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 
 const estadoMap: Record<EstadoEvento, EventStatus> = {
   PENDIENTE: 'Pendiente',
@@ -26,7 +29,12 @@ const nextActionMap: Record<EstadoEvento, string> = {
   CANCELADO: 'Sin acciones pendientes',
 };
 
-function toEventRecord(e: EventoResponse): EventRecord {
+function toEventRecord(
+  e: EventoResponse,
+  clientes: Map<string, ClienteResponse>,
+  salones: Map<string, SalonResponse>,
+  tiposEvento: Map<string, CatalogoBasicoResponse>
+): EventRecord {
   const reservaVigente = e.reservas.find((r) => r.vigente);
   const inicio = new Date(e.fechaHoraInicio);
   const dateLabel = new Intl.DateTimeFormat('es-CO', {
@@ -37,14 +45,27 @@ function toEventRecord(e: EventoResponse): EventRecord {
     minute: '2-digit',
   }).format(inicio);
 
+  const cliente = clientes.get(e.clienteId);
+  const salon = reservaVigente ? salones.get(reservaVigente.salonId) : null;
+  const tipoEvento = tiposEvento.get(e.tipoEventoId);
+
+  // Obtener iniciales del cliente
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  };
+
   return {
-    id: e.id.slice(0, 8).toUpperCase(),
+    id: e.id,
     dateLabel,
-    clientName: e.clienteId, // se enriquece con datos del cliente si se necesita
-    clientDocument: `ID: ${e.clienteId.slice(0, 8)}`,
-    clientInitials: '??',
-    hall: reservaVigente?.salonId ?? 'Sin salón',
-    eventKind: 'Social', // el tipo real viene del catálogo; se puede enriquecer
+    clientName: cliente?.nombreCompleto ?? 'Cliente desconocido',
+    clientDocument: cliente?.cedula ?? `ID: ${e.clienteId.slice(0, 8)}`,
+    clientInitials: cliente ? getInitials(cliente.nombreCompleto) : '??',
+    hall: salon?.nombre ?? 'Sin salón',
+    eventKind: tipoEvento?.nombre ?? 'Social',
     status: estadoMap[e.estado] ?? 'Pendiente',
     isActive: e.estado !== 'CANCELADO',
     nextAction: nextActionMap[e.estado] ?? '',
@@ -64,8 +85,28 @@ const EventsPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await eventosApi.listar();
-        if (!cancelled) setEvents(data.map(toEventRecord));
+
+        // Cargar todos los datos en paralelo
+        const [eventosData, clientesData, salonesData, tiposEventoData] = await Promise.all([
+          eventosApi.listar(),
+          clientesApi.listar(),
+          salonesApi.listar(),
+          catalogosApi.listarTiposEvento(),
+        ]);
+
+        if (cancelled) return;
+
+        // Crear mapas para búsqueda rápida
+        const clientesMap = new Map(clientesData.map(c => [c.id, c]));
+        const salonesMap = new Map(salonesData.map(s => [s.id, s]));
+        const tiposEventoMap = new Map(tiposEventoData.map(t => [t.id, t]));
+
+        // Enriquecer eventos con datos de catálogos
+        const enrichedEvents = eventosData.map(e => 
+          toEventRecord(e, clientesMap, salonesMap, tiposEventoMap)
+        );
+
+        setEvents(enrichedEvents);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Error al cargar eventos.');
       } finally {

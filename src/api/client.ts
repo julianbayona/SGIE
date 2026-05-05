@@ -13,13 +13,21 @@ const apiClient = axios.create({
 // Interceptor de respuesta: normaliza errores del backend
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ message?: string; errors?: Record<string, string> }>) => {
+  (error: AxiosError<{ mensaje?: string; message?: string; errors?: Record<string, string> }>) => {
     const status = error.response?.status;
     const data = error.response?.data;
 
+    // Log en consola para depuración — muestra el cuerpo exacto del error del backend
+    if (error.response) {
+      console.error(`[API ${status}]`, error.config?.url, JSON.stringify(data));
+    }
+
     let message = 'Error inesperado. Intenta de nuevo.';
 
-    if (data?.message) {
+    // El backend devuelve { "mensaje": "...", "timestamp": "..." }
+    if (data?.mensaje) {
+      message = data.mensaje;
+    } else if (data?.message) {
       message = data.message;
     } else if (status === 404) {
       message = 'Recurso no encontrado.';

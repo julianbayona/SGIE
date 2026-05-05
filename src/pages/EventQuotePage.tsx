@@ -1,22 +1,23 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
-import { getEventSummaryById } from '@/features/events/data/eventSummary';
+import eventosApi from '@/api/eventos';
+import cotizacionesApi from '@/api/cotizaciones';
+import clientesApi from '@/api/clientes';
+import salonesApi from '@/api/salones';
+import catalogosApi from '@/api/catalogos';
+import type { EventoResponse, CotizacionResponse, EstadoCotizacion, ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 import type { QuoteStatus } from '@/features/quotes/types';
 
-type PricingMode = 'servicio' | 'unidad';
-
-interface QuoteItem {
-  id: string;
-  source: 'menu' | 'montaje' | 'salon';
-  concept: string;
-  pricingMode: PricingMode;
-  quantity: number;
-  unitBasePrice: number;
-  unitAdjustedPrice: number;
-  notes?: string;
-}
+const estadoMap: Record<EstadoCotizacion, QuoteStatus> = {
+  BORRADOR: 'Borrador',
+  GENERADA: 'Generada',
+  ENVIADA: 'Enviada',
+  ACEPTADA: 'Aceptada',
+  RECHAZADA: 'Rechazada',
+  DESACTUALIZADA: 'Desactualizada',
+};
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('es-CO', {
@@ -28,133 +29,257 @@ const formatCurrency = (value: number): string => {
 
 const EventQuotePage: React.FC = () => {
   const { eventId } = useParams();
-  const event = useMemo(() => getEventSummaryById(eventId), [eventId]);
-  const guests = event.guests || 120;
-
-  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>(() => [
-    {
-      id: 'venue',
-      source: 'salon',
-      concept: 'Alquiler salón principal (4h)',
-      pricingMode: 'servicio',
-      quantity: 1,
-      unitBasePrice: 1200000,
-      unitAdjustedPrice: 1200000,
-    },
-    {
-      id: 'menu-entrada',
-      source: 'menu',
-      concept: 'Menú - Entrada',
-      pricingMode: 'unidad',
-      quantity: guests,
-      unitBasePrice: 25000,
-      unitAdjustedPrice: 25000,
-      notes: 'Carpaccio de res con alcaparras',
-    },
-    {
-      id: 'menu-consome',
-      source: 'menu',
-      concept: 'Menú - Consomé',
-      pricingMode: 'unidad',
-      quantity: guests,
-      unitBasePrice: 8500,
-      unitAdjustedPrice: 8500,
-      notes: 'Crema de espárragos',
-    },
-    {
-      id: 'menu-plato-fuerte',
-      source: 'menu',
-      concept: 'Menú - Plato fuerte',
-      pricingMode: 'unidad',
-      quantity: guests,
-      unitBasePrice: 65000,
-      unitAdjustedPrice: 65000,
-      notes: 'Medallón de lomo en salsa pimienta',
-    },
-    {
-      id: 'menu-postre',
-      source: 'menu',
-      concept: 'Menú - Postre',
-      pricingMode: 'unidad',
-      quantity: guests,
-      unitBasePrice: 12000,
-      unitAdjustedPrice: 12000,
-      notes: 'Mousse de chocolate al 70%',
-    },
-    {
-      id: 'menu-bebidas',
-      source: 'menu',
-      concept: 'Menú - Bebidas',
-      pricingMode: 'unidad',
-      quantity: guests,
-      unitBasePrice: 15000,
-      unitAdjustedPrice: 15000,
-      notes: 'Jugo natural + agua',
-    },
-    {
-      id: 'montaje-base',
-      source: 'montaje',
-      concept: 'Montaje base y textiles',
-      pricingMode: 'servicio',
-      quantity: 1,
-      unitBasePrice: 420000,
-      unitAdjustedPrice: 420000,
-      notes: '12 mesas redondas, sillas Tiffany, mantel lino premium',
-    },
-    {
-      id: 'adicional-tarimas',
-      source: 'montaje',
-      concept: 'Adicional - Tarimas',
-      pricingMode: 'unidad',
-      quantity: 2,
-      unitBasePrice: 180000,
-      unitAdjustedPrice: 180000,
-    },
-    {
-      id: 'adicional-audiovisuales',
-      source: 'montaje',
-      concept: 'Adicional - Audiovisuales',
-      pricingMode: 'servicio',
-      quantity: 1,
-      unitBasePrice: 450000,
-      unitAdjustedPrice: 450000,
-    },
-  ]);
+  
+  const [evento, setEvento] = useState<EventoResponse | null>(null);
+  const [cotizacion, setCotizacion] = useState<CotizacionResponse | null>(null);
+  const [cliente, setCliente] = useState<ClienteResponse | null>(null);
+  const [salon, setSalon] = useState<SalonResponse | null>(null);
+  const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [advancePercent, setAdvancePercent] = useState(20);
-  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('Borrador');
-  const isDraft = quoteStatus === 'Borrador';
 
-  const history: Array<{ id: string; date: string; status: QuoteStatus; active: boolean }> = [
-    { id: 'COT-041-02', date: '10 jun 2025', status: 'Borrador', active: true },
-    { id: 'COT-041-01', date: '2 jun 2025', status: 'Desactualizada', active: false },
-  ];
+  // Cargar evento y cotización
+  useEffect(() => {
+    if (!eventId) return;
+    
+    let cancelled = false;
+    
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const updateAdjustedPrice = (itemId: string, value: number) => {
-    if (!isDraft) {
-      return;
-    }
+        const eventoData = await eventosApi.obtenerPorId(eventId);
+        if (cancelled) return;
+        setEvento(eventoData);
 
-    setQuoteItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, unitAdjustedPrice: Math.max(0, Number.isNaN(value) ? 0 : value) } : item
-      )
-    );
-  };
+        const reserva = eventoData.reservas.find(r => r.vigente);
+        if (!reserva) {
+          setError('No hay reserva activa para este evento');
+          setLoading(false);
+          return;
+        }
 
-  const baseTotal = useMemo(() => {
-    return quoteItems.reduce((sum, item) => sum + item.quantity * item.unitBasePrice, 0);
-  }, [quoteItems]);
+        // Cargar datos relacionados en paralelo
+        const [clienteData, tipoEventoData, salonData] = await Promise.all([
+          clientesApi.obtenerPorId(eventoData.clienteId),
+          catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
+          salonesApi.obtenerPorId(reserva.salonId),
+        ]);
 
-  const adjustedTotal = useMemo(() => {
-    return quoteItems.reduce((sum, item) => sum + item.quantity * item.unitAdjustedPrice, 0);
-  }, [quoteItems]);
+        if (cancelled) return;
+        setCliente(clienteData);
+        setTipoEvento(tipoEventoData);
+        setSalon(salonData);
 
-  const menuItems = useMemo(() => quoteItems.filter((item) => item.source === 'menu'), [quoteItems]);
-  const montageItems = useMemo(() => quoteItems.filter((item) => item.source === 'montaje'), [quoteItems]);
+        // Intentar cargar cotización existente
+        try {
+          // TODO: Implementar endpoint para obtener cotización por reservaId
+          // const cotizacionData = await cotizacionesApi.obtenerPorReserva(reserva.id);
+          // setCotizacion(cotizacionData);
+          
+          // Por ahora, generar cotización si no existe
+          const cotizacionData = await cotizacionesApi.generar(reserva.id, {
+            usuarioId: '00000000-0000-0000-0000-000000000001',
+            descuento: 0,
+            observaciones: null,
+          });
+          
+          if (cancelled) return;
+          setCotizacion(cotizacionData);
+        } catch (cotErr) {
+          console.log('Error al cargar/generar cotización:', cotErr);
+          setError('No se pudo cargar la cotización. Asegúrate de haber configurado el menú y montaje.');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar datos');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [eventId]);
+
+  const isDraft = cotizacion?.estado === 'BORRADOR';
+  const quoteStatus = cotizacion ? estadoMap[cotizacion.estado] : 'Borrador';
+
+  const adjustedTotal = cotizacion?.valorTotal || 0;
+  const baseTotal = cotizacion?.valorSubtotal || 0;
   const deltaTotal = adjustedTotal - baseTotal;
   const advanceValue = Math.round((adjustedTotal * advancePercent) / 100);
   const remainingValue = adjustedTotal - advanceValue;
+
+  // Mapear items de cotización a formato de UI
+  const quoteItems = useMemo(() => {
+    if (!cotizacion) return [];
+    
+    return cotizacion.items.map(item => {
+      // Determinar origen y modo de cobro desde tipoConcepto
+      let source: 'salon' | 'menu' | 'montaje' = 'montaje';
+      let pricingMode: 'servicio' | 'unidad' = 'unidad';
+      
+      if (item.tipoConcepto.includes('SALON') || item.tipoConcepto.includes('ALQUILER')) {
+        source = 'salon';
+        pricingMode = 'servicio';
+      } else if (item.tipoConcepto.includes('MENU') || item.tipoConcepto.includes('PLATO')) {
+        source = 'menu';
+        pricingMode = 'unidad';
+      } else if (item.tipoConcepto.includes('MONTAJE') || item.tipoConcepto.includes('ADICIONAL')) {
+        source = 'montaje';
+        // Los adicionales pueden ser por servicio o por unidad
+        pricingMode = item.cantidad === 1 ? 'servicio' : 'unidad';
+      }
+
+      return {
+        id: item.id,
+        concept: item.descripcion,
+        source,
+        pricingMode,
+        quantity: item.cantidad,
+        unitBasePrice: item.precioBase,
+        unitAdjustedPrice: item.precioOverride ?? item.precioBase,
+        notes: null,
+      };
+    });
+  }, [cotizacion]);
+
+  // Separar items de menú y montaje para el sidebar
+  const menuItems = useMemo(() => {
+    return quoteItems.filter(item => item.source === 'menu');
+  }, [quoteItems]);
+
+  const montageItems = useMemo(() => {
+    return quoteItems.filter(item => item.source === 'montaje');
+  }, [quoteItems]);
+
+  const updateAdjustedPrice = async (itemId: string, nuevoPrecio: number) => {
+    if (!cotizacion || !isDraft) return;
+
+    try {
+      setSaving(true);
+      await cotizacionesApi.actualizarItem(cotizacion.id, itemId, {
+        precioOverride: nuevoPrecio,
+      });
+
+      // Recargar cotización
+      const cotizacionActualizada = await cotizacionesApi.obtenerPorId(cotizacion.id);
+      setCotizacion(cotizacionActualizada);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al ajustar precio');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEnviarCotizacion = async () => {
+    if (!cotizacion) return;
+
+    try {
+      setSaving(true);
+      const cotizacionActualizada = await cotizacionesApi.enviar(cotizacion.id);
+      setCotizacion(cotizacionActualizada);
+      alert('Cotización enviada exitosamente');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al enviar cotización');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAceptarCotizacion = async () => {
+    if (!cotizacion) return;
+
+    try {
+      setSaving(true);
+      const cotizacionActualizada = await cotizacionesApi.aceptar(cotizacion.id);
+      setCotizacion(cotizacionActualizada);
+      alert('Cotización aceptada exitosamente');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al aceptar cotización');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Crear objeto event compatible con EventDetailHeaderTabs
+  const event = useMemo(() => {
+    if (!evento) {
+      return {
+        id: eventId || '',
+        title: 'Cargando...',
+        dateLabel: '',
+        timeLabel: '',
+        status: 'Pendiente' as const,
+        customerName: '',
+        customerPhone: '',
+        eventType: '',
+        guests: 0,
+        venue: '',
+        venueCapacity: '',
+        totalQuote: '$0',
+      };
+    }
+
+    const reserva = evento.reservas.find(r => r.vigente);
+    const inicio = new Date(evento.fechaHoraInicio);
+    
+    return {
+      id: evento.id,
+      title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
+      dateLabel: inicio.toLocaleDateString('es-CO'),
+      timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+      status: 'Pendiente' as const,
+      customerName: cliente?.nombreCompleto || 'Cargando...',
+      customerPhone: cliente?.telefono || '',
+      eventType: tipoEvento?.nombre || 'Cargando...',
+      guests: reserva?.numInvitados || 0,
+      venue: salon?.nombre || 'Sin salón',
+      venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
+      totalQuote: formatCurrency(adjustedTotal),
+    };
+  }, [evento, cliente, salon, tipoEvento, eventId, adjustedTotal]);
+
+  if (loading) {
+    return (
+      <section className="space-y-8 pb-28">
+        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+          Cargando cotización...
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-8 pb-28">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+        <Link
+          to={`/events/${eventId}/menu`}
+          className="inline-flex items-center gap-2 text-primary-gold font-bold hover:underline"
+        >
+          ← Volver a configurar menú
+        </Link>
+      </section>
+    );
+  }
+
+  if (!cotizacion) {
+    return (
+      <section className="space-y-8 pb-28">
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          No hay cotización disponible. Configura el menú y montaje primero.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-8 pb-28">
@@ -338,44 +463,52 @@ const EventQuotePage: React.FC = () => {
 
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Menú solicitado</p>
-              {menuItems.map((item) => (
-                <div key={item.id} className="text-sm">
-                  <p className="font-semibold text-on-surface">{item.concept.replace('Menú - ', '')}</p>
-                  <p className="text-on-surface-variant text-xs">
-                    {item.notes ?? 'Sin detalle'} - {item.quantity} pax
-                  </p>
-                </div>
-              ))}
+              {menuItems.length > 0 ? (
+                menuItems.map((item) => (
+                  <div key={item.id} className="text-sm">
+                    <p className="font-semibold text-on-surface">{item.concept}</p>
+                    <p className="text-on-surface-variant text-xs">
+                      {item.quantity} pax - {formatCurrency(item.unitAdjustedPrice)} c/u
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant">No hay items de menú</p>
+              )}
             </div>
 
             <div className="space-y-2 pt-2 border-t border-outline-variant/20">
               <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Montaje y adicionales</p>
-              {montageItems.map((item) => (
-                <div key={item.id} className="text-sm flex items-center justify-between gap-3">
-                  <p className="font-semibold text-on-surface">{item.concept.replace('Adicional - ', '')}</p>
-                  <p className="text-on-surface-variant text-xs">
-                    {item.pricingMode === 'unidad' ? `x${item.quantity}` : '1 servicio'}
-                  </p>
-                </div>
-              ))}
+              {montageItems.length > 0 ? (
+                montageItems.map((item) => (
+                  <div key={item.id} className="text-sm flex items-center justify-between gap-3">
+                    <p className="font-semibold text-on-surface">{item.concept}</p>
+                    <p className="text-on-surface-variant text-xs">
+                      {item.pricingMode === 'unidad' ? `x${item.quantity}` : '1 servicio'}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant">No hay items de montaje</p>
+              )}
             </div>
           </div>
 
           <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
             <h4 className="font-display font-bold text-lg text-on-surface">Historial cotizaciones</h4>
             <div className="space-y-3">
-              {history.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-on-surface">#{item.id}</p>
-                      {item.active ? <span className="text-[10px] font-bold text-gold">Activa</span> : null}
-                    </div>
-                    <p className="text-xs text-on-surface-variant">{item.date}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-on-surface">#{cotizacion.id.slice(0, 8).toUpperCase()}</p>
+                    <span className="text-[10px] font-bold text-gold">Activa</span>
                   </div>
-                  <StatusBadge type="quote" status={item.status} />
+                  <p className="text-xs text-on-surface-variant">
+                    {new Date().toLocaleDateString('es-CO')}
+                  </p>
                 </div>
-              ))}
+                <StatusBadge type="quote" status={quoteStatus} />
+              </div>
             </div>
           </div>
         </aside>
@@ -390,22 +523,25 @@ const EventQuotePage: React.FC = () => {
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
           <button
-            className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors rounded-md px-5 py-2.5 text-sm font-semibold"
+            className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors rounded-md px-5 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             type="button"
+            disabled={saving}
           >
             Guardar borrador
           </button>
           <button
-            className="flex-1 sm:flex-none border border-green-text/40 text-green-text hover:bg-green-bg transition-colors rounded-md px-5 py-2.5 text-sm font-semibold"
+            className="flex-1 sm:flex-none border border-green-text/40 text-green-text hover:bg-green-bg transition-colors rounded-md px-5 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             type="button"
-            onClick={() => setQuoteStatus('Enviada')}
+            onClick={handleEnviarCotizacion}
+            disabled={saving || !isDraft}
           >
             Enviar por WhatsApp
           </button>
           <button
-            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-6 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors"
+            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-6 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             type="button"
-            onClick={() => setQuoteStatus('Aceptada')}
+            onClick={handleAceptarCotizacion}
+            disabled={saving || cotizacion?.estado !== 'ENVIADA'}
           >
             Registrar aceptación
           </button>

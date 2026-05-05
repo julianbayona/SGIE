@@ -1,26 +1,138 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getEventSummaryById } from '@/features/events/data/eventSummary';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
+import eventosApi from '@/api/eventos';
+import clientesApi from '@/api/clientes';
+import salonesApi from '@/api/salones';
+import catalogosApi from '@/api/catalogos';
+import type { EventoResponse, ClienteResponse, SalonResponse, CatalogoBasicoResponse, EstadoEvento } from '@/api/types';
+
+const estadoLabels: Record<EstadoEvento, string> = {
+  PENDIENTE: 'Pendiente',
+  COTIZACION_ENVIADA: 'Cotización enviada',
+  COTIZACION_APROBADA: 'Cotización aprobada',
+  PENDIENTE_ANTICIPO: 'Pendiente anticipo',
+  CONFIRMADO: 'Confirmado',
+  CANCELADO: 'Cancelado',
+};
 
 const lifecycleSteps = [
-  'Pendiente',
-  'Esperando selección de menú',
-  'Cotización enviada',
-  'Cotización aprobada',
-  'Pendiente anticipo',
-  'Confirmado',
+  'PENDIENTE',
+  'COTIZACION_ENVIADA',
+  'COTIZACION_APROBADA',
+  'PENDIENTE_ANTICIPO',
+  'CONFIRMADO',
 ];
 
 const EventSummaryPage: React.FC = () => {
   const navigate = useNavigate();
   const { eventId } = useParams();
 
-  const event = useMemo(() => {
-    return getEventSummaryById(eventId);
+  const [evento, setEvento] = useState<EventoResponse | null>(null);
+  const [cliente, setCliente] = useState<ClienteResponse | null>(null);
+  const [salon, setSalon] = useState<SalonResponse | null>(null);
+  const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!eventId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Cargar evento
+        const eventoData = await eventosApi.obtenerPorId(eventId);
+        if (cancelled) return;
+        setEvento(eventoData);
+
+        // Cargar datos relacionados en paralelo
+        const reservaActual = eventoData.reservas.find(r => r.vigente);
+        
+        const [clienteData, tipoEventoData, salonData] = await Promise.all([
+          clientesApi.obtenerPorId(eventoData.clienteId),
+          catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
+          reservaActual ? salonesApi.obtenerPorId(reservaActual.salonId) : Promise.resolve(null),
+        ]);
+
+        if (cancelled) return;
+        setCliente(clienteData);
+        setTipoEvento(tipoEventoData);
+        setSalon(salonData);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar evento');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [eventId]);
 
-  const currentStepIndex = lifecycleSteps.indexOf(event.status);
+  const event = useMemo(() => {
+    if (!evento) {
+      return {
+        id: eventId || '',
+        title: 'Cargando...',
+        dateLabel: '',
+        timeLabel: '',
+        status: 'Pendiente' as const,
+        customerName: '',
+        customerPhone: '',
+        eventType: '',
+        guests: 0,
+        venue: '',
+        venueCapacity: '',
+        totalQuote: '$0',
+      };
+    }
+
+    const reserva = evento.reservas.find(r => r.vigente);
+    const inicio = new Date(evento.fechaHoraInicio);
+    
+    return {
+      id: evento.id,
+      title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
+      dateLabel: inicio.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }),
+      timeLabel: `${inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} - ${new Date(evento.fechaHoraFin).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`,
+      status: estadoLabels[evento.estado] as any,
+      customerName: cliente?.nombreCompleto || 'Cargando...',
+      customerPhone: cliente?.telefono || '',
+      eventType: tipoEvento?.nombre || 'Cargando...',
+      guests: reserva?.numInvitados || 0,
+      venue: salon?.nombre || 'Sin salón',
+      venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
+      totalQuote: '$0', // TODO: Obtener de cotización cuando esté disponible
+    };
+  }, [evento, cliente, salon, tipoEvento, eventId]);
+
+  const currentStepIndex = evento ? lifecycleSteps.indexOf(evento.estado) : -1;
+
+  if (loading) {
+    return (
+      <section className="space-y-8 pb-28">
+        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+          Cargando información del evento...
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-8 pb-28">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-8 pb-28">
@@ -30,7 +142,10 @@ const EventSummaryPage: React.FC = () => {
         <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm border border-border">
           <span className="text-xs text-stone-500 uppercase tracking-wider font-bold">Cliente principal</span>
           <p className="text-lg font-display font-bold mt-2">{event.customerName}</p>
-          <p className="text-sm text-on-surface-variant mt-1">{event.customerPhone}</p>
+          <p className="text-sm text-on-surface-variant mt-1">{event.customerPhone || 'Sin teléfono'}</p>
+          {cliente && (
+            <p className="text-xs text-on-surface-variant mt-1">{cliente.correo}</p>
+          )}
         </div>
 
         <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm border border-border">
@@ -48,7 +163,7 @@ const EventSummaryPage: React.FC = () => {
         <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm border border-border">
           <span className="text-xs text-stone-500 uppercase tracking-wider font-bold">Total cotizado</span>
           <p className="text-lg font-display font-bold mt-2">{event.totalQuote}</p>
-          <p className="text-sm text-on-surface-variant mt-1">IVA incluido si aplica</p>
+          <p className="text-sm text-on-surface-variant mt-1">Pendiente cotización</p>
         </div>
       </div>
 
@@ -90,7 +205,7 @@ const EventSummaryPage: React.FC = () => {
                     {isCurrent ? <div className="w-2.5 h-2.5 rounded-full bg-primary-gold"></div> : null}
                   </div>
                   <span className={`text-[11px] font-bold leading-tight ${isCurrent ? 'text-primary-gold' : 'text-on-surface-variant'}`}>
-                    {step}
+                    {estadoLabels[step as EstadoEvento]}
                   </span>
                 </div>
               );

@@ -43,6 +43,32 @@ const catalogosApi = {
         .then((r) => r.data);
     },
   },
+
+  // Métodos de conveniencia
+  listarTiposEvento(): Promise<CatalogoBasicoResponse[]> {
+    return this.tiposEvento.listar();
+  },
+  listarTiposComida(): Promise<CatalogoBasicoResponse[]> {
+    return this.tiposComida.listar();
+  },
+  listarTiposMesa(): Promise<CatalogoBasicoResponse[]> {
+    return this.tiposMesa.listar();
+  },
+  listarTiposSilla(): Promise<CatalogoBasicoResponse[]> {
+    return this.tiposSilla.listar();
+  },
+  listarColores(): Promise<CatalogoBasicoResponse[]> {
+    return this.colores.listar();
+  },
+  listarManteles(): Promise<CatalogoBasicoResponse[]> {
+    return this.manteles.listar();
+  },
+  listarSobremanteles(): Promise<CatalogoBasicoResponse[]> {
+    return this.sobremanteles.listar();
+  },
+  listarTiposAdicional(): Promise<TipoAdicionalResponse[]> {
+    return this.tiposAdicional.listar();
+  },
 };
 
 export default catalogosApi;

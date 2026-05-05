@@ -73,7 +73,13 @@ const EventRequestPage: React.FC = () => {
 
     const inicio = new Date(`${fecha}T${horaInicio}:00`);
     const fin = new Date(inicio.getTime() + duracion * 60 * 60 * 1000);
-    const toLocalISO = (d: Date) => d.toISOString().slice(0, 19);
+
+    // Formatea como LocalDateTime sin zona (lo que espera Spring)
+    // NO usar toISOString() porque convierte a UTC
+    const toLocalISO = (d: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
 
     try {
       setSaving(true);

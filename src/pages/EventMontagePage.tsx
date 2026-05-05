@@ -1,7 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
-import { getEventSummaryById } from '@/features/events/data/eventSummary';
 import { useParams } from 'react-router-dom';
+import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
+import eventosApi from '@/api/eventos';
+import montajesApi from '@/api/montajes';
+import catalogosApi from '@/api/catalogos';
+import clientesApi from '@/api/clientes';
+import salonesApi from '@/api/salones';
+import type { 
+  EventoResponse, 
+  CatalogoBasicoResponse, 
+  TipoAdicionalResponse,
+  MontajeResponse,
+  ClienteResponse,
+  SalonResponse
+} from '@/api/types';
 
 interface InfrastructureItem {
   id: string;
@@ -11,59 +23,13 @@ interface InfrastructureItem {
 
 interface AdditionalItem {
   id: string;
+  tipoAdicionalId: string;
   name: string;
-  billingType: 'servicio' | 'unidad';
+  billingType: 'POR_SERVICIO' | 'POR_UNIDAD';
   selected: boolean;
   quantity: number;
   basePrice: number;
 }
-
-interface FabricColor {
-  id: string;
-  name: string;
-  hex: string;
-}
-
-const tableTypes = ['Redonda', 'Rectangular', 'Imperial'];
-const chairTypes = ['Tiffany', 'Crossback', 'Napoleón'];
-const clothTypes = ['Lino premium', 'Algodón clásico', 'Raso ceremonial'];
-const topClothTypes = ['Organza', 'Encaje', 'Satinado'];
-
-const clothColorPalette: FabricColor[] = [
-  { id: 'marfil-real', name: 'Marfil real', hex: '#EFE4CE' },
-  { id: 'blanco-perla', name: 'Blanco perla', hex: '#F4F4EF' },
-  { id: 'champana-claro', name: 'Champana claro', hex: '#E9D8B4' },
-  { id: 'verde-oliva', name: 'Verde oliva', hex: '#7D8461' },
-  { id: 'gris-piedra', name: 'Gris piedra', hex: '#B5B1A8' },
-];
-
-const topClothPalette: FabricColor[] = [
-  { id: 'dorado-viejo', name: 'Dorado viejo', hex: '#B08A3F' },
-  { id: 'champana-satin', name: 'Champana satinado', hex: '#D6B679' },
-  { id: 'marfil-suave', name: 'Marfil suave', hex: '#F3E9D3' },
-  { id: 'verde-salvia', name: 'Verde salvia', hex: '#95A28A' },
-  { id: 'grafito', name: 'Grafito', hex: '#5D6165' },
-];
-
-const clothColorByType: Record<string, string[]> = {
-  'Lino premium': ['marfil-real', 'blanco-perla', 'gris-piedra'],
-  'Algodón clásico': ['blanco-perla', 'champana-claro', 'verde-oliva'],
-  'Raso ceremonial': ['champana-claro', 'marfil-real', 'gris-piedra'],
-};
-
-const topColorByCloth: Record<string, string[]> = {
-  'marfil-real': ['dorado-viejo', 'champana-satin', 'verde-salvia'],
-  'blanco-perla': ['dorado-viejo', 'grafito', 'verde-salvia'],
-  'champana-claro': ['marfil-suave', 'dorado-viejo', 'grafito'],
-  'verde-oliva': ['champana-satin', 'marfil-suave', 'dorado-viejo'],
-  'gris-piedra': ['marfil-suave', 'champana-satin', 'dorado-viejo'],
-};
-
-const topColorByTopType: Record<string, string[]> = {
-  Organza: ['dorado-viejo', 'champana-satin', 'marfil-suave'],
-  Encaje: ['marfil-suave', 'verde-salvia', 'champana-satin'],
-  Satinado: ['grafito', 'dorado-viejo', 'champana-satin'],
-};
 
 const copCurrencyFormatter = new Intl.NumberFormat('es-CO', {
   style: 'currency',
@@ -73,17 +39,32 @@ const copCurrencyFormatter = new Intl.NumberFormat('es-CO', {
 
 const EventMontagePage: React.FC = () => {
   const { eventId } = useParams();
-  const event = useMemo(() => getEventSummaryById(eventId), [eventId]);
+  
+  // Estados para datos del API
+  const [evento, setEvento] = useState<EventoResponse | null>(null);
+  const [cliente, setCliente] = useState<ClienteResponse | null>(null);
+  const [salon, setSalon] = useState<SalonResponse | null>(null);
+  const [tipoEvento, setTipoEvento] = useState<CatalogoBasicoResponse | null>(null);
+  const [tiposMesa, setTiposMesa] = useState<CatalogoBasicoResponse[]>([]);
+  const [tiposSilla, setTiposSilla] = useState<CatalogoBasicoResponse[]>([]);
+  const [manteles, setManteles] = useState<CatalogoBasicoResponse[]>([]);
+  const [sobremanteles, setSobremanteles] = useState<CatalogoBasicoResponse[]>([]);
+  const [colores, setColores] = useState<CatalogoBasicoResponse[]>([]);
+  const [tiposAdicional, setTiposAdicional] = useState<TipoAdicionalResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [tableType, setTableType] = useState('Redonda');
-  const [chairType, setChairType] = useState('Tiffany');
+  // Estados del formulario
+  const [tableType, setTableType] = useState('');
+  const [chairType, setChairType] = useState('');
   const [peoplePerTable, setPeoplePerTable] = useState(10);
   const [tableCount, setTableCount] = useState(12);
-  const [clothType, setClothType] = useState('Lino premium');
-  const [clothColor, setClothColor] = useState('marfil-real');
-  const [topClothType, setTopClothType] = useState('Organza');
-  const [topClothColor, setTopClothColor] = useState('dorado-viejo');
-  const [dinnerware, setDinnerware] = useState('Vajilla blanca con ribete dorado');
+  const [clothType, setClothType] = useState('');
+  const [clothColor, setClothColor] = useState('');
+  const [topClothType, setTopClothType] = useState('');
+  const [topClothColor, setTopClothColor] = useState('');
+  const [dinnerware, setDinnerware] = useState(false);
   const [fajonEnabled, setFajonEnabled] = useState(true);
 
   const [infrastructure, setInfrastructure] = useState<InfrastructureItem[]>([
@@ -93,48 +74,161 @@ const EventMontagePage: React.FC = () => {
     { id: 'espacio_bombas', name: 'Espacio bombas', selected: false },
   ]);
 
-  const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>([
-    {
-      id: 'tarimas',
-      name: 'Tarimas',
-      billingType: 'unidad',
-      selected: false,
-      quantity: 1,
-      basePrice: 180000,
-    },
-    {
-      id: 'audiovisuales',
-      name: 'Audiovisuales',
-      billingType: 'servicio',
-      selected: false,
-      quantity: 1,
-      basePrice: 450000,
-    },
-    {
-      id: 'telas',
-      name: 'Telas',
-      billingType: 'unidad',
-      selected: false,
-      quantity: 1,
-      basePrice: 120000,
-    },
-    {
-      id: 'luces_arbol',
-      name: 'Luces árbol',
-      billingType: 'servicio',
-      selected: false,
-      quantity: 1,
-      basePrice: 260000,
-    },
-    {
-      id: 'luces_techo',
-      name: 'Luces techo',
-      billingType: 'servicio',
-      selected: false,
-      quantity: 1,
-      basePrice: 300000,
-    },
-  ]);
+  const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>([]);
+
+  // Cargar datos del API al montar
+  useEffect(() => {
+    if (!eventId) return;
+    
+    let cancelled = false;
+    
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Cargar evento y catálogos en paralelo
+        const [
+          eventoData,
+          mesasData,
+          sillasData,
+          mantelesData,
+          sobremantelesData,
+          coloresData,
+          adicionalesData
+        ] = await Promise.all([
+          eventosApi.obtenerPorId(eventId),
+          catalogosApi.tiposMesa.listar(),
+          catalogosApi.tiposSilla.listar(),
+          catalogosApi.manteles.listar(),
+          catalogosApi.sobremanteles.listar(),
+          catalogosApi.colores.listar(),
+          catalogosApi.tiposAdicional.listar(),
+        ]);
+
+        if (cancelled) return;
+
+        setEvento(eventoData);
+        setTiposMesa(mesasData);
+        setTiposSilla(sillasData);
+        setManteles(mantelesData);
+        setSobremanteles(sobremantelesData);
+        setColores(coloresData);
+        setTiposAdicional(adicionalesData);
+
+        const reservaActual = eventoData.reservas.find(r => r.vigente);
+        if (!reservaActual) {
+          setError('No hay reserva activa para este evento');
+          setLoading(false);
+          return;
+        }
+
+        // Cargar datos relacionados del evento
+        const [clienteData, tipoEventoData, salonData] = await Promise.all([
+          clientesApi.obtenerPorId(eventoData.clienteId),
+          catalogosApi.tiposEvento.obtenerPorId(eventoData.tipoEventoId),
+          salonesApi.obtenerPorId(reservaActual.salonId),
+        ]);
+
+        if (cancelled) return;
+        setCliente(clienteData);
+        setTipoEvento(tipoEventoData);
+        setSalon(salonData);
+
+        if (cancelled) return;
+
+        setEvento(eventoData);
+        
+        const mesasActivas = mesasData.filter(m => m.activo);
+        const sillasActivas = sillasData.filter(s => s.activo);
+        const mantelesActivos = mantelesData.filter(m => m.activo);
+        const sobremantelesActivos = sobremantelesData.filter(s => s.activo);
+        const coloresActivos = coloresData.filter(c => c.activo);
+        const adicionalesActivos = adicionalesData.filter(a => a.activo);
+
+        setTiposMesa(mesasActivas);
+        setTiposSilla(sillasActivas);
+        setManteles(mantelesActivos);
+        setSobremanteles(sobremantelesActivos);
+        setColores(coloresActivos);
+        setTiposAdicional(adicionalesActivos);
+
+        // Inicializar valores por defecto
+        if (mesasActivas.length > 0) setTableType(mesasActivas[0]!.id);
+        if (sillasActivas.length > 0) setChairType(sillasActivas[0]!.id);
+        if (mantelesActivos.length > 0) setClothType(mantelesActivos[0]!.id);
+        if (coloresActivos.length > 0) setClothColor(coloresActivos[0]!.id);
+        if (sobremantelesActivos.length > 0) setTopClothType(sobremantelesActivos[0]!.id);
+        if (coloresActivos.length > 0) setTopClothColor(coloresActivos[0]!.id);
+
+        // Convertir adicionales a formato del formulario
+        const adicionalesFormato: AdditionalItem[] = adicionalesActivos.map(a => ({
+          id: `adicional-${a.id}`,
+          tipoAdicionalId: a.id,
+          name: a.nombre,
+          billingType: a.modoCobro,
+          selected: false,
+          quantity: 1,
+          basePrice: Number(a.precioBase),
+        }));
+        setAdditionalItems(adicionalesFormato);
+
+        // Intentar cargar montaje existente
+        const reserva = eventoData.reservas.find(r => r.vigente);
+        if (reserva) {
+          try {
+            const montaje = await montajesApi.obtener(reserva.reservaRaizId);
+            if (cancelled) return;
+
+            // Poblar formulario con datos existentes
+            if (montaje.mesas.length > 0) {
+              const mesa = montaje.mesas[0];
+              setTableType(mesa.tipoMesaId);
+              setChairType(mesa.tipoSillaId);
+              setPeoplePerTable(mesa.sillaPorMesa);
+              setTableCount(mesa.cantidadMesas);
+              if (mesa.mantelId) setClothType(mesa.mantelId);
+              if (mesa.sobremantelId) setTopClothType(mesa.sobremantelId);
+              setDinnerware(mesa.vajilla);
+              setFajonEnabled(mesa.fajon);
+            }
+
+            // Poblar infraestructura
+            setInfrastructure([
+              { id: 'mesa_ponque', name: 'Mesa ponque', selected: montaje.infraestructura.mesaPonque },
+              { id: 'mesa_regalos', name: 'Mesa regalos', selected: montaje.infraestructura.mesaRegalos },
+              { id: 'espacio_musicos', name: 'Espacio músicos', selected: montaje.infraestructura.espacioMusicos },
+              { id: 'espacio_bombas', name: 'Espacio bombas', selected: montaje.infraestructura.estanteBombas },
+            ]);
+
+            // Poblar adicionales seleccionados
+            setAdditionalItems(prev => prev.map(item => {
+              const adicionalExistente = montaje.adicionales.find(a => a.tipoAdicionalId === item.tipoAdicionalId);
+              if (adicionalExistente) {
+                return {
+                  ...item,
+                  selected: true,
+                  quantity: adicionalExistente.cantidad,
+                };
+              }
+              return item;
+            }));
+          } catch (montajeErr) {
+            // No hay montaje configurado aún, continuar con valores por defecto
+            console.log('No hay montaje configurado aún');
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar datos');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [eventId]);
 
   const updateInfrastructureSelection = (itemId: string, checked: boolean) => {
     setInfrastructure((prev) =>
@@ -151,7 +245,7 @@ const EventMontagePage: React.FC = () => {
   const updateAdditionalQuantity = (itemId: string, quantity: number) => {
     setAdditionalItems((prev) =>
       prev.map((item) => {
-        if (item.id !== itemId || item.billingType !== 'unidad') {
+        if (item.id !== itemId || item.billingType !== 'POR_UNIDAD') {
           return item;
         }
 
@@ -160,33 +254,103 @@ const EventMontagePage: React.FC = () => {
     );
   };
 
+  // Función para guardar montaje
+  const handleGuardarMontaje = async () => {
+    if (!evento) {
+      setError('No hay evento cargado');
+      return;
+    }
+
+    const reserva = evento.reservas.find(r => r.vigente);
+    if (!reserva) {
+      setError('No hay reserva activa para este evento');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      await montajesApi.configurar(reserva.reservaRaizId, {
+        usuarioId: '00000000-0000-0000-0000-000000000001', // TODO: Usuario autenticado
+        observaciones: null,
+        mesas: [{
+          tipoMesaId: tableType,
+          tipoSillaId: chairType,
+          sillaPorMesa: peoplePerTable,
+          cantidadMesas: tableCount,
+          mantelId: clothType || undefined,
+          sobremantelId: topClothType || undefined,
+          vajilla: dinnerware,
+          fajon: fajonEnabled,
+        }],
+        infraestructura: {
+          mesaPonque: infrastructure.find(i => i.id === 'mesa_ponque')?.selected || false,
+          mesaRegalos: infrastructure.find(i => i.id === 'mesa_regalos')?.selected || false,
+          espacioMusicos: infrastructure.find(i => i.id === 'espacio_musicos')?.selected || false,
+          estanteBombas: infrastructure.find(i => i.id === 'espacio_bombas')?.selected || false,
+        },
+        adicionales: selectedAdditionalItems.map(item => ({
+          tipoAdicionalId: item.tipoAdicionalId,
+          cantidad: item.quantity,
+        })),
+      });
+
+      alert('Montaje guardado exitosamente');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar montaje');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Crear objeto event compatible con EventDetailHeaderTabs
+  const event = useMemo(() => {
+    if (!evento) {
+      return {
+        id: eventId || '',
+        title: 'Cargando...',
+        dateLabel: '',
+        timeLabel: '',
+        status: 'Pendiente' as const,
+        customerName: '',
+        customerPhone: '',
+        eventType: '',
+        guests: 0,
+        venue: '',
+        venueCapacity: '',
+        totalQuote: '$0',
+      };
+    }
+
+    const reserva = evento.reservas.find(r => r.vigente);
+    const inicio = new Date(evento.fechaHoraInicio);
+    
+    return {
+      id: evento.id,
+      title: `${tipoEvento?.nombre || 'Evento'} - ${cliente?.nombreCompleto || 'Cliente'}`,
+      dateLabel: inicio.toLocaleDateString('es-CO'),
+      timeLabel: inicio.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+      status: 'Pendiente' as const,
+      customerName: cliente?.nombreCompleto || 'Cargando...',
+      customerPhone: cliente?.telefono || '',
+      eventType: tipoEvento?.nombre || 'Cargando...',
+      guests: reserva?.numInvitados || 0,
+      venue: salon?.nombre || 'Sin salón',
+      venueCapacity: salon ? `Capacidad: ${salon.capacidad} pax` : '',
+      totalQuote: '$0',
+    };
+  }, [evento, cliente, salon, tipoEvento, eventId]);
+
   const selectedClothColor = useMemo(
-    () => clothColorPalette.find((color) => color.id === clothColor),
-    [clothColor]
+    () => colores.find((color) => color.id === clothColor),
+    [clothColor, colores]
   );
 
   const selectedTopClothColor = useMemo(
-    () => topClothPalette.find((color) => color.id === topClothColor),
-    [topClothColor]
+    () => colores.find((color) => color.id === topClothColor),
+    [topClothColor, colores]
   );
-
-  const clothColorOptions = useMemo(() => {
-    const allowedIds = clothColorByType[clothType] ?? [];
-
-    return allowedIds
-      .map((colorId) => clothColorPalette.find((color) => color.id === colorId))
-      .filter((color): color is FabricColor => Boolean(color));
-  }, [clothType]);
-
-  const topClothOptions = useMemo(() => {
-    const allowedByCloth = topColorByCloth[clothColor] ?? [];
-    const allowedByTopType = topColorByTopType[topClothType] ?? [];
-    const allowedIds = allowedByCloth.filter((id) => allowedByTopType.includes(id));
-
-    return allowedIds
-      .map((colorId) => topClothPalette.find((color) => color.id === colorId))
-      .filter((color): color is FabricColor => Boolean(color));
-  }, [clothColor, topClothType]);
 
   const selectedInfrastructureItems = useMemo(
     () => infrastructure.filter((item) => item.selected),
@@ -200,30 +364,30 @@ const EventMontagePage: React.FC = () => {
 
   const additionalTotal = useMemo(() => {
     return selectedAdditionalItems.reduce((sum, item) => {
-      const lineTotal = item.billingType === 'unidad' ? item.quantity * item.basePrice : item.basePrice;
+      const lineTotal = item.billingType === 'POR_UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
       return sum + lineTotal;
     }, 0);
   }, [selectedAdditionalItems]);
 
-  useEffect(() => {
-    const allowedIds = clothColorByType[clothType] ?? [];
-    const firstAllowed = allowedIds[0];
+  if (loading) {
+    return (
+      <section className="space-y-10 pb-32">
+        <div className="flex items-center justify-center py-16 text-on-surface-variant">
+          Cargando configuración de montaje...
+        </div>
+      </section>
+    );
+  }
 
-    if (firstAllowed && !allowedIds.includes(clothColor)) {
-      setClothColor(firstAllowed);
-    }
-  }, [clothType, clothColor]);
-
-  useEffect(() => {
-    const allowedByCloth = topColorByCloth[clothColor] ?? [];
-    const allowedByTopType = topColorByTopType[topClothType] ?? [];
-    const allowedIds = allowedByCloth.filter((id) => allowedByTopType.includes(id));
-    const firstAllowed = allowedIds[0];
-
-    if (firstAllowed && !allowedIds.includes(topClothColor)) {
-      setTopClothColor(firstAllowed);
-    }
-  }, [clothColor, topClothType, topClothColor]);
+  if (error && !evento) {
+    return (
+      <section className="space-y-10 pb-32">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-10 pb-32">
@@ -257,10 +421,12 @@ const EventMontagePage: React.FC = () => {
                     className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                     value={tableType}
                     onChange={(eventTarget) => setTableType(eventTarget.target.value)}
+                    disabled={tiposMesa.length === 0}
                   >
-                    {tableTypes.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+                    {tiposMesa.length === 0 && <option value="">Cargando...</option>}
+                    {tiposMesa.map((tipo) => (
+                      <option key={tipo.id} value={tipo.id}>
+                        {tipo.nombre}
                       </option>
                     ))}
                   </select>
@@ -272,10 +438,12 @@ const EventMontagePage: React.FC = () => {
                     className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                     value={chairType}
                     onChange={(eventTarget) => setChairType(eventTarget.target.value)}
+                    disabled={tiposSilla.length === 0}
                   >
-                    {chairTypes.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+                    {tiposSilla.length === 0 && <option value="">Cargando...</option>}
+                    {tiposSilla.map((tipo) => (
+                      <option key={tipo.id} value={tipo.id}>
+                        {tipo.nombre}
                       </option>
                     ))}
                   </select>
@@ -305,13 +473,14 @@ const EventMontagePage: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-2">Vajilla</label>
-                  <input
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
-                    type="text"
-                    value={dinnerware}
-                    onChange={(eventTarget) => setDinnerware(eventTarget.target.value)}
-                    placeholder="Descripcion de vajilla"
-                  />
+                  <select
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
+                    value={dinnerware ? 'true' : 'false'}
+                    onChange={(eventTarget) => setDinnerware(eventTarget.target.value === 'true')}
+                  >
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                  </select>
                 </div>
 
                 <div>
@@ -335,10 +504,12 @@ const EventMontagePage: React.FC = () => {
                         className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                         value={clothType}
                         onChange={(eventTarget) => setClothType(eventTarget.target.value)}
+                        disabled={manteles.length === 0}
                       >
-                        {clothTypes.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
+                        {manteles.length === 0 && <option value="">Cargando...</option>}
+                        {manteles.map((mantel) => (
+                          <option key={mantel.id} value={mantel.id}>
+                            {mantel.nombre}
                           </option>
                         ))}
                       </select>
@@ -347,20 +518,18 @@ const EventMontagePage: React.FC = () => {
                         className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                         value={clothColor}
                         onChange={(eventTarget) => setClothColor(eventTarget.target.value)}
+                        disabled={colores.length === 0}
                       >
-                        {clothColorOptions.map((color) => (
+                        {colores.length === 0 && <option value="">Cargando...</option>}
+                        {colores.map((color) => (
                           <option key={color.id} value={color.id}>
-                            {color.name}
+                            {color.nombre}
                           </option>
                         ))}
                       </select>
 
                       <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                        <span
-                          className="w-4 h-4 rounded-full border border-black/10"
-                          style={{ backgroundColor: selectedClothColor?.hex ?? '#FFFFFF' }}
-                        ></span>
-                        <span>Color actual: {selectedClothColor?.name ?? clothColor}</span>
+                        <span className="text-sm">Color: {selectedClothColor?.nombre || 'Sin seleccionar'}</span>
                       </div>
                     </div>
 
@@ -370,10 +539,12 @@ const EventMontagePage: React.FC = () => {
                         className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                         value={topClothType}
                         onChange={(eventTarget) => setTopClothType(eventTarget.target.value)}
+                        disabled={sobremanteles.length === 0}
                       >
-                        {topClothTypes.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
+                        {sobremanteles.length === 0 && <option value="">Cargando...</option>}
+                        {sobremanteles.map((sobremantel) => (
+                          <option key={sobremantel.id} value={sobremantel.id}>
+                            {sobremantel.nombre}
                           </option>
                         ))}
                       </select>
@@ -382,20 +553,18 @@ const EventMontagePage: React.FC = () => {
                         className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm focus:ring-1 focus:ring-primary-gold"
                         value={topClothColor}
                         onChange={(eventTarget) => setTopClothColor(eventTarget.target.value)}
+                        disabled={colores.length === 0}
                       >
-                        {topClothOptions.map((color) => (
+                        {colores.length === 0 && <option value="">Cargando...</option>}
+                        {colores.map((color) => (
                           <option key={color.id} value={color.id}>
-                            {color.name}
+                            {color.nombre}
                           </option>
                         ))}
                       </select>
 
                       <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                        <span
-                          className="w-4 h-4 rounded-full border border-black/10"
-                          style={{ backgroundColor: selectedTopClothColor?.hex ?? '#FFFFFF' }}
-                        ></span>
-                        <span>Color actual: {selectedTopClothColor?.name ?? topClothColor}</span>
+                        <span className="text-sm">Color: {selectedTopClothColor?.nombre || 'Sin seleccionar'}</span>
                       </div>
                     </div>
                   </div>
@@ -452,10 +621,10 @@ const EventMontagePage: React.FC = () => {
                       <tr key={item.id}>
                         <td className="px-5 py-3 font-semibold text-on-surface">{item.name}</td>
                         <td className="px-5 py-3 text-sm text-on-surface-variant">
-                          {item.billingType === 'servicio' ? 'Por servicio' : 'Por unidad'}
+                          {item.billingType === 'POR_SERVICIO' ? 'Por servicio' : 'Por unidad'}
                         </td>
                         <td className="px-5 py-3 text-right">
-                          {item.billingType === 'unidad' ? (
+                          {item.billingType === 'POR_UNIDAD' ? (
                             <input
                               className="w-20 bg-surface-container-low border border-outline-variant/40 rounded-md px-2 py-1.5 text-sm text-right"
                               type="number"
@@ -506,23 +675,25 @@ const EventMontagePage: React.FC = () => {
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Tipo mesa / silla</span>
-                <span className="font-semibold text-on-surface text-right">{tableType} · {chairType}</span>
+                <span className="font-semibold text-on-surface text-right">
+                  {tiposMesa.find(t => t.id === tableType)?.nombre || 'Sin definir'} · {tiposSilla.find(s => s.id === chairType)?.nombre || 'Sin definir'}
+                </span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Mantel</span>
                 <span className="font-semibold text-on-surface text-right">
-                  {clothType} · {selectedClothColor?.name ?? clothColor}
+                  {manteles.find(m => m.id === clothType)?.nombre || 'Sin definir'} · {selectedClothColor?.nombre || 'Sin color'}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Sobremantel</span>
                 <span className="font-semibold text-on-surface text-right">
-                  {topClothType} · {selectedTopClothColor?.name ?? topClothColor}
+                  {sobremanteles.find(s => s.id === topClothType)?.nombre || 'Sin definir'} · {selectedTopClothColor?.nombre || 'Sin color'}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Vajilla</span>
-                <span className="font-semibold text-on-surface text-right">{dinnerware || 'Sin definir'}</span>
+                <span className="font-semibold text-on-surface text-right">{dinnerware ? 'Sí' : 'No'}</span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-on-surface-variant">Fajón</span>
@@ -550,14 +721,14 @@ const EventMontagePage: React.FC = () => {
               <div className="space-y-3">
                 {selectedAdditionalItems.map((item) => {
                   const lineTotal =
-                    item.billingType === 'unidad' ? item.quantity * item.basePrice : item.basePrice;
+                    item.billingType === 'POR_UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
 
                   return (
                     <div key={item.id} className="flex items-start justify-between gap-3 text-sm">
                       <div>
                         <p className="font-semibold text-on-surface">{item.name}</p>
                         <p className="text-on-surface-variant text-xs">
-                          {item.billingType === 'unidad' ? `${item.quantity} unidades` : '1 servicio'}
+                          {item.billingType === 'POR_UNIDAD' ? `${item.quantity} unidades` : '1 servicio'}
                         </p>
                       </div>
                       <p className="font-semibold text-on-surface">
@@ -592,10 +763,12 @@ const EventMontagePage: React.FC = () => {
         </div>
         <div className="flex gap-4 w-full sm:w-auto">
           <button
-            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-8 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors"
+            className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-8 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors disabled:opacity-50"
             type="button"
+            onClick={handleGuardarMontaje}
+            disabled={saving || !evento}
           >
-            Guardar montaje
+            {saving ? 'Guardando...' : 'Guardar montaje'}
           </button>
         </div>
       </footer>
