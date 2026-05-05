@@ -1,49 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-type VenueStatus = 'Disponible' | 'Parcial';
-
-interface Venue {
-  id: string;
-  name: string;
-  capacity: string;
-  features: string;
-  status: VenueStatus;
-  pendingText?: string;
-}
-
-const venues: Venue[] = [
-  {
-    id: 'jade',
-    name: 'Salón Jade',
-    capacity: 'Hasta 120 personas',
-    features: 'Ambiente señorial, montaje social o corporativo.',
-    status: 'Parcial',
-    pendingText: '2 cotizaciones pendientes en el mismo rango',
-  },
-  {
-    id: 'versalles',
-    name: 'Versalles',
-    capacity: 'Hasta 220 personas',
-    features: 'Salón principal para bodas, grados y eventos amplios.',
-    status: 'Parcial',
-    pendingText: '1 cotización pendiente por confirmar',
-  },
-  {
-    id: 'terraza',
-    name: 'Terraza Mirador',
-    capacity: 'Hasta 80 personas',
-    features: 'Espacio abierto para almuerzos, onces y eventos sociales.',
-    status: 'Disponible',
-  },
-  {
-    id: 'biblioteca',
-    name: 'Biblioteca',
-    capacity: 'Hasta 35 personas',
-    features: 'Espacio reservado para reuniones pequeñas.',
-    status: 'Disponible',
-  },
-];
+import clientesApi from '@/api/clientes';
+import eventosApi from '@/api/eventos';
+import catalogosApi from '@/api/catalogos';
+import salonesApi from '@/api/salones';
+import type { ClienteResponse, SalonResponse, CatalogoBasicoResponse } from '@/api/types';
 
 const labelClass =
   'block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2';
@@ -55,22 +16,94 @@ const EventRequestPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [customerQuery, setCustomerQuery] = useState('');
-  const [selectedVenueId, setSelectedVenueId] = useState('versalles');
+  const [selectedVenueId, setSelectedVenueId] = useState('');
+  const [salones, setSalones] = useState<SalonResponse[]>([]);
+  const [tiposEvento, setTiposEvento] = useState<CatalogoBasicoResponse[]>([]);
+  const [tiposComida, setTiposComida] = useState<CatalogoBasicoResponse[]>([]);
+  const [clienteEncontrado, setClienteEncontrado] = useState<ClienteResponse | null>(null);
+  const [fecha, setFecha] = useState('');
+  const [horaInicio, setHoraInicio] = useState('');
+  const [duracion, setDuracion] = useState(3);
+  const [numPersonas, setNumPersonas] = useState(0);
+  const [tipoEventoId, setTipoEventoId] = useState('');
+  const [tipoComidaId, setTipoComidaId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const matchedCustomer = useMemo(() => {
-    const query = customerQuery.trim().toLowerCase();
+  // Carga catálogos y salones al montar
+  useEffect(() => {
+    Promise.all([
+      catalogosApi.tiposEvento.listar(),
+      catalogosApi.tiposComida.listar(),
+      salonesApi.listar(),
+    ]).then(([te, tc, sl]) => {
+      setTiposEvento(te.filter((t) => t.activo));
+      setTiposComida(tc.filter((t) => t.activo));
+      setSalones(sl.filter((s) => s.activo));
+      if (te.length > 0) setTipoEventoId(te[0]!.id);
+      if (tc.length > 0) setTipoComidaId(tc[0]!.id);
+      if (sl.length > 0) setSelectedVenueId(sl[0]!.id);
+    }).catch(() => {
+      // Si el backend no está disponible, continúa con listas vacías
+    });
+  }, []);
 
-    if (query.includes('mauricio') || query.includes('alarcon')) {
-      return {
-        name: 'Mauricio Alejandro de Alarcón',
-        type: 'Socio',
-      };
-    }
-
-    return null;
+  // Búsqueda de cliente con debounce
+  useEffect(() => {
+    const q = customerQuery.trim();
+    if (!q) { setClienteEncontrado(null); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const results = await clientesApi.listar(q);
+        setClienteEncontrado(results[0] ?? null);
+      } catch {
+        setClienteEncontrado(null);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
   }, [customerQuery]);
 
-  const selectedVenue = venues.find((venue) => venue.id === selectedVenueId);
+  const selectedVenue = salones.find((s) => s.id === selectedVenueId);
+
+  const handleCrearEvento = async () => {
+    if (!clienteEncontrado || !fecha || !horaInicio || !selectedVenueId || !tipoEventoId || !tipoComidaId) {
+      setError('Completa todos los campos obligatorios antes de continuar.');
+      return;
+    }
+
+    const inicio = new Date(`${fecha}T${horaInicio}:00`);
+    const fin = new Date(inicio.getTime() + duracion * 60 * 60 * 1000);
+    const toLocalISO = (d: Date) => d.toISOString().slice(0, 19);
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const evento = await eventosApi.crear({
+        clienteId: clienteEncontrado.id,
+        tipoEventoId,
+        tipoComidaId,
+        usuarioCreadorId: '00000000-0000-0000-0000-000000000001', // reemplazar con usuario autenticado
+        fechaHoraInicio: toLocalISO(inicio),
+        fechaHoraFin: toLocalISO(fin),
+      });
+
+      // Crear reserva de salón
+      await eventosApi.crearReserva(evento.id, {
+        usuarioId: '00000000-0000-0000-0000-000000000001',
+        salonId: selectedVenueId,
+        numInvitados: numPersonas || 1,
+        fechaHoraInicio: toLocalISO(inicio),
+        fechaHoraFin: toLocalISO(fin),
+      });
+
+      navigate(`/events/${evento.id}/menu`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear el evento.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <section className="space-y-8 pb-36">
@@ -81,6 +114,12 @@ const EventRequestPage: React.FC = () => {
           Registra cliente, horario y salón antes de completar menú, montaje y cotización.
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
         <div className="space-y-6">
@@ -102,24 +141,24 @@ const EventRequestPage: React.FC = () => {
                     placeholder="Buscar por nombre, cédula o teléfono"
                     type="text"
                     value={customerQuery}
-                    onChange={(event) => setCustomerQuery(event.target.value)}
+                    onChange={(e) => setCustomerQuery(e.target.value)}
                   />
                 </div>
               </div>
 
-              {matchedCustomer ? (
+              {clienteEncontrado ? (
                 <div className="flex items-center justify-between p-4 bg-primary-gold/10 border border-primary-gold/30 rounded-md">
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary-gold">person</span>
                     <div>
-                      <p className="font-semibold text-on-surface">{matchedCustomer.name}</p>
+                      <p className="font-semibold text-on-surface">{clienteEncontrado.nombreCompleto}</p>
                       <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-primary-gold text-white rounded-full">
-                        {matchedCustomer.type}
+                        {clienteEncontrado.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio'}
                       </span>
                     </div>
                   </div>
-                  <button className="text-on-surface-variant hover:text-primary-gold transition-colors" type="button">
-                    <span className="material-symbols-outlined">edit</span>
+                  <button className="text-on-surface-variant hover:text-primary-gold transition-colors" type="button" onClick={() => setClienteEncontrado(null)}>
+                    <span className="material-symbols-outlined">close</span>
                   </button>
                 </div>
               ) : (
@@ -145,52 +184,45 @@ const EventRequestPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
               <div>
                 <label className={labelClass}>Fecha</label>
-                <input className={inputClass} type="date" />
+                <input className={inputClass} type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
               </div>
 
               <div>
                 <label className={labelClass}>Hora de inicio</label>
-                <input className={inputClass} type="time" />
+                <input className={inputClass} type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
               </div>
 
               <div>
                 <label className={labelClass}>Duración</label>
-                <select className={inputClass}>
-                  <option>2 horas</option>
-                  <option>3 horas</option>
-                  <option>4 horas</option>
-                  <option>5 horas</option>
-                  <option>6 horas</option>
-                  <option>7 horas</option>
+                <select className={inputClass} value={duracion} onChange={(e) => setDuracion(Number(e.target.value))}>
+                  {[2, 3, 4, 5, 6, 7].map((h) => (
+                    <option key={h} value={h}>{h} horas</option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className={labelClass}>Número de personas</label>
-                <input className={inputClass} placeholder="0" type="number" min={1} />
+                <input className={inputClass} placeholder="0" type="number" min={1} value={numPersonas || ''} onChange={(e) => setNumPersonas(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>Tipo de evento</label>
-                <select className={inputClass}>
-                  <option>Boda</option>
-                  <option>Cumpleaños</option>
-                  <option>Bautizo</option>
-                  <option>Grado</option>
-                  <option>Evento corporativo</option>
-                  <option>Otro evento social</option>
+                <select className={inputClass} value={tipoEventoId} onChange={(e) => setTipoEventoId(e.target.value)}>
+                  {tiposEvento.length === 0 && <option value="">Cargando…</option>}
+                  {tiposEvento.map((t) => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className={labelClass}>Tipo de comida</label>
-                <select className={inputClass}>
-                  <option>Desayuno</option>
-                  <option>Almuerzo</option>
-                  <option>Cena</option>
-                  <option>Onces</option>
-                  <option>Coctel / pasabocas</option>
-                  <option>Sin servicio de comida</option>
+                <select className={inputClass} value={tipoComidaId} onChange={(e) => setTipoComidaId(e.target.value)}>
+                  {tiposComida.length === 0 && <option value="">Cargando…</option>}
+                  {tiposComida.map((t) => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -202,51 +234,46 @@ const EventRequestPage: React.FC = () => {
               <div className="flex-1 h-px bg-stone-200"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {venues.map((venue) => {
-                const isSelected = selectedVenueId === venue.id;
-                const isPartial = venue.status === 'Parcial';
-
-                return (
-                  <button
-                    key={venue.id}
-                    type="button"
-                    onClick={() => setSelectedVenueId(venue.id)}
-                    className={`relative p-4 text-left rounded-lg border transition-colors ${
-                      isSelected
-                        ? 'bg-gold-bg border-gold shadow-sm'
-                        : 'bg-surface-container-lowest border-border hover:border-gold/50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-bold text-on-surface">{venue.name}</h3>
-                        <p className="text-xs text-on-surface-variant mt-1">{venue.capacity}</p>
-                        <p className="text-xs text-on-surface-variant mt-2 leading-snug">{venue.features}</p>
+            {salones.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">Cargando salones…</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {salones.map((salon) => {
+                  const isSelected = selectedVenueId === salon.id;
+                  return (
+                    <button
+                      key={salon.id}
+                      type="button"
+                      onClick={() => setSelectedVenueId(salon.id)}
+                      className={`relative p-4 text-left rounded-lg border transition-colors ${
+                        isSelected
+                          ? 'bg-gold-bg border-gold shadow-sm'
+                          : 'bg-surface-container-lowest border-border hover:border-gold/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-bold text-on-surface">{salon.nombre}</h3>
+                          <p className="text-xs text-on-surface-variant mt-1">Hasta {salon.capacidad} personas</p>
+                          {salon.descripcion && (
+                            <p className="text-xs text-on-surface-variant mt-2 leading-snug">{salon.descripcion}</p>
+                          )}
+                        </div>
+                        {isSelected ? (
+                          <span className="material-symbols-outlined text-primary-gold">check_circle</span>
+                        ) : null}
                       </div>
-                      {isSelected ? (
-                        <span className="material-symbols-outlined text-primary-gold">check_circle</span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold ${
-                          isPartial ? 'bg-gold-bg2 text-gold-d' : 'bg-green-bg text-green-text'
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${isPartial ? 'bg-gold' : 'bg-green'}`}></span>
-                        {venue.status}
-                      </span>
-
-                      {venue.pendingText ? (
-                        <p className="text-[11px] text-on-surface-variant mt-2">{venue.pendingText}</p>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="mt-3">
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold bg-green-bg text-green-text">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green"></span>
+                          Disponible
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
 
@@ -255,18 +282,13 @@ const EventRequestPage: React.FC = () => {
           <div className="space-y-3 text-sm">
             <div>
               <p className="text-xs uppercase tracking-wider text-text3 font-bold">Cliente</p>
-              <p className="font-semibold text-text1">{matchedCustomer?.name ?? 'Sin cliente seleccionado'}</p>
+              <p className="font-semibold text-text1">{clienteEncontrado?.nombreCompleto ?? 'Sin cliente seleccionado'}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wider text-text3 font-bold">Salón</p>
-              <p className="font-semibold text-text1">{selectedVenue?.name}</p>
-              <p className="text-xs text-text3">{selectedVenue?.capacity}</p>
+              <p className="font-semibold text-text1">{selectedVenue?.nombre ?? 'Sin salón'}</p>
+              <p className="text-xs text-text3">{selectedVenue ? `Hasta ${selectedVenue.capacidad} personas` : ''}</p>
             </div>
-            {selectedVenue?.status === 'Parcial' ? (
-              <div className="rounded-md border border-gold/25 bg-gold-bg p-3 text-xs text-gold-d">
-                Hay cotizaciones superpuestas. Se permite crear la solicitud, pero debe advertirse al confirmar.
-              </div>
-            ) : null}
           </div>
         </aside>
       </div>
@@ -287,10 +309,11 @@ const EventRequestPage: React.FC = () => {
           </p>
           <button
             type="button"
-            onClick={() => navigate('/events/EVT-041/menu')}
-            className="bg-primary-gold text-white px-6 py-3 rounded-md font-bold flex items-center gap-3 hover:bg-primary transition-all shadow-sm active:scale-95"
+            onClick={handleCrearEvento}
+            disabled={saving}
+            className="bg-primary-gold text-white px-6 py-3 rounded-md font-bold flex items-center gap-3 hover:bg-primary transition-all shadow-sm active:scale-95 disabled:opacity-50"
           >
-            Crear evento y continuar
+            {saving ? 'Creando…' : 'Crear evento y continuar'}
             <span className="material-symbols-outlined">chevron_right</span>
           </button>
         </div>

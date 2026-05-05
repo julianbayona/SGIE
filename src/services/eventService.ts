@@ -1,53 +1,44 @@
-import { Event } from '@/features/calendar/types';
-import { addHours, subDays } from 'date-fns';
+import eventosApi from '@/api/eventos';
+import type { EventoResponse, EstadoEvento } from '@/api/types';
+import type { Event, EventStatus } from '@/features/calendar/types';
 
-// Mock data para simular la respuesta del backend.
-const allEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Boda - Familia Pérez',
-    start: new Date(),
-    end: addHours(new Date(), 2),
-    status: 'Confirmado',
-    salon: 'Salón Jade',
-  },
-  {
-    id: '2',
-    title: 'Reunión Directiva',
-    start: addHours(new Date(), 3),
-    end: addHours(new Date(), 4),
-    status: 'Pendiente',
-    salon: 'Sala de Juntas',
-  },
-  {
-    id: '3',
-    title: 'Almuerzo de negocios',
-    start: subDays(new Date(), 1),
-    end: addHours(subDays(new Date(), 1), 2),
-    status: 'Cotización enviada',
-    salon: 'Restaurante',
-  },
-  {
-    id: '4',
-    title: 'Cumpleaños - Sr. Rodríguez',
-    start: addHours(subDays(new Date(), 2), 5),
-    end: addHours(subDays(new Date(), 2), 8),
-    status: 'Pendiente anticipo',
-    salon: 'Versalles',
-  },
-];
+/** Mapea el enum del backend al label que usa el frontend. */
+const estadoMap: Record<EstadoEvento, EventStatus> = {
+  PENDIENTE: 'Pendiente',
+  COTIZACION_ENVIADA: 'Cotización enviada',
+  COTIZACION_APROBADA: 'Cotización aprobada',
+  PENDIENTE_ANTICIPO: 'Pendiente anticipo',
+  CONFIRMADO: 'Confirmado',
+  CANCELADO: 'Cancelado',
+};
+
+function toCalendarEvent(evento: EventoResponse): Event {
+  const reservaVigente = evento.reservas.find((r) => r.vigente);
+  return {
+    id: evento.id,
+    title: `Evento ${evento.id.slice(0, 8)}`,
+    start: new Date(evento.fechaHoraInicio),
+    end: new Date(evento.fechaHoraFin),
+    status: estadoMap[evento.estado] ?? 'Pendiente',
+    salon: reservaVigente?.salonId ?? 'Sin salón',
+  };
+}
 
 const eventService = {
+  /**
+   * Obtiene todos los eventos del backend y los filtra por rango de fechas
+   * en el cliente (el backend no expone filtro por fecha en el listado).
+   */
   async getEvents(startDate: Date, endDate: Date): Promise<Event[]> {
-    console.log(`Fetching events from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    const eventos = await eventosApi.listar();
+    return eventos
+      .map(toCalendarEvent)
+      .filter((e) => e.start >= startDate && e.start <= endDate);
+  },
 
-    const filteredEvents = allEvents.filter((event) => {
-      return event.start >= startDate && event.start <= endDate;
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    return filteredEvents;
+  /** Expone el evento crudo del backend para módulos que lo necesiten. */
+  async getEventById(id: string): Promise<EventoResponse> {
+    return eventosApi.obtenerPorId(id);
   },
 };
 

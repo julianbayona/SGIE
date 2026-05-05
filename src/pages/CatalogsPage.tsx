@@ -1,6 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import catalogosApi from '@/api/catalogos';
+import salonesApi from '@/api/salones';
+import type { CatalogoBasicoResponse, TipoAdicionalResponse, SalonResponse } from '@/api/types';
 
 type CatalogKey =
+  | 'tipo_evento'
+  | 'tipo_comida'
   | 'tipo_mesa'
   | 'tipo_silla'
   | 'mantel'
@@ -9,437 +14,360 @@ type CatalogKey =
   | 'tipo_adicional'
   | 'salon';
 
-type FieldType = 'text' | 'number' | 'select' | 'color';
-type CatalogRecord = Record<string, string | number | boolean>;
-
-interface FieldConfig {
-  key: string;
+interface CatalogTab {
+  key: CatalogKey;
   label: string;
-  type: FieldType;
-  required?: boolean;
-  options?: string[];
-}
-
-interface CatalogConfig {
-  label: string;
-  dbTable: string;
-  idKey: string;
   description: string;
-  fields: FieldConfig[];
 }
 
-const catalogConfigs: Record<CatalogKey, CatalogConfig> = {
-  tipo_mesa: {
-    label: 'Tipos de mesa',
-    dbTable: 'tipo_mesa',
-    idKey: 'id_tipo_mesa',
-    description: 'Catálogo usado en el montaje de mesas por reserva.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'activo', label: 'Activo', type: 'select', options: ['Sí', 'No'] },
-    ],
-  },
-  tipo_silla: {
-    label: 'Tipos de silla',
-    dbTable: 'tipo_silla',
-    idKey: 'id_tipo_silla',
-    description: 'Catálogo de sillas disponibles para montaje.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'activo', label: 'Activo', type: 'select', options: ['Sí', 'No'] },
-    ],
-  },
-  mantel: {
-    label: 'Manteles',
-    dbTable: 'mantel',
-    idKey: 'id_mantel',
-    description: 'Manteles asociados a un color del catálogo.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'color', label: 'Color', type: 'select', required: true },
-      { key: 'activo', label: 'Activo', type: 'select', options: ['Sí', 'No'] },
-    ],
-  },
-  sobremantel: {
-    label: 'Sobremanteles',
-    dbTable: 'sobremantel',
-    idKey: 'id_sobremantel',
-    description: 'Sobremanteles asociados a un color del catálogo.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'color', label: 'Color', type: 'select', required: true },
-      { key: 'activo', label: 'Activo', type: 'select', options: ['Sí', 'No'] },
-    ],
-  },
-  color: {
-    label: 'Colores',
-    dbTable: 'color',
-    idKey: 'id_color',
-    description: 'Colores reutilizados por manteles y sobremanteles.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'codigo_hex', label: 'Código HEX', type: 'color', required: true },
-      { key: 'activo', label: 'Activo', type: 'select', options: ['Sí', 'No'] },
-    ],
-  },
-  tipo_adicional: {
-    label: 'Tipos de adicional',
-    dbTable: 'tipo_adicional',
-    idKey: 'id_tipo_adicional',
-    description: 'Adicionales del montaje con modo de cobro y precio base.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'modo_cobro', label: 'Modo de cobro', type: 'select', required: true, options: ['servicio', 'unidad'] },
-      { key: 'precio_base', label: 'Precio base', type: 'number', required: true },
-    ],
-  },
-  salon: {
-    label: 'Salones',
-    dbTable: 'salon',
-    idKey: 'id_salon',
-    description: 'Espacios físicos reservables para eventos.',
-    fields: [
-      { key: 'nombre', label: 'Nombre', type: 'text', required: true },
-      { key: 'capacidad_max', label: 'Capacidad máxima', type: 'number', required: true },
-      { key: 'descripcion', label: 'Descripción', type: 'text' },
-      { key: 'activo', label: 'Activo', type: 'select', options: ['Sí', 'No'] },
-    ],
-  },
-};
+const catalogTabs: CatalogTab[] = [
+  { key: 'tipo_evento', label: 'Tipos de evento', description: 'Categorías de eventos disponibles.' },
+  { key: 'tipo_comida', label: 'Tipos de comida', description: 'Servicios de alimentación disponibles.' },
+  { key: 'tipo_mesa', label: 'Tipos de mesa', description: 'Catálogo usado en el montaje de mesas.' },
+  { key: 'tipo_silla', label: 'Tipos de silla', description: 'Sillas disponibles para montaje.' },
+  { key: 'mantel', label: 'Manteles', description: 'Manteles asociados a colores del catálogo.' },
+  { key: 'sobremantel', label: 'Sobremanteles', description: 'Sobremanteles asociados a colores.' },
+  { key: 'color', label: 'Colores', description: 'Colores reutilizados por manteles y sobremanteles.' },
+  { key: 'tipo_adicional', label: 'Tipos de adicional', description: 'Adicionales del montaje con precio base.' },
+  { key: 'salon', label: 'Salones', description: 'Espacios físicos reservables para eventos.' },
+];
 
-const initialData: Record<CatalogKey, CatalogRecord[]> = {
-  tipo_mesa: [
-    { id_tipo_mesa: 1, nombre: 'Redonda', activo: true },
-    { id_tipo_mesa: 2, nombre: 'Rectangular', activo: true },
-    { id_tipo_mesa: 3, nombre: 'Imperial', activo: true },
-  ],
-  tipo_silla: [
-    { id_tipo_silla: 1, nombre: 'Tiffany', activo: true },
-    { id_tipo_silla: 2, nombre: 'Crossback', activo: true },
-    { id_tipo_silla: 3, nombre: 'Napoleón', activo: true },
-  ],
-  mantel: [
-    { id_mantel: 1, nombre: 'Lino premium', color: 'Marfil real', activo: true },
-    { id_mantel: 2, nombre: 'Algodón clásico', color: 'Blanco perla', activo: true },
-  ],
-  sobremantel: [
-    { id_sobremantel: 1, nombre: 'Organza', color: 'Dorado viejo', activo: true },
-    { id_sobremantel: 2, nombre: 'Encaje', color: 'Marfil suave', activo: true },
-  ],
-  color: [
-    { id_color: 1, nombre: 'Marfil real', codigo_hex: '#EFE4CE', activo: true },
-    { id_color: 2, nombre: 'Blanco perla', codigo_hex: '#F4F4EF', activo: true },
-    { id_color: 3, nombre: 'Dorado viejo', codigo_hex: '#B08A3F', activo: true },
-  ],
-  tipo_adicional: [
-    { id_tipo_adicional: 1, nombre: 'Tarimas', modo_cobro: 'unidad', precio_base: 180000 },
-    { id_tipo_adicional: 2, nombre: 'Audiovisuales', modo_cobro: 'servicio', precio_base: 450000 },
-    { id_tipo_adicional: 3, nombre: 'Luces árbol', modo_cobro: 'servicio', precio_base: 260000 },
-  ],
-  salon: [
-    { id_salon: 1, nombre: 'Salón Jade', capacidad_max: 120, descripcion: 'Ambiente señorial para eventos sociales.', activo: true },
-    { id_salon: 2, nombre: 'Versalles Principal', capacidad_max: 220, descripcion: 'Salón principal para eventos amplios.', activo: true },
-    { id_salon: 3, nombre: 'Biblioteca', capacidad_max: 35, descripcion: 'Espacio reservado para reuniones pequeñas.', activo: true },
-  ],
-};
+type GenericRow = CatalogoBasicoResponse | TipoAdicionalResponse | SalonResponse;
 
-const catalogTabs: CatalogKey[] = ['tipo_mesa', 'tipo_silla', 'mantel', 'sobremantel', 'color', 'tipo_adicional', 'salon'];
-
-const createEmptyForm = (config: CatalogConfig, colorOptions: string[]): CatalogRecord => {
-  return config.fields.reduce<CatalogRecord>((acc, field) => {
-    if (field.key === 'activo') {
-      acc[field.key] = 'Sí';
-      return acc;
-    }
-
-    if (field.key === 'color') {
-      acc[field.key] = colorOptions[0] ?? '';
-      return acc;
-    }
-
-    if (field.type === 'select') {
-      acc[field.key] = field.options?.[0] ?? '';
-      return acc;
-    }
-
-    acc[field.key] = field.type === 'number' ? 0 : '';
-    return acc;
-  }, {});
-};
-
-const formatValue = (value: string | number | boolean): string => {
-  if (typeof value === 'boolean') {
-    return value ? 'Sí' : 'No';
-  }
-
-  if (typeof value === 'number') {
-    return new Intl.NumberFormat('es-CO').format(value);
-  }
-
-  return value;
-};
+const formatCOP = (v: number) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
 
 const CatalogsPage: React.FC = () => {
-  const [activeCatalog, setActiveCatalog] = useState<CatalogKey>('tipo_mesa');
-  const [catalogData, setCatalogData] = useState(initialData);
-  const [editingId, setEditingId] = useState<string | number | null>(null);
+  const [activeCatalog, setActiveCatalog] = useState<CatalogKey>('tipo_evento');
+  const [rows, setRows] = useState<GenericRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formNombre, setFormNombre] = useState('');
+  const [formDescripcion, setFormDescripcion] = useState('');
+  const [formCapacidad, setFormCapacidad] = useState(0);
+  const [saving, setSaving] = useState(false);
 
-  const colorOptions = useMemo(
-    () => catalogData.color.map((color) => String(color.nombre)).filter(Boolean),
-    [catalogData.color]
-  );
-
-  const activeConfig = catalogConfigs[activeCatalog];
-  const activeRows = catalogData[activeCatalog];
-  const [form, setForm] = useState<CatalogRecord>(() => createEmptyForm(activeConfig, colorOptions));
-
-  const resetForm = (catalog: CatalogKey = activeCatalog) => {
-    const nextConfig = catalogConfigs[catalog];
-    setEditingId(null);
-    setForm(createEmptyForm(nextConfig, colorOptions));
-  };
-
-  const changeCatalog = (catalog: CatalogKey) => {
-    setActiveCatalog(catalog);
-    resetForm(catalog);
-  };
-
-  const updateFormValue = (key: string, value: string | number) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const saveRecord = () => {
-    const idKey = activeConfig.idKey;
-    const normalizedForm = {
-      ...form,
-      activo: form.activo === 'Sí' || form.activo === true,
-    };
-
-    setCatalogData((prev) => {
-      const rows = prev[activeCatalog];
-
-      if (editingId !== null) {
-        return {
-          ...prev,
-          [activeCatalog]: rows.map((row) =>
-            row[idKey] === editingId ? { ...row, ...normalizedForm, [idKey]: editingId } : row
-          ),
-        };
+  const loadCatalog = async (key: CatalogKey) => {
+    setLoading(true);
+    setError(null);
+    try {
+      let data: GenericRow[] = [];
+      switch (key) {
+        case 'tipo_evento': data = await catalogosApi.tiposEvento.listar(); break;
+        case 'tipo_comida': data = await catalogosApi.tiposComida.listar(); break;
+        case 'tipo_mesa': data = await catalogosApi.tiposMesa.listar(); break;
+        case 'tipo_silla': data = await catalogosApi.tiposSilla.listar(); break;
+        case 'mantel': data = await catalogosApi.manteles.listar(); break;
+        case 'sobremantel': data = await catalogosApi.sobremanteles.listar(); break;
+        case 'color': data = await catalogosApi.colores.listar(); break;
+        case 'tipo_adicional': data = await catalogosApi.tiposAdicional.listar(); break;
+        case 'salon': data = await salonesApi.listar(); break;
       }
+      setRows(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar el catálogo.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const nextId = rows.reduce((max, row) => Math.max(max, Number(row[idKey]) || 0), 0) + 1;
-      return {
-        ...prev,
-        [activeCatalog]: [{ [idKey]: nextId, ...normalizedForm }, ...rows],
-      };
-    });
-
+  useEffect(() => {
+    loadCatalog(activeCatalog);
     resetForm();
+  }, [activeCatalog]);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setFormNombre('');
+    setFormDescripcion('');
+    setFormCapacidad(0);
   };
 
-  const editRecord = (record: CatalogRecord) => {
-    const idValue = record[activeConfig.idKey];
-    if (typeof idValue !== 'string' && typeof idValue !== 'number') {
-      return;
+  const startEdit = (row: GenericRow) => {
+    setEditingId(row.id);
+    setFormNombre('nombre' in row ? row.nombre : '');
+    setFormDescripcion('descripcion' in row ? (row.descripcion ?? '') : '');
+    setFormCapacidad('capacidad' in row ? (row as SalonResponse).capacidad : 0);
+  };
+
+  const handleSave = async () => {
+    if (!formNombre.trim()) return;
+    setSaving(true);
+    try {
+      const basicData = { nombre: formNombre.trim(), descripcion: formDescripcion.trim() || undefined };
+      const salonData = { nombre: formNombre.trim(), capacidad: formCapacidad, descripcion: formDescripcion.trim() || undefined };
+
+      if (editingId) {
+        switch (activeCatalog) {
+          case 'tipo_evento': await catalogosApi.tiposEvento.actualizar(editingId, basicData); break;
+          case 'tipo_comida': await catalogosApi.tiposComida.actualizar(editingId, basicData); break;
+          case 'tipo_mesa': await catalogosApi.tiposMesa.actualizar(editingId, basicData); break;
+          case 'tipo_silla': await catalogosApi.tiposSilla.actualizar(editingId, basicData); break;
+          case 'mantel': await catalogosApi.manteles.actualizar(editingId, basicData); break;
+          case 'sobremantel': await catalogosApi.sobremanteles.actualizar(editingId, basicData); break;
+          case 'color': await catalogosApi.colores.actualizar(editingId, basicData); break;
+          default: break;
+        }
+      } else {
+        switch (activeCatalog) {
+          case 'tipo_evento': await catalogosApi.tiposEvento.crear(basicData); break;
+          case 'tipo_comida': await catalogosApi.tiposComida.crear(basicData); break;
+          case 'tipo_mesa': await catalogosApi.tiposMesa.crear(basicData); break;
+          case 'tipo_silla': await catalogosApi.tiposSilla.crear(basicData); break;
+          case 'mantel': await catalogosApi.manteles.crear(basicData); break;
+          case 'sobremantel': await catalogosApi.sobremanteles.crear(basicData); break;
+          case 'color': await catalogosApi.colores.crear(basicData); break;
+          case 'salon': await salonesApi.registrar(salonData); break;
+          default: break;
+        }
+      }
+      await loadCatalog(activeCatalog);
+      resetForm();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al guardar.');
+    } finally {
+      setSaving(false);
     }
-
-    setEditingId(idValue);
-    setForm({
-      ...record,
-      activo: record.activo === true ? 'Sí' : 'No',
-    });
   };
 
-  const toggleActive = (record: CatalogRecord) => {
-    const idKey = activeConfig.idKey;
-    const idValue = record[idKey];
-
-    setCatalogData((prev) => ({
-      ...prev,
-      [activeCatalog]: prev[activeCatalog].map((row) =>
-        row[idKey] === idValue ? { ...row, activo: !(row.activo === true) } : row
-      ),
-    }));
-  };
-
-  const isSaveDisabled = activeConfig.fields.some((field) => {
-    if (!field.required) {
-      return false;
+  const handleDesactivar = async (id: string) => {
+    try {
+      switch (activeCatalog) {
+        case 'tipo_evento': await catalogosApi.tiposEvento.desactivar(id); break;
+        case 'tipo_comida': await catalogosApi.tiposComida.desactivar(id); break;
+        case 'tipo_mesa': await catalogosApi.tiposMesa.desactivar(id); break;
+        case 'tipo_silla': await catalogosApi.tiposSilla.desactivar(id); break;
+        case 'mantel': await catalogosApi.manteles.desactivar(id); break;
+        case 'sobremantel': await catalogosApi.sobremanteles.desactivar(id); break;
+        case 'color': await catalogosApi.colores.desactivar(id); break;
+        default: return;
+      }
+      await loadCatalog(activeCatalog);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al desactivar.');
     }
+  };
 
-    const value = form[field.key];
-    return value === undefined || value === '';
-  });
+  const activeTab = catalogTabs.find((t) => t.key === activeCatalog)!;
+  const isSalon = activeCatalog === 'salon';
+  const isReadOnly = activeCatalog === 'tipo_adicional';
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-primary-gold tracking-widest text-xs uppercase mb-2">Administración</p>
-          <h1 className="text-2xl font-display font-bold text-on-surface">Catálogos</h1>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Gestión operativa de catálogos base usados en salones, montaje y adicionales.
-          </p>
-        </div>
+      <div>
+        <p className="text-primary-gold tracking-widest text-xs uppercase mb-2">Administración</p>
+        <h1 className="text-2xl font-display font-bold text-on-surface">Catálogos</h1>
+        <p className="text-sm text-on-surface-variant mt-1">
+          Gestión operativa de catálogos base usados en salones, montaje y adicionales.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[240px_1fr_360px] gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[220px_1fr_340px] gap-5">
+        {/* Sidebar */}
         <aside className="bg-surface-container-lowest border border-border rounded-lg p-3 h-fit">
           <nav className="space-y-1">
-            {catalogTabs.map((catalog) => {
-              const config = catalogConfigs[catalog];
-              const isActive = catalog === activeCatalog;
-
-              return (
-                <button
-                  key={catalog}
-                  type="button"
-                  onClick={() => changeCatalog(catalog)}
-                  className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold transition-colors ${
-                    isActive ? 'bg-gold-bg text-gold-d' : 'text-text2 hover:bg-hover'
-                  }`}
-                >
-                  {config.label}
-                </button>
-              );
-            })}
+            {catalogTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveCatalog(tab.key)}
+                className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold transition-colors ${
+                  tab.key === activeCatalog ? 'bg-gold-bg text-gold-d' : 'text-text2 hover:bg-hover'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </nav>
         </aside>
 
+        {/* Tabla */}
         <main className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-display font-bold text-on-surface">{activeConfig.label}</h2>
-              <p className="text-sm text-on-surface-variant mt-1">{activeConfig.description}</p>
+          <div className="px-5 py-4 border-b border-border">
+            <h2 className="text-xl font-display font-bold text-on-surface">{activeTab.label}</h2>
+            <p className="text-sm text-on-surface-variant mt-1">{activeTab.description}</p>
+          </div>
+
+          {error && (
+            <div className="mx-5 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
             </div>
-            <span className="text-xs font-bold text-text3 bg-surface-container-low px-2.5 py-1 rounded-full">
-              {activeConfig.dbTable}
-            </span>
-          </div>
+          )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[720px]">
-              <thead className="bg-surface-container-low text-[11px] uppercase tracking-wider text-neutral-500">
-                <tr>
-                  <th className="px-4 py-3">ID</th>
-                  {activeConfig.fields.map((field) => (
-                    <th key={field.key} className="px-4 py-3">{field.label}</th>
-                  ))}
-                  <th className="px-4 py-3 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/20">
-                {activeRows.map((row) => (
-                  <tr key={String(row[activeConfig.idKey])} className="hover:bg-stone-50/70">
-                    <td className="px-4 py-3 text-xs font-bold text-primary-gold">#{row[activeConfig.idKey]}</td>
-                    {activeConfig.fields.map((field) => {
-                      const value = row[field.key];
-                      const isColor = field.key === 'codigo_hex';
-
-                      return (
-                        <td key={field.key} className="px-4 py-3 text-sm text-on-surface">
-                          {isColor && typeof value === 'string' ? (
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full border border-black/10" style={{ backgroundColor: value }}></span>
-                              <span className="font-mono text-xs">{value}</span>
-                            </div>
-                          ) : (
-                            <span>{formatValue(value ?? '')}</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => editRecord(row)}
-                          className="px-3 py-1.5 rounded border border-border text-xs font-semibold text-text2 hover:bg-hover"
-                        >
-                          Editar
-                        </button>
-                        {'activo' in row ? (
-                          <button
-                            type="button"
-                            onClick={() => toggleActive(row)}
-                            className={`px-3 py-1.5 rounded border text-xs font-semibold ${
-                              row.activo === true
-                                ? 'border-red-border text-red-text hover:bg-red-bg'
-                                : 'border-green-border text-green-text hover:bg-green-bg'
-                            }`}
-                          >
-                            {row.activo === true ? 'Desactivar' : 'Activar'}
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-on-surface-variant text-sm">
+              Cargando…
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[560px]">
+                <thead className="bg-surface-container-low text-[11px] uppercase tracking-wider text-neutral-500">
+                  <tr>
+                    <th className="px-4 py-3">Nombre</th>
+                    {isSalon && <th className="px-4 py-3">Capacidad</th>}
+                    {activeCatalog === 'tipo_adicional' && <th className="px-4 py-3">Modo cobro</th>}
+                    {activeCatalog === 'tipo_adicional' && <th className="px-4 py-3">Precio base</th>}
+                    <th className="px-4 py-3">Estado</th>
+                    <th className="px-4 py-3 text-right">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {rows.map((row) => {
+                    const isActive = 'activo' in row ? row.activo : true;
+                    return (
+                      <tr key={row.id} className="hover:bg-stone-50/70">
+                        <td className="px-4 py-3 text-sm font-semibold text-on-surface">
+                          {'nombre' in row ? row.nombre : ''}
+                          {'descripcion' in row && row.descripcion ? (
+                            <p className="text-xs text-on-surface-variant font-normal mt-0.5">{row.descripcion}</p>
+                          ) : null}
+                        </td>
+                        {isSalon && (
+                          <td className="px-4 py-3 text-sm text-on-surface-variant">
+                            {(row as SalonResponse).capacidad} pax
+                          </td>
+                        )}
+                        {activeCatalog === 'tipo_adicional' && (
+                          <>
+                            <td className="px-4 py-3 text-sm text-on-surface-variant">
+                              {(row as TipoAdicionalResponse).modoCobro === 'POR_UNIDAD' ? 'Por unidad' : 'Por servicio'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-on-surface-variant">
+                              {formatCOP((row as TipoAdicionalResponse).precioBase)}
+                            </td>
+                          </>
+                        )}
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold ${
+                            isActive ? 'bg-green-bg text-green-text' : 'bg-surface-container-low text-on-surface-variant'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green' : 'bg-stone-400'}`}></span>
+                            {isActive ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            {!isReadOnly && (
+                              <button
+                                type="button"
+                                onClick={() => startEdit(row)}
+                                className="px-3 py-1.5 rounded border border-border text-xs font-semibold text-text2 hover:bg-hover"
+                              >
+                                Editar
+                              </button>
+                            )}
+                            {!isReadOnly && !isSalon && (
+                              <button
+                                type="button"
+                                onClick={() => handleDesactivar(row.id)}
+                                className={`px-3 py-1.5 rounded border text-xs font-semibold ${
+                                  isActive
+                                    ? 'border-red-border text-red-text hover:bg-red-bg'
+                                    : 'border-green-border text-green-text hover:bg-green-bg'
+                                }`}
+                              >
+                                {isActive ? 'Desactivar' : 'Activar'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {rows.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-on-surface-variant">
+                        No hay registros en este catálogo.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </main>
 
-        <aside className="bg-surface-container-lowest border border-border rounded-lg p-5 h-fit shadow-sm">
-          <h3 className="text-lg font-display font-bold text-on-surface">
-            {editingId === null ? 'Nuevo registro' : 'Editar registro'}
-          </h3>
-          <p className="text-sm text-on-surface-variant mt-1 mb-5">
-            Los registros se desactivan para preservar trazabilidad; no se eliminan físicamente.
-          </p>
+        {/* Formulario */}
+        {!isReadOnly && (
+          <aside className="bg-surface-container-lowest border border-border rounded-lg p-5 h-fit shadow-sm">
+            <h3 className="text-lg font-display font-bold text-on-surface">
+              {editingId ? 'Editar registro' : 'Nuevo registro'}
+            </h3>
+            <p className="text-sm text-on-surface-variant mt-1 mb-5">
+              Los registros se desactivan para preservar trazabilidad.
+            </p>
 
-          <div className="space-y-4">
-            {activeConfig.fields.map((field) => {
-              const value = form[field.key];
-              const options = field.key === 'color' ? colorOptions : field.options;
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-2">Nombre *</label>
+                <input
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                  type="text"
+                  value={formNombre}
+                  onChange={(e) => setFormNombre(e.target.value)}
+                  placeholder="Nombre del registro"
+                />
+              </div>
 
-              return (
-                <div key={field.key}>
-                  <label className="block text-xs font-bold text-neutral-700 mb-2">{field.label}</label>
-                  {field.type === 'select' ? (
-                    <select
-                      className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
-                      value={String(value ?? '')}
-                      onChange={(event) => updateFormValue(field.key, event.target.value)}
-                    >
-                      {(options ?? []).map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : (
+              {!isSalon && (
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Descripción</label>
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                    type="text"
+                    value={formDescripcion}
+                    onChange={(e) => setFormDescripcion(e.target.value)}
+                    placeholder="Opcional"
+                  />
+                </div>
+              )}
+
+              {isSalon && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-2">Capacidad máxima *</label>
                     <input
                       className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
-                      type={field.type === 'number' ? 'number' : field.type === 'color' ? 'color' : 'text'}
-                      value={String(value ?? '')}
-                      onChange={(event) => {
-                        const nextValue = field.type === 'number' ? Number(event.target.value) : event.target.value;
-                        updateFormValue(field.key, nextValue);
-                      }}
+                      type="number"
+                      min={1}
+                      value={formCapacidad}
+                      onChange={(e) => setFormCapacidad(Number(e.target.value))}
                     />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-2">Descripción</label>
+                    <input
+                      className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                      type="text"
+                      value={formDescripcion}
+                      onChange={(e) => setFormDescripcion(e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
 
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={() => resetForm()}
-              className="px-4 py-2 rounded-md border border-border text-sm font-semibold text-text2 hover:bg-hover"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={saveRecord}
-              disabled={isSaveDisabled}
-              className="px-5 py-2 rounded-md bg-primary-gold text-white text-sm font-bold hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Guardar
-            </button>
-          </div>
-        </aside>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 py-2 rounded-md border border-border text-sm font-semibold text-text2 hover:bg-hover"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!formNombre.trim() || saving || (isSalon && formCapacidad < 1)}
+                className="px-5 py-2 rounded-md bg-primary-gold text-white text-sm font-bold hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </aside>
+        )}
       </div>
     </section>
   );

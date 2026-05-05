@@ -1,0 +1,40 @@
+import axios, { AxiosError } from 'axios';
+
+export const API_BASE_URL = 'http://localhost:8080/api';
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 15000,
+});
+
+// Interceptor de respuesta: normaliza errores del backend
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ message?: string; errors?: Record<string, string> }>) => {
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    let message = 'Error inesperado. Intenta de nuevo.';
+
+    if (data?.message) {
+      message = data.message;
+    } else if (status === 404) {
+      message = 'Recurso no encontrado.';
+    } else if (status === 400) {
+      message = 'Datos inválidos. Revisa el formulario.';
+    } else if (status === 409) {
+      message = 'Conflicto: el recurso ya existe o hay un solapamiento.';
+    } else if (status === 500) {
+      message = 'Error interno del servidor.';
+    } else if (!error.response) {
+      message = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 8080.';
+    }
+
+    return Promise.reject(new Error(message));
+  }
+);
+
+export default apiClient;

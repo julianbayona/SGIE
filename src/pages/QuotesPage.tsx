@@ -1,84 +1,46 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import QuotesHeader from '@/features/quotes/components/QuotesHeader';
 import QuotesTable from '@/features/quotes/components/QuotesTable';
 import QuotesTablePagination from '@/features/quotes/components/QuotesTablePagination';
 import type { QuoteRecord, QuotesTab } from '@/features/quotes/types';
 
-const quotesData: QuoteRecord[] = [
-  {
-    id: 'COT-8422',
-    eventName: 'Boda Alicia Morales',
-    eventMeta: 'Salón Principal · 200 invitados',
-    customerName: 'Alicia Morales',
-    customerType: 'Socio',
-    createdAt: '12 Oct 2023',
-    totalValue: '$ 14.500.000',
-    status: 'Aceptada',
-  },
-  {
-    id: 'COT-8421',
-    eventName: 'Cena Corporativa Bancolombia',
-    eventMeta: 'Terraza Club · 50 invitados',
-    customerName: 'Roberto Vélez',
-    customerType: 'No Socio',
-    createdAt: '10 Oct 2023',
-    totalValue: '$ 3.200.000',
-    status: 'Enviada',
-  },
-  {
-    id: 'COT-8420',
-    eventName: 'Aniversario Familia Pineda',
-    eventMeta: 'Salón VIP · 15 invitados',
-    customerName: 'Juan Pineda',
-    customerType: 'Socio',
-    createdAt: '08 Oct 2023',
-    totalValue: '$ 1.850.000',
-    status: 'Borrador',
-  },
-  {
-    id: 'COT-8419',
-    eventName: 'Graduación Colegio Mayor',
-    eventMeta: 'Salón Imperial · 400 invitados',
-    customerName: 'Secretaría Académica',
-    customerType: 'No Socio',
-    createdAt: '01 Oct 2023',
-    totalValue: '$ 28.900.000',
-    status: 'Desactualizada',
-  },
-  {
-    id: 'COT-8418',
-    eventName: 'Despedida de Año IBM',
-    eventMeta: 'Área Social · 120 invitados',
-    customerName: 'Recursos Humanos',
-    customerType: 'No Socio',
-    createdAt: '25 Sep 2023',
-    totalValue: '$ 9.450.000',
-    status: 'Rechazada',
-  },
-];
-
 const QuotesPage: React.FC = () => {
+  const [quotes] = useState<QuoteRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<QuotesTab>('Recientes');
 
+  useEffect(() => {
+    setLoading(false);
+  }, []);
+
   const visibleQuotes = useMemo(() => {
-    if (activeTab === 'Aprobadas') {
-      return quotesData.filter((quote) => quote.status === 'Aceptada');
-    }
-
-    if (activeTab === 'Pendientes') {
-      return quotesData.filter((quote) => quote.status === 'Enviada' || quote.status === 'Borrador' || quote.status === 'Desactualizada');
-    }
-
-    return quotesData;
-  }, [activeTab]);
+    if (activeTab === 'Aprobadas') return quotes.filter((q) => q.status === 'Aceptada');
+    if (activeTab === 'Pendientes')
+      return quotes.filter((q) =>
+        ['Enviada', 'Borrador', 'Desactualizada'].includes(q.status)
+      );
+    return quotes;
+  }, [activeTab, quotes]);
 
   return (
     <section className="space-y-6">
       <QuotesHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="bg-surface rounded-lg overflow-hidden shadow-sm border border-border">
-        <QuotesTable quotes={visibleQuotes} />
-        <QuotesTablePagination from={1} to={visibleQuotes.length} total={156} />
+      {/* Las cotizaciones se gestionan desde el detalle de cada evento */}
+
+      <div className="bg-surface rounded-lg overflow-hidden shadow-sm border border-border">        {loading ? (
+          <div className="flex items-center justify-center py-16 text-on-surface-variant text-sm">
+            Cargando cotizaciones…
+          </div>
+        ) : visibleQuotes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant text-sm gap-2">
+            <span className="material-symbols-outlined text-3xl">receipt_long</span>
+            <p>Las cotizaciones se gestionan desde el detalle de cada evento.</p>
+          </div>
+        ) : (
+          <QuotesTable quotes={visibleQuotes} />
+        )}
+        <QuotesTablePagination from={1} to={visibleQuotes.length} total={visibleQuotes.length} />
       </div>
     </section>
   );

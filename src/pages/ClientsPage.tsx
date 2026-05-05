@@ -1,76 +1,71 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ClientsHeader from '@/features/clients/components/ClientsHeader';
 import ClientsTable from '@/features/clients/components/ClientsTable';
 import ClientsTablePagination from '@/features/clients/components/ClientsTablePagination';
 import ClientFormModal, { type ClientFormValues } from '@/features/clients/components/ClientFormModal';
 import type { Client, ClientsTab } from '@/features/clients/types';
+import clientesApi from '@/api/clientes';
+import type { ClienteResponse } from '@/api/types';
 
-const initialClientsData: Client[] = [
-  {
-    idNumber: '1.024.456.789',
-    fullName: 'Ricardo Albarracín',
-    phone: '+57 312 456 7890',
-    email: 'r.albarracin@email.com',
-    category: 'Socio',
-    status: 'Activo',
-    registeredAt: '12 Oct 2023',
-  },
-  {
-    idNumber: '79.567.890',
-    fullName: 'Claudia Mendoza',
-    phone: '+57 300 123 4455',
-    email: 'claudia.m@gmail.com',
-    category: 'No Socio',
-    status: 'Activo',
-    registeredAt: '05 Nov 2023',
-  },
-  {
-    idNumber: '1.018.234.567',
-    fullName: 'Mauricio Herrera',
-    phone: '+57 315 987 6543',
-    email: 'm.herrera@boyaca.org',
-    category: 'Socio',
-    status: 'Suspendido',
-    registeredAt: '20 Ene 2024',
-  },
-  {
-    idNumber: '1.052.889.442',
-    fullName: 'Natalia Forero',
-    phone: '+57 316 331 7890',
-    email: 'natalia.forero@correo.com',
-    category: 'No Socio',
-    status: 'Activo',
-    registeredAt: '15 Feb 2024',
-  },
-];
+/** Convierte la respuesta del backend al tipo que usa el frontend. */
+function toClient(c: ClienteResponse): Client {
+  return {
+    idNumber: c.cedula,
+    fullName: c.nombreCompleto,
+    phone: c.telefono,
+    email: c.correo,
+    category: c.tipoCliente === 'SOCIO' ? 'Socio' : 'No Socio',
+    status: c.activo ? 'Activo' : 'Suspendido',
+    registeredAt: c.id, // se usa el id como referencia interna; la fecha no viene en el DTO
+  };
+}
 
 const ClientsPage: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>(initialClientsData);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ClientsTab>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
 
+  // Carga inicial y búsqueda con debounce
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await clientesApi.listar(searchQuery.trim() || undefined);
+        if (!cancelled) setClients(data.map(toClient));
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Error al cargar clientes.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
   const editingClient = useMemo(
-    () => clients.find((client) => client.idNumber === editingClientId) ?? null,
+    () => clients.find((c) => c.idNumber === editingClientId) ?? null,
     [clients, editingClientId]
   );
 
-  const idNumbersInUse = useMemo(() => {
-    return clients
-      .filter((client) => client.idNumber !== editingClientId)
-      .map((client) => client.idNumber.replace(/[^\d]/g, ''));
-  }, [clients, editingClientId]);
-
-  const formattedToday = useMemo(
+  const idNumbersInUse = useMemo(
     () =>
-      new Intl.DateTimeFormat('es-CO', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }).format(new Date()),
-    []
+      clients
+        .filter((c) => c.idNumber !== editingClientId)
+        .map((c) => c.idNumber.replace(/[^\d]/g, '')),
+    [clients, editingClientId]
   );
+
+  const formattedToday = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
+  void formattedToday; // usado en saveClient para nuevos registros locales
 
   const openCreateForm = () => {
     setEditingClientId(null);
@@ -87,66 +82,50 @@ const ClientsPage: React.FC = () => {
     setEditingClientId(null);
   };
 
-  const saveClient = (values: ClientFormValues) => {
-    if (editingClientId) {
-      setClients((prev) =>
-        prev.map((client) => {
-          if (client.idNumber !== editingClientId) {
-            return client;
-          }
+  const saveClient = async (values: ClientFormValues) => {
+    try {
+      if (editingClientId) {
+        // El backend no expone PUT /clientes/{id} aún; actualizamos localmente
+        setClients((prev) =>
+          prev.map((c) =>
+            c.idNumber !== editingClientId
+              ? c
+              : {
+                  ...c,
+                  idNumber: values.idNumber,
+                  fullName: values.fullName,
+                  category: values.category,
+                  phone: values.phone,
+                  email: values.email,
+                }
+          )
+        );
+        closeForm();
+        return;
+      }
 
-          return {
-            ...client,
-            idNumber: values.idNumber,
-            fullName: values.fullName,
-            category: values.category,
-            phone: values.phone,
-            email: values.email,
-          };
-        })
-      );
+      const nuevo = await clientesApi.registrar({
+        cedula: values.idNumber,
+        nombreCompleto: values.fullName,
+        telefono: values.phone,
+        correo: values.email,
+        tipoCliente: values.category === 'Socio' ? 'SOCIO' : 'NO_SOCIO',
+      });
+
+      setClients((prev) => [toClient(nuevo), ...prev]);
       closeForm();
-      return;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al guardar el cliente.');
     }
-
-    const newClient: Client = {
-      idNumber: values.idNumber,
-      fullName: values.fullName,
-      phone: values.phone,
-      email: values.email,
-      category: values.category,
-      status: 'Activo',
-      registeredAt: formattedToday,
-    };
-
-    setClients((prev) => [newClient, ...prev]);
-    closeForm();
   };
 
   const visibleClients = useMemo(() => {
-    const filteredByTab = clients.filter((client) => {
-      if (activeTab === 'Socios') {
-        return client.category === 'Socio';
-      }
-
-      if (activeTab === 'No Socios') {
-        return client.category === 'No Socio';
-      }
-
+    return clients.filter((c) => {
+      if (activeTab === 'Socios') return c.category === 'Socio';
+      if (activeTab === 'No Socios') return c.category === 'No Socio';
       return true;
     });
-
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-      return filteredByTab;
-    }
-
-    return filteredByTab.filter((client) => {
-      const searchable = `${client.idNumber} ${client.fullName} ${client.phone}`.toLowerCase();
-      return searchable.includes(normalizedQuery);
-    });
-  }, [activeTab, clients, searchQuery]);
+  }, [activeTab, clients]);
 
   return (
     <section className="space-y-6 relative isolate min-h-[calc(100vh-10rem)]">
@@ -158,9 +137,21 @@ const ClientsPage: React.FC = () => {
         onCreateClient={openCreateForm}
       />
 
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="bg-surface rounded-lg shadow-sm border border-border overflow-hidden flex-1 flex flex-col">
-        <ClientsTable clients={visibleClients} onEditClient={openEditForm} />
-        <ClientsTablePagination from={1} to={visibleClients.length} total={1245} />
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-on-surface-variant text-sm">
+            Cargando clientes…
+          </div>
+        ) : (
+          <ClientsTable clients={visibleClients} onEditClient={openEditForm} />
+        )}
+        <ClientsTablePagination from={1} to={visibleClients.length} total={visibleClients.length} />
       </div>
 
       <ClientFormModal

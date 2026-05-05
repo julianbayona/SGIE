@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { getEventSummaryById } from '@/features/events/data/eventSummary';
+import pagosApi from '@/api/pagos';
 
 interface PaymentRecord {
   id: string;
@@ -58,28 +59,65 @@ const EventPaymentsPage: React.FC = () => {
   const paymentStatusLabel = pendingAmount > 0 ? 'Saldo pendiente' : 'Pagado totalmente';
   const paymentHistory = useMemo(() => [...payments].reverse(), [payments]);
 
-  const registerPayment = () => {
+  // cotizacionId debe venir del contexto del evento; por ahora se usa un placeholder
+  // que se reemplazará cuando EventSummaryPage cargue el evento real del backend.
+  const cotizacionId = (event as { cotizacionId?: string }).cotizacionId ?? '';
+
+  const registerPayment = async () => {
     if (newAmount <= 0 || !newDate || pendingAmount <= 0 || !newConcept.trim()) {
       return;
     }
 
     const safeAmount = Math.min(newAmount, pendingAmount);
 
-    setPayments((prev) => [
-      ...prev,
-      {
-        id: `pay-${Date.now()}`,
-        date: new Date(newDate).toLocaleDateString('es-CO', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
-        concept: newConcept.trim(),
-        method: newMethod,
-        amount: safeAmount,
-        registeredBy: 'Usuario actual',
-      },
-    ]);
+    try {
+      if (cotizacionId) {
+        // Llamada real al backend
+        const anticipo = await pagosApi.registrarAnticipo(cotizacionId, {
+          usuarioId: '00000000-0000-0000-0000-000000000001', // reemplazar con usuario autenticado
+          valor: safeAmount,
+          metodoPago: newMethod,
+          fechaPago: newDate,
+          observaciones: newConcept.trim(),
+        });
+
+        setPayments((prev) => [
+          ...prev,
+          {
+            id: anticipo.id,
+            date: new Date(anticipo.fechaPago).toLocaleDateString('es-CO', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            }),
+            concept: anticipo.observaciones ?? newConcept.trim(),
+            method: anticipo.metodoPago,
+            amount: Number(anticipo.valor),
+            registeredBy: 'Usuario actual',
+          },
+        ]);
+      } else {
+        // Modo local mientras no haya cotizacionId disponible
+        setPayments((prev) => [
+          ...prev,
+          {
+            id: `pay-${Date.now()}`,
+            date: new Date(newDate).toLocaleDateString('es-CO', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            }),
+            concept: newConcept.trim(),
+            method: newMethod,
+            amount: safeAmount,
+            registeredBy: 'Usuario actual',
+          },
+        ]);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al registrar el pago.');
+      return;
+    }
 
     setNewAmount(0);
     setNewDate('');
