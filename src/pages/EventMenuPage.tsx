@@ -3,15 +3,19 @@ import { Link, useParams } from 'react-router-dom';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { getEventSummaryById } from '@/features/events/data/eventSummary';
 
-interface MenuItemOption {
-  label: string;
+interface MenuOption {
+  moment: string;
+  name: string;
   price: number;
 }
 
-interface CourseConfig {
-  key: string;
-  title: string;
-  options: MenuItemOption[];
+interface MenuLine {
+  id: string;
+  moment: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  notes: string;
 }
 
 const formatCurrency = (value: number): string => {
@@ -22,418 +26,325 @@ const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-const courseConfigs: CourseConfig[] = [
-  {
-    key: 'entrada',
-    title: 'Entrada',
-    options: [
-      { label: 'Carpaccio de res con alcaparras', price: 25000 },
-      { label: 'Ensalada de frutos del bosque', price: 22000 },
-    ],
-  },
-  {
-    key: 'consome',
-    title: 'Consomé',
-    options: [
-      { label: 'Crema de espárragos', price: 8500 },
-      { label: 'Consomé de pavo artesanal', price: 9000 },
-    ],
-  },
-  {
-    key: 'platoFuerte',
-    title: 'Plato fuerte',
-    options: [
-      { label: 'Medallón de lomo en salsa pimienta', price: 65000 },
-      { label: 'Salmón a la parrilla con finas hierbas', price: 68000 },
-    ],
-  },
-  {
-    key: 'postre',
-    title: 'Postre',
-    options: [
-      { label: 'Mousse de chocolate al 70%', price: 12000 },
-      { label: 'Cheesecake de frutos amarillos', price: 13000 },
-    ],
-  },
+const menuOptions: MenuOption[] = [
+  { moment: 'Entrada', name: 'Carpaccio de res con alcaparras', price: 25000 },
+  { moment: 'Entrada', name: 'Ensalada de frutos del bosque', price: 22000 },
+  { moment: 'Consomé', name: 'Crema de espárragos', price: 8500 },
+  { moment: 'Consomé', name: 'Consomé de pavo artesanal', price: 9000 },
+  { moment: 'Plato fuerte', name: 'Medallón de lomo en salsa pimienta', price: 65000 },
+  { moment: 'Plato fuerte', name: 'Salmón a la parrilla con finas hierbas', price: 68000 },
+  { moment: 'Postre', name: 'Mousse de chocolate al 70%', price: 12000 },
+  { moment: 'Postre', name: 'Cheesecake de frutos amarillos', price: 13000 },
+  { moment: 'Bebidas', name: 'Jugo natural + agua', price: 15000 },
+  { moment: 'Bebidas', name: 'Vino de la casa', price: 26000 },
 ];
 
-const beverageOptions: MenuItemOption[] = [
-  { label: 'Jugo natural + Agua', price: 15000 },
-  { label: 'Vino de la casa', price: 26000 },
-  { label: 'Gaseosas variadas', price: 9000 },
-  { label: 'Barra libre nacional', price: 38000 },
-];
-
-interface CourseState {
-  selectedLabel: string;
-  basePrice: number;
-  quantity: number;
-  notes: string;
-}
-
-interface EconomicPreviewLine {
-  id: string;
-  product: string;
-  quantity: number;
-  unitPrice: number;
-  notes: string;
-}
-
-const createDefaultState = (option: MenuItemOption): CourseState => ({
-  selectedLabel: option.label,
-  basePrice: option.price,
-  quantity: 0,
-  notes: '',
-});
+const createLineId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const EventMenuPage: React.FC = () => {
   const { eventId } = useParams();
   const event = useMemo(() => getEventSummaryById(eventId), [eventId]);
+  const guests = event.guests || 0;
 
-  const [courses, setCourses] = useState<Record<string, CourseState>>(() => {
-    const initial: Record<string, CourseState> = {};
+  const [menuLines, setMenuLines] = useState<MenuLine[]>(() => [
+    {
+      id: 'menu-entrada',
+      moment: 'Entrada',
+      name: 'Carpaccio de res con alcaparras',
+      quantity: guests,
+      unitPrice: 25000,
+      notes: '',
+    },
+    {
+      id: 'menu-consome',
+      moment: 'Consomé',
+      name: 'Crema de espárragos',
+      quantity: guests,
+      unitPrice: 8500,
+      notes: '',
+    },
+    {
+      id: 'menu-plato-fuerte',
+      moment: 'Plato fuerte',
+      name: 'Medallón de lomo en salsa pimienta',
+      quantity: guests,
+      unitPrice: 65000,
+      notes: '',
+    },
+    {
+      id: 'menu-postre',
+      moment: 'Postre',
+      name: 'Mousse de chocolate al 70%',
+      quantity: guests,
+      unitPrice: 12000,
+      notes: '',
+    },
+    {
+      id: 'menu-bebidas',
+      moment: 'Bebidas',
+      name: 'Jugo natural + agua',
+      quantity: guests,
+      unitPrice: 15000,
+      notes: 'Sin hielo en el agua',
+    },
+  ]);
 
-    courseConfigs.forEach((course) => {
-      initial[course.key] = createDefaultState(course.options[0]!);
-    });
+  const [selectedOptionName, setSelectedOptionName] = useState(menuOptions[0]?.name ?? '');
+  const [selectedQuantity, setSelectedQuantity] = useState(guests);
+  const [selectedNotes, setSelectedNotes] = useState('');
+  const [exceptionsText, setExceptionsText] = useState('3 vegetarianos, 1 alergia a frutos secos');
 
-    return initial;
-  });
+  const selectedOption = useMemo(() => {
+    return menuOptions.find((option) => option.name === selectedOptionName) ?? menuOptions[0]!;
+  }, [selectedOptionName]);
 
-  const [beverage, setBeverage] = useState<CourseState>(() => createDefaultState(beverageOptions[0]!));
-  const [economicPreviewLines, setEconomicPreviewLines] = useState<EconomicPreviewLine[]>([]);
-  const [exceptionsText, setExceptionsText] = useState('');
+  const menuTotal = useMemo(() => {
+    return menuLines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+  }, [menuLines]);
 
-  const updateCourse = (key: string, updater: (prev: CourseState) => CourseState) => {
-    setCourses((prev) => ({
-      ...prev,
-      [key]: updater(prev[key]!),
-    }));
+  const costPerGuest = guests > 0 ? Math.round(menuTotal / guests) : 0;
+
+  const updateLineQuantity = (lineId: string, quantity: number) => {
+    setMenuLines((prev) =>
+      prev.map((line) =>
+        line.id === lineId ? { ...line, quantity: Math.max(1, Number.isNaN(quantity) ? 1 : quantity) } : line
+      )
+    );
   };
 
-  const addEconomicPreviewLine = (line: Omit<EconomicPreviewLine, 'id'>) => {
-    if (line.quantity <= 0) {
-      return;
-    }
+  const updateLineNotes = (lineId: string, notes: string) => {
+    setMenuLines((prev) => prev.map((line) => (line.id === lineId ? { ...line, notes } : line)));
+  };
 
-    setEconomicPreviewLines((prev) => [
+  const addMenuLine = () => {
+    const quantity = Math.max(1, Number.isNaN(selectedQuantity) ? 1 : selectedQuantity);
+
+    setMenuLines((prev) => [
       ...prev,
       {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        ...line,
+        id: createLineId(),
+        moment: selectedOption.moment,
+        name: selectedOption.name,
+        quantity,
+        unitPrice: selectedOption.price,
+        notes: selectedNotes.trim(),
       },
     ]);
+    setSelectedQuantity(guests);
+    setSelectedNotes('');
   };
-
-  const totalEstimate = useMemo(() => {
-    return economicPreviewLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
-  }, [economicPreviewLines]);
-
-  const subtotalPerPerson = useMemo(() => {
-    const guests = event.guests || 0;
-
-    if (guests <= 0) {
-      return 0;
-    }
-
-    return totalEstimate / guests;
-  }, [event.guests, totalEstimate]);
 
   return (
     <section className="space-y-8 pb-32">
       <EventDetailHeaderTabs event={event} activeTab="menu" />
 
-      <div className="lg:flex lg:items-start max-w-[1400px] mx-auto w-full gap-6">
-        <div className="space-y-8 flex-1 mb-32 md:mb-20">
-          <div className="bg-surface-container-lowest p-8 shadow-sm space-y-10">
-            <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Selección de menú principal</h4>
-
-            {courseConfigs.map((course, index) => {
-              const courseState = courses[course.key]!;
-
-              return (
-                <div key={course.key} className={`${index < courseConfigs.length - 1 ? 'border-b border-surface-container pb-10' : 'pb-4'} grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start`}>
-                  <div className="lg:col-span-12 mb-2">
-                    <label className="text-xs uppercase tracking-wider text-primary-gold font-bold block">{course.title}</label>
-                  </div>
-
-                  <div className="lg:col-span-4">
-                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Selección</label>
-                    <select
-                      className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 px-3 italic"
-                      value={courseState.selectedLabel}
-                      onChange={(eventTarget) => {
-                        const option = course.options.find((item) => item.label === eventTarget.target.value) ?? course.options[0]!;
-                        updateCourse(course.key, (prev) => ({
-                          ...prev,
-                          selectedLabel: option.label,
-                          basePrice: option.price,
-                        }));
-                      }}
-                    >
-                      {course.options.map((option) => (
-                        <option key={option.label} value={option.label}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="lg:col-span-2">
-                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Cantidad</label>
-                    <input
-                      className="w-full h-[42px] bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm text-center"
-                      type="number"
-                      min={0}
-                      value={courseState.quantity}
-                      onChange={(eventTarget) => {
-                        const next = Number(eventTarget.target.value);
-                        updateCourse(course.key, (prev) => ({
-                          ...prev,
-                          quantity: Math.max(0, Number.isNaN(next) ? 0 : next),
-                        }));
-                      }}
-                    />
-                  </div>
-
-                  <div className="lg:col-span-3">
-                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Especificaciones</label>
-                    <input
-                      className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 px-3"
-                      placeholder="Instrucciones..."
-                      type="text"
-                      value={courseState.notes}
-                      onChange={(eventTarget) => {
-                        updateCourse(course.key, (prev) => ({
-                          ...prev,
-                          notes: eventTarget.target.value,
-                        }));
-                      }}
-                    />
-                  </div>
-
-                  <div className="lg:col-span-2">
-                    <label className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold block mb-2">Precio base</label>
-                    <div className="h-[42px] flex items-center justify-end px-3 bg-surface-container-low text-sm font-bold text-primary-gold">
-                      {formatCurrency(courseState.basePrice)}
-                    </div>
-                  </div>
-
-                  <div className="lg:col-span-1 pt-6">
-                    <button
-                      className="w-full h-[42px] border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium text-on-surface flex items-center justify-center gap-1.5"
-                      type="button"
-                      title="Agregar al resumen"
-                      disabled={courseState.quantity <= 0}
-                      onClick={() => {
-                        addEconomicPreviewLine({
-                          product: courseState.selectedLabel,
-                          quantity: courseState.quantity,
-                          unitPrice: courseState.basePrice,
-                          notes: courseState.notes.trim(),
-                        });
-
-                        updateCourse(course.key, (prev) => ({
-                          ...prev,
-                          quantity: 0,
-                          notes: '',
-                        }));
-                      }}
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-primary-gold">add_circle</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="bg-surface-container-lowest p-8 shadow-sm space-y-6">
-            <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Gestión de bebidas</h4>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-6 lg:gap-x-8 items-start">
-              <div className="lg:col-span-5">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Bebida seleccionada</label>
-                <select
-                  className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-2.5 px-3 italic"
-                  value={beverage.selectedLabel}
-                  onChange={(eventTarget) => {
-                    const option = beverageOptions.find((item) => item.label === eventTarget.target.value) ?? beverageOptions[0]!;
-                    setBeverage((prev) => ({
-                      ...prev,
-                      selectedLabel: option.label,
-                      basePrice: option.price,
-                    }));
-                  }}
-                >
-                  {beverageOptions.map((option) => (
-                    <option key={option.label} value={option.label}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+      <div className="lg:flex lg:items-start gap-6">
+        <div className="flex-1 space-y-6 mb-24">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Ficha gastronómica</p>
+                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">Menú del evento</h3>
+                <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">
+                  Aquí se define lo que el cliente pidió para el evento. La cotización toma estas cantidades como fuente
+                  de verdad y solo permite ajustes económicos.
+                </p>
               </div>
-
-              <div className="lg:col-span-2">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Cantidad</label>
-                <input
-                  className="w-full h-[42px] bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm text-center"
-                  type="number"
-                  min={0}
-                  value={beverage.quantity}
-                  onChange={(eventTarget) => {
-                    const next = Number(eventTarget.target.value);
-                    setBeverage((prev) => ({
-                      ...prev,
-                      quantity: Math.max(0, Number.isNaN(next) ? 0 : next),
-                    }));
-                  }}
-                />
-              </div>
-
-              <div className="lg:col-span-2">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Precio base</label>
-                <div className="h-[42px] flex items-center justify-end px-3 bg-surface-container-low text-sm font-bold text-primary-gold">
-                  {formatCurrency(beverage.basePrice)}
-                </div>
-              </div>
-
-              <div className="lg:col-span-3 pt-6">
-                <button
-                  className="w-full h-[42px] border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-medium text-on-surface flex items-center justify-center gap-1.5"
-                  type="button"
-                  title="Agregar al resumen"
-                  disabled={beverage.quantity <= 0}
-                  onClick={() => {
-                    addEconomicPreviewLine({
-                      product: beverage.selectedLabel,
-                      quantity: beverage.quantity,
-                      unitPrice: beverage.basePrice,
-                      notes: beverage.notes.trim(),
-                    });
-
-                    setBeverage((prev) => ({
-                      ...prev,
-                      quantity: 0,
-                      notes: '',
-                    }));
-                  }}
-                >
-                  <span className="material-symbols-outlined text-[16px] text-primary-gold">add_circle</span>
-                </button>
-              </div>
-
-              <div className="lg:col-span-12">
-                <label className="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-2">Especificaciones del servicio de bebidas</label>
-                <textarea
-                  className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-3 px-3 min-h-[80px]"
-                  placeholder="Ej: No servir hielo en el agua, rodajas de limón disponibles..."
-                  value={beverage.notes}
-                  onChange={(eventTarget) => {
-                    setBeverage((prev) => ({
-                      ...prev,
-                      notes: eventTarget.target.value,
-                    }));
-                  }}
-                ></textarea>
-              </div>
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                En edición
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-surface-container-lowest p-8 shadow-sm space-y-4">
-              <h4 className="font-display text-xl font-bold text-on-surface border-b border-outline-variant pb-2">Excepciones alimentarias</h4>
+          <div className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-outline-variant/20">
+              <h4 className="font-display text-lg font-bold text-on-surface">Items solicitados</h4>
+              <p className="text-sm text-on-surface-variant mt-1">
+                Cambia cantidades o especificaciones aquí antes de generar o actualizar la cotización.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px] text-left">
+                <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
+                  <tr>
+                    <th className="px-6 py-3">Momento</th>
+                    <th className="px-4 py-3">Selección</th>
+                    <th className="px-4 py-3 text-right">Cantidad</th>
+                    <th className="px-4 py-3 text-right">Precio base</th>
+                    <th className="px-4 py-3">Especificaciones</th>
+                    <th className="px-6 py-3 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {menuLines.map((line) => (
+                    <tr key={line.id}>
+                      <td className="px-6 py-4 text-sm font-semibold text-on-surface">{line.moment}</td>
+                      <td className="px-4 py-4">
+                        <p className="text-sm font-semibold text-on-surface">{line.name}</p>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <input
+                          className="w-20 rounded-md border border-outline-variant/40 bg-surface-container-low px-2 py-1.5 text-right text-sm"
+                          type="number"
+                          min={1}
+                          value={line.quantity}
+                          onChange={(eventTarget) => updateLineQuantity(line.id, Number(eventTarget.target.value))}
+                        />
+                      </td>
+                      <td className="px-4 py-4 text-right text-sm text-on-surface-variant">
+                        {formatCurrency(line.unitPrice)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <input
+                          className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-sm"
+                          type="text"
+                          value={line.notes}
+                          placeholder="Sin observaciones"
+                          onChange={(eventTarget) => updateLineNotes(line.id, eventTarget.target.value)}
+                        />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          className="text-sm font-semibold text-red-700 hover:text-red-800"
+                          type="button"
+                          onClick={() => setMenuLines((prev) => prev.filter((item) => item.id !== line.id))}
+                        >
+                          Quitar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+            <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm space-y-5">
+              <div>
+                <h4 className="font-display text-lg font-bold text-on-surface">Agregar ítem al menú</h4>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  Usa esta sección para sumar una bebida, plato alterno o componente adicional del menú.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div className="md:col-span-5">
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Selección</label>
+                  <select
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    value={selectedOptionName}
+                    onChange={(eventTarget) => setSelectedOptionName(eventTarget.target.value)}
+                  >
+                    {menuOptions.map((option) => (
+                      <option key={`${option.moment}-${option.name}`} value={option.name}>
+                        {option.moment} - {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Cantidad</label>
+                  <input
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    type="number"
+                    min={1}
+                    value={selectedQuantity}
+                    onChange={(eventTarget) => setSelectedQuantity(Number(eventTarget.target.value))}
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-bold text-neutral-700 mb-2">Nota</label>
+                  <input
+                    className="w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm"
+                    type="text"
+                    value={selectedNotes}
+                    placeholder="Opcional"
+                    onChange={(eventTarget) => setSelectedNotes(eventTarget.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <button
+                    className="w-full rounded-md bg-primary-gold px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary"
+                    type="button"
+                    onClick={addMenuLine}
+                  >
+                    Agregar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm space-y-4">
+              <h4 className="font-display text-lg font-bold text-on-surface">Excepciones alimentarias</h4>
               <textarea
-                className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary-gold/50 text-sm py-4 px-4 min-h-[120px] italic"
-                placeholder="Ej: 3 personas sin gluten, 1 persona alérgica a frutos secos..."
+                className="min-h-[118px] w-full rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-3 text-sm"
                 value={exceptionsText}
+                placeholder="Ej: personas vegetarianas, alergias, menú infantil..."
                 onChange={(eventTarget) => setExceptionsText(eventTarget.target.value)}
               ></textarea>
-            </div>
-
-            <div className="bg-primary-gold/5 p-8 shadow-sm border border-primary-gold/20 space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl">event_note</span>
-              </div>
-              <h4 className="font-display text-xl font-bold text-primary-gold border-b border-primary-gold/20 pb-2">Agenda y recordatorios</h4>
-              <div className="space-y-5 relative z-10">
-                <p className="text-sm text-on-surface-variant">
-                  Gestiona aquí solo la propuesta gastronómica. Las pruebas de plato y recordatorios de anticipo se programan en la Agenda del evento, donde puedes crear múltiples registros.
-                </p>
-                <div className="space-y-3">
-                  <Link
-                    className="w-full bg-primary-gold text-white px-6 py-3 rounded-md text-sm font-bold shadow-sm flex items-center justify-center gap-3 hover:bg-primary transition-colors"
-                    to={`/events/${event.id}/agenda`}
-                  >
-                    <span className="material-symbols-outlined">calendar_add_on</span>
-                    Ir a Agenda del evento
-                  </Link>
-                  <p className="text-[11px] italic text-primary-gold font-medium">
-                    Allí podrás registrar varias degustaciones y múltiples recordatorios para cada anticipo.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
-        <aside className="hidden lg:block w-[320px] sticky top-[92px] mt-2 space-y-6">
-          <div className="bg-white p-6 shadow-md border border-neutral-100 rounded-sm">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-4">
-              <h5 className="font-display font-bold text-lg text-primary-gold">Resumen económico</h5>
-              <span className="text-xs font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">{event.guests} pax</span>
-            </div>
-
-            <div className="mb-6">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-3 text-[10px] uppercase tracking-wider text-neutral-500 font-bold mb-3">
-                <span>Producto</span>
-                <span className="text-right">Cantidad</span>
-                <span className="text-right">Precio</span>
+        <aside className="lg:w-[330px] space-y-6 lg:sticky lg:top-[92px]">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-5 shadow-sm space-y-4">
+            <h4 className="font-display font-bold text-lg text-on-surface">Resumen del menú</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <span className="text-on-surface-variant">Invitados</span>
+                <span className="font-semibold text-on-surface">{guests} pax</span>
               </div>
-
-              <div className="space-y-2">
-              {economicPreviewLines.length === 0 ? (
-                <p className="text-sm text-neutral-400 italic">Aún no hay ítems agregados al resumen.</p>
-              ) : (
-                economicPreviewLines.map((line) => (
-                  <div key={line.id} className="grid grid-cols-[1fr_auto_auto] gap-3 text-sm items-start">
-                    <p className="text-neutral-600">{line.product}</p>
-                    <span className="text-right text-neutral-500">{line.quantity}</span>
-                    <span className="font-medium text-neutral-800 text-right">
-                      {formatCurrency(line.unitPrice * line.quantity)}
-                    </span>
-                  </div>
-                ))
-              )}
+              <div className="flex justify-between gap-3">
+                <span className="text-on-surface-variant">Items definidos</span>
+                <span className="font-semibold text-on-surface">{menuLines.length}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-on-surface-variant">Estimado por invitado</span>
+                <span className="font-semibold text-on-surface">{formatCurrency(costPerGuest)}</span>
+              </div>
+              <div className="flex justify-between gap-3 border-t border-outline-variant/20 pt-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">Total menú</span>
+                <span className="font-display text-lg font-bold text-primary-gold">{formatCurrency(menuTotal)}</span>
               </div>
             </div>
+          </div>
 
-            <div className="border-t-2 border-dashed border-neutral-100 pt-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Total por persona</span>
-                <span className="font-display text-xl font-bold text-primary-gold">{formatCurrency(subtotalPerPerson)}</span>
-              </div>
-              <div className="bg-primary-gold/10 p-4 rounded-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-primary uppercase tracking-wider">Gran Total</span>
-                  <span className="font-display text-2xl font-bold text-primary">{formatCurrency(totalEstimate)}</span>
-                </div>
-              </div>
-            </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 shadow-sm space-y-3">
+            <h4 className="font-display font-bold text-base text-amber-800">Impacto en cotización</h4>
+            <p className="text-sm text-amber-800">
+              Si la cotización está en borrador, estos cambios recalculan el documento. Si ya fue enviada, debe quedar
+              desactualizada y generar una nueva.
+            </p>
+            <Link
+              className="inline-flex w-full items-center justify-center rounded-md border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-100"
+              to={`/events/${event.id}/cotizacion`}
+            >
+              Ir a cotización
+            </Link>
           </div>
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/80 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
+      <footer className="fixed bottom-0 right-0 z-[60] flex w-full items-center justify-between border-t border-surface-container bg-surface-container-lowest/90 px-6 py-4 backdrop-blur-md md:w-[calc(100%-16rem)]">
         <div className="hidden sm:flex items-center gap-2 text-on-secondary-container">
           <span className="material-symbols-outlined text-lg">info</span>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Resumen en tiempo real basado en la selección actual</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+            Menús y cantidades se editan aquí, no dentro de la cotización
+          </p>
         </div>
-        <div className="flex gap-4 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none border border-outline-variant hover:bg-surface-container-low transition-colors px-6 py-2.5 text-sm font-medium flex items-center justify-center gap-2" type="button">
-            <span className="material-symbols-outlined text-green-700 text-lg">chat</span>
+        <div className="flex w-full gap-3 sm:w-auto">
+          <button
+            className="flex-1 rounded-md border border-green-text/40 px-5 py-2.5 text-sm font-semibold text-green-text transition-colors hover:bg-green-bg sm:flex-none"
+            type="button"
+          >
             Enviar propuesta por WhatsApp
           </button>
-          <button className="flex-1 sm:flex-none bg-primary-gold text-white rounded-md px-8 py-2.5 text-sm font-bold shadow-sm hover:bg-primary transition-colors" type="button">
+          <button
+            className="flex-1 rounded-md bg-primary-gold px-8 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary sm:flex-none"
+            type="button"
+          >
             Guardar menú
           </button>
         </div>

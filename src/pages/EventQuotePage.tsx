@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import EventDetailHeaderTabs from '@/features/events/components/EventDetailHeaderTabs';
 import { getEventSummaryById } from '@/features/events/data/eventSummary';
@@ -9,6 +9,7 @@ type PricingMode = 'servicio' | 'unidad';
 
 interface QuoteItem {
   id: string;
+  source: 'menu' | 'montaje' | 'salon';
   concept: string;
   pricingMode: PricingMode;
   quantity: number;
@@ -28,101 +29,117 @@ const formatCurrency = (value: number): string => {
 const EventQuotePage: React.FC = () => {
   const { eventId } = useParams();
   const event = useMemo(() => getEventSummaryById(eventId), [eventId]);
+  const guests = event.guests || 120;
 
-  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>(() => {
-    const guests = event.guests || 120;
-
-    return [
-      {
-        id: 'venue',
-        concept: 'Alquiler salón principal (4h)',
-        pricingMode: 'servicio',
-        quantity: 1,
-        unitBasePrice: 1200000,
-        unitAdjustedPrice: 1200000,
-      },
-      {
-        id: 'menu-entrada',
-        concept: 'Menú · Entrada',
-        pricingMode: 'unidad',
-        quantity: guests,
-        unitBasePrice: 25000,
-        unitAdjustedPrice: 25000,
-        notes: 'Carpaccio de res con alcaparras',
-      },
-      {
-        id: 'menu-consome',
-        concept: 'Menú · Consomé',
-        pricingMode: 'unidad',
-        quantity: guests,
-        unitBasePrice: 8500,
-        unitAdjustedPrice: 8500,
-        notes: 'Crema de espárragos',
-      },
-      {
-        id: 'menu-plato-fuerte',
-        concept: 'Menú · Plato fuerte',
-        pricingMode: 'unidad',
-        quantity: guests,
-        unitBasePrice: 65000,
-        unitAdjustedPrice: 65000,
-        notes: 'Medallón de lomo en salsa pimienta',
-      },
-      {
-        id: 'menu-postre',
-        concept: 'Menú · Postre',
-        pricingMode: 'unidad',
-        quantity: guests,
-        unitBasePrice: 12000,
-        unitAdjustedPrice: 12000,
-        notes: 'Mousse de chocolate al 70%',
-      },
-      {
-        id: 'menu-bebidas',
-        concept: 'Menú · Bebidas',
-        pricingMode: 'unidad',
-        quantity: guests,
-        unitBasePrice: 15000,
-        unitAdjustedPrice: 15000,
-        notes: 'Jugo natural + agua',
-      },
-      {
-        id: 'montaje-base',
-        concept: 'Montaje base y textiles',
-        pricingMode: 'servicio',
-        quantity: 1,
-        unitBasePrice: 420000,
-        unitAdjustedPrice: 420000,
-      },
-      {
-        id: 'adicional-tarimas',
-        concept: 'Adicional · Tarimas',
-        pricingMode: 'unidad',
-        quantity: 2,
-        unitBasePrice: 180000,
-        unitAdjustedPrice: 180000,
-      },
-      {
-        id: 'adicional-audiovisuales',
-        concept: 'Adicional · Audiovisuales',
-        pricingMode: 'servicio',
-        quantity: 1,
-        unitBasePrice: 450000,
-        unitAdjustedPrice: 450000,
-      },
-    ];
-  });
+  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>(() => [
+    {
+      id: 'venue',
+      source: 'salon',
+      concept: 'Alquiler salón principal (4h)',
+      pricingMode: 'servicio',
+      quantity: 1,
+      unitBasePrice: 1200000,
+      unitAdjustedPrice: 1200000,
+    },
+    {
+      id: 'menu-entrada',
+      source: 'menu',
+      concept: 'Menú - Entrada',
+      pricingMode: 'unidad',
+      quantity: guests,
+      unitBasePrice: 25000,
+      unitAdjustedPrice: 25000,
+      notes: 'Carpaccio de res con alcaparras',
+    },
+    {
+      id: 'menu-consome',
+      source: 'menu',
+      concept: 'Menú - Consomé',
+      pricingMode: 'unidad',
+      quantity: guests,
+      unitBasePrice: 8500,
+      unitAdjustedPrice: 8500,
+      notes: 'Crema de espárragos',
+    },
+    {
+      id: 'menu-plato-fuerte',
+      source: 'menu',
+      concept: 'Menú - Plato fuerte',
+      pricingMode: 'unidad',
+      quantity: guests,
+      unitBasePrice: 65000,
+      unitAdjustedPrice: 65000,
+      notes: 'Medallón de lomo en salsa pimienta',
+    },
+    {
+      id: 'menu-postre',
+      source: 'menu',
+      concept: 'Menú - Postre',
+      pricingMode: 'unidad',
+      quantity: guests,
+      unitBasePrice: 12000,
+      unitAdjustedPrice: 12000,
+      notes: 'Mousse de chocolate al 70%',
+    },
+    {
+      id: 'menu-bebidas',
+      source: 'menu',
+      concept: 'Menú - Bebidas',
+      pricingMode: 'unidad',
+      quantity: guests,
+      unitBasePrice: 15000,
+      unitAdjustedPrice: 15000,
+      notes: 'Jugo natural + agua',
+    },
+    {
+      id: 'montaje-base',
+      source: 'montaje',
+      concept: 'Montaje base y textiles',
+      pricingMode: 'servicio',
+      quantity: 1,
+      unitBasePrice: 420000,
+      unitAdjustedPrice: 420000,
+      notes: '12 mesas redondas, sillas Tiffany, mantel lino premium',
+    },
+    {
+      id: 'adicional-tarimas',
+      source: 'montaje',
+      concept: 'Adicional - Tarimas',
+      pricingMode: 'unidad',
+      quantity: 2,
+      unitBasePrice: 180000,
+      unitAdjustedPrice: 180000,
+    },
+    {
+      id: 'adicional-audiovisuales',
+      source: 'montaje',
+      concept: 'Adicional - Audiovisuales',
+      pricingMode: 'servicio',
+      quantity: 1,
+      unitBasePrice: 450000,
+      unitAdjustedPrice: 450000,
+    },
+  ]);
 
   const [advancePercent, setAdvancePercent] = useState(20);
-  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('Aceptada');
+  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('Borrador');
+  const isDraft = quoteStatus === 'Borrador';
 
   const history: Array<{ id: string; date: string; status: QuoteStatus; active: boolean }> = [
-    { id: 'COT-041-02', date: '10 jun 2025', status: 'Aceptada', active: true },
+    { id: 'COT-041-02', date: '10 jun 2025', status: 'Borrador', active: true },
     { id: 'COT-041-01', date: '2 jun 2025', status: 'Desactualizada', active: false },
   ];
 
-  const updateQuoteItem = (itemId: string, updater: (item: QuoteItem) => QuoteItem) => {
-    setQuoteItems((prev) => prev.map((item) => (item.id === itemId ? updater(item) : item)));
+  const updateAdjustedPrice = (itemId: string, value: number) => {
+    if (!isDraft) {
+      return;
+    }
+
+    setQuoteItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, unitAdjustedPrice: Math.max(0, Number.isNaN(value) ? 0 : value) } : item
+      )
+    );
   };
 
   const baseTotal = useMemo(() => {
@@ -133,17 +150,11 @@ const EventQuotePage: React.FC = () => {
     return quoteItems.reduce((sum, item) => sum + item.quantity * item.unitAdjustedPrice, 0);
   }, [quoteItems]);
 
+  const menuItems = useMemo(() => quoteItems.filter((item) => item.source === 'menu'), [quoteItems]);
+  const montageItems = useMemo(() => quoteItems.filter((item) => item.source === 'montaje'), [quoteItems]);
   const deltaTotal = adjustedTotal - baseTotal;
   const advanceValue = Math.round((adjustedTotal * advancePercent) / 100);
   const remainingValue = adjustedTotal - advanceValue;
-
-  const requestedMenuItems = useMemo(() => {
-    return quoteItems.filter((item) => item.id.startsWith('menu-'));
-  }, [quoteItems]);
-
-  const requestedMontageAdditionalItems = useMemo(() => {
-    return quoteItems.filter((item) => item.id.startsWith('adicional-'));
-  }, [quoteItems]);
 
   return (
     <section className="space-y-8 pb-28">
@@ -151,14 +162,60 @@ const EventQuotePage: React.FC = () => {
 
       <div className="lg:flex lg:items-start gap-6">
         <div className="flex-1 space-y-6 mb-20">
-          <div className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-outline-variant/20 flex items-start justify-between gap-4 flex-wrap">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Cotización activa</p>
-                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">#{event.id.replace('EVT', 'COT').replace('EV-', 'COT-')}</h3>
-                <p className="text-sm text-on-surface-variant mt-1">{event.title.replace(' - ', ' · ')} · {event.dateLabel}</p>
+                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">
+                  #{event.id.replace('EVT', 'COT').replace('EV-', 'COT-')}
+                </h3>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  {event.title.replace(' - ', ' - ')} - {event.dateLabel}
+                </p>
               </div>
               <StatusBadge type="quote" status={quoteStatus} size="md" />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-5 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h4 className="font-display text-base font-bold text-blue-900">Origen de los datos</h4>
+                <p className="mt-1 max-w-3xl text-sm text-blue-900">
+                  Esta cotización se genera desde el menú y montaje del evento. Para cambiar platos, cantidades o
+                  adicionales, edita esas pestañas; aquí solo se revisan precios, descuento, anticipo y envío.
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Link
+                  className="rounded-md border border-blue-300 bg-white px-3 py-2 text-sm font-bold text-blue-900 hover:bg-blue-100"
+                  to={`/events/${event.id}/menu`}
+                >
+                  Ir a Menú
+                </Link>
+                <Link
+                  className="rounded-md border border-blue-300 bg-white px-3 py-2 text-sm font-bold text-blue-900 hover:bg-blue-100"
+                  to={`/events/${event.id}/montaje`}
+                >
+                  Ir a Montaje
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface-container-lowest border border-border rounded-lg shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-outline-variant/20 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 className="font-display text-lg font-bold text-on-surface">Detalle económico</h4>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  Las cantidades son de solo lectura porque pertenecen a Menú y Montaje.
+                </p>
+              </div>
+              {!isDraft ? (
+                <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-bold text-stone-600">
+                  Documento no editable
+                </span>
+              ) : null}
             </div>
 
             <div className="overflow-x-auto">
@@ -166,6 +223,7 @@ const EventQuotePage: React.FC = () => {
                 <thead className="bg-surface-container-low text-xs uppercase tracking-wider text-neutral-500">
                   <tr>
                     <th className="px-6 py-3">Concepto</th>
+                    <th className="px-4 py-3">Origen</th>
                     <th className="px-4 py-3">Cobro</th>
                     <th className="px-4 py-3 text-right">Cantidad</th>
                     <th className="px-4 py-3 text-right">Precio base</th>
@@ -183,47 +241,33 @@ const EventQuotePage: React.FC = () => {
                           <p className="font-semibold text-on-surface">{item.concept}</p>
                           {item.notes ? <p className="text-xs text-on-surface-variant mt-1">{item.notes}</p> : null}
                         </td>
+                        <td className="px-4 py-4">
+                          <span className="rounded-full bg-surface-container-low px-2.5 py-1 text-xs font-bold text-on-surface-variant">
+                            {item.source === 'salon' ? 'Salón' : item.source === 'menu' ? 'Menú' : 'Montaje'}
+                          </span>
+                        </td>
                         <td className="px-4 py-4 text-sm text-on-surface-variant">
                           {item.pricingMode === 'servicio' ? 'Por servicio' : 'Por unidad'}
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          {item.pricingMode === 'unidad' ? (
-                            <input
-                              className="w-20 bg-surface-container-low border border-outline-variant/40 rounded-md px-2 py-1.5 text-sm text-right"
-                              type="number"
-                              min={1}
-                              value={item.quantity}
-                              onChange={(eventTarget) => {
-                                const next = Number(eventTarget.target.value);
-                                updateQuoteItem(item.id, (prev) => ({
-                                  ...prev,
-                                  quantity: Math.max(1, Number.isNaN(next) ? 1 : next),
-                                }));
-                              }}
-                            />
-                          ) : (
-                            <span className="text-sm text-on-surface-variant">1</span>
-                          )}
+                        <td className="px-4 py-4 text-right text-sm font-semibold text-on-surface">
+                          {item.pricingMode === 'servicio' ? '1 servicio' : `${item.quantity} pax`}
                         </td>
                         <td className="px-4 py-4 text-right text-sm text-on-surface-variant">
                           {formatCurrency(item.unitBasePrice)}
                         </td>
                         <td className="px-4 py-4 text-right">
                           <input
-                            className={`w-28 bg-surface-container-low border rounded-md px-2 py-1.5 text-sm text-right ${
-                              hasAdjustment ? 'border-primary-gold/60' : 'border-outline-variant/40'
-                            }`}
+                            className={`w-28 rounded-md border px-2 py-1.5 text-right text-sm ${
+                              isDraft
+                                ? 'bg-surface-container-low'
+                                : 'bg-surface-container text-on-surface-variant cursor-not-allowed'
+                            } ${hasAdjustment ? 'border-primary-gold/60' : 'border-outline-variant/40'}`}
                             type="number"
                             min={0}
                             step={1000}
                             value={item.unitAdjustedPrice}
-                            onChange={(eventTarget) => {
-                              const next = Number(eventTarget.target.value);
-                              updateQuoteItem(item.id, (prev) => ({
-                                ...prev,
-                                unitAdjustedPrice: Math.max(0, Number.isNaN(next) ? 0 : next),
-                              }));
-                            }}
+                            disabled={!isDraft}
+                            onChange={(eventTarget) => updateAdjustedPrice(item.id, Number(eventTarget.target.value))}
                           />
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-on-surface">
@@ -282,7 +326,8 @@ const EventQuotePage: React.FC = () => {
               <div className="flex justify-between border-t border-outline-variant/20 pt-2">
                 <span className="text-on-surface-variant">Ajuste neto</span>
                 <span className={`font-semibold ${deltaTotal >= 0 ? 'text-primary-gold' : 'text-green-text'}`}>
-                  {deltaTotal >= 0 ? '+' : '-'}{formatCurrency(Math.abs(deltaTotal))}
+                  {deltaTotal >= 0 ? '+' : '-'}
+                  {formatCurrency(Math.abs(deltaTotal))}
                 </span>
               </div>
             </div>
@@ -293,19 +338,21 @@ const EventQuotePage: React.FC = () => {
 
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Menú solicitado</p>
-              {requestedMenuItems.map((item) => (
+              {menuItems.map((item) => (
                 <div key={item.id} className="text-sm">
-                  <p className="font-semibold text-on-surface">{item.concept.replace('Menú · ', '')}</p>
-                  <p className="text-on-surface-variant text-xs">{item.notes ?? 'Sin detalle'} · {item.quantity} pax</p>
+                  <p className="font-semibold text-on-surface">{item.concept.replace('Menú - ', '')}</p>
+                  <p className="text-on-surface-variant text-xs">
+                    {item.notes ?? 'Sin detalle'} - {item.quantity} pax
+                  </p>
                 </div>
               ))}
             </div>
 
             <div className="space-y-2 pt-2 border-t border-outline-variant/20">
-              <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Adicionales de montaje</p>
-              {requestedMontageAdditionalItems.map((item) => (
+              <p className="text-xs uppercase tracking-wider font-bold text-neutral-500">Montaje y adicionales</p>
+              {montageItems.map((item) => (
                 <div key={item.id} className="text-sm flex items-center justify-between gap-3">
-                  <p className="font-semibold text-on-surface">{item.concept.replace('Adicional · ', '')}</p>
+                  <p className="font-semibold text-on-surface">{item.concept.replace('Adicional - ', '')}</p>
                   <p className="text-on-surface-variant text-xs">
                     {item.pricingMode === 'unidad' ? `x${item.quantity}` : '1 servicio'}
                   </p>
@@ -337,7 +384,9 @@ const EventQuotePage: React.FC = () => {
       <footer className="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface-container-lowest/90 backdrop-blur-md border-t border-surface-container px-6 py-4 flex justify-between items-center z-[60]">
         <div className="hidden sm:flex items-center gap-2 text-on-secondary-container">
           <span className="material-symbols-outlined text-lg">info</span>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">La cotización se recalcula en tiempo real con cada ajuste</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+            Solo el borrador permite ajustar precios; las cantidades se corrigen en Menú o Montaje
+          </p>
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
           <button

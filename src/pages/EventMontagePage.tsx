@@ -230,7 +230,23 @@ const EventMontagePage: React.FC = () => {
       <EventDetailHeaderTabs event={event} activeTab="montaje" />
 
       <div className="lg:flex lg:items-start gap-6">
-        <div className="flex-1 mb-24">
+        <div className="flex-1 mb-24 space-y-6">
+          <div className="bg-surface-container-lowest border border-border rounded-lg p-6 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider font-bold text-stone-500">Ficha operativa</p>
+                <h3 className="font-display text-2xl font-bold text-on-surface mt-1">Montaje del evento</h3>
+                <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">
+                  Configura mesas, sillas, textiles, infraestructura y adicionales. La cotización toma estas
+                  cantidades como fuente de verdad.
+                </p>
+              </div>
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                En edición
+              </span>
+            </div>
+          </div>
+
           <div className="bg-surface-container-lowest border border-border rounded-xl p-8 shadow-sm space-y-8">
             <section className="space-y-4">
               <h3 className="text-xl font-display font-bold text-on-surface">Configuración de mesas</h3>
