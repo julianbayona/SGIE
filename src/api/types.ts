@@ -191,6 +191,12 @@ export interface TipoAdicionalRequest {
   precioBase: number;
 }
 
+export interface PlatoRequest {
+  nombre: string;
+  descripcion?: string;
+  precioBase: number;
+}
+
 // ─────────────────────────────────────────────
 // Menús
 // ─────────────────────────────────────────────
@@ -268,12 +274,26 @@ export interface TipoMomentoMenuResponse {
   activo: boolean;
 }
 
+export interface TipoMomentoMenuRequest {
+  nombre: string;
+}
+
 export interface PlatoResponse {
   id: string;
   nombre: string;
   descripcion: string | null;
   precioBase: number;
   activo: boolean;
+}
+
+export interface PlatoMomentoRequest {
+  platoId: string;
+  tipoMomentoId: string;
+}
+
+export interface PlatoMomentoResponse {
+  platoId: string;
+  tipoMomentoId: string;
 }
 
 // ─────────────────────────────────────────────

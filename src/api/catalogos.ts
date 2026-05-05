@@ -5,7 +5,11 @@ import type {
   TipoAdicionalResponse,
   TipoAdicionalRequest,
   PlatoResponse,
-  TipoMomentoMenuResponse
+  PlatoRequest,
+  TipoMomentoMenuResponse,
+  TipoMomentoMenuRequest,
+  PlatoMomentoRequest,
+  PlatoMomentoResponse,
 } from './types';
 
 /** Fábrica genérica para catálogos con estructura básica (nombre + descripción). */
@@ -77,6 +81,21 @@ const catalogosApi = {
         .get<PlatoResponse>(`/catalogos/platos/${id}`)
         .then((r) => r.data);
     },
+    crear(data: PlatoRequest): Promise<PlatoResponse> {
+      return apiClient
+        .post<PlatoResponse>('/catalogos/platos', data)
+        .then((r) => r.data);
+    },
+    actualizar(id: string, data: PlatoRequest): Promise<PlatoResponse> {
+      return apiClient
+        .put<PlatoResponse>(`/catalogos/platos/${id}`, data)
+        .then((r) => r.data);
+    },
+    desactivar(id: string): Promise<PlatoResponse> {
+      return apiClient
+        .delete<PlatoResponse>(`/catalogos/platos/${id}`)
+        .then((r) => r.data);
+    },
   },
 
   tiposMomentoMenu: {
@@ -89,6 +108,37 @@ const catalogosApi = {
       return apiClient
         .get<TipoMomentoMenuResponse>(`/catalogos/tipos-momento-menu/${id}`)
         .then((r) => r.data);
+    },
+    crear(data: TipoMomentoMenuRequest): Promise<TipoMomentoMenuResponse> {
+      return apiClient
+        .post<TipoMomentoMenuResponse>('/catalogos/tipos-momento-menu', data)
+        .then((r) => r.data);
+    },
+    actualizar(id: string, data: TipoMomentoMenuRequest): Promise<TipoMomentoMenuResponse> {
+      return apiClient
+        .put<TipoMomentoMenuResponse>(`/catalogos/tipos-momento-menu/${id}`, data)
+        .then((r) => r.data);
+    },
+    desactivar(id: string): Promise<TipoMomentoMenuResponse> {
+      return apiClient
+        .delete<TipoMomentoMenuResponse>(`/catalogos/tipos-momento-menu/${id}`)
+        .then((r) => r.data);
+    },
+  },
+
+  platoMomentos: {
+    crear(data: PlatoMomentoRequest): Promise<PlatoMomentoResponse> {
+      return apiClient
+        .post<PlatoMomentoResponse>('/catalogos/plato-momentos', data)
+        .then((r) => r.data);
+    },
+    obtener(params: PlatoMomentoRequest): Promise<PlatoMomentoResponse> {
+      return apiClient
+        .get<PlatoMomentoResponse>('/catalogos/plato-momentos', { params })
+        .then((r) => r.data);
+    },
+    eliminar(params: PlatoMomentoRequest): Promise<void> {
+      return apiClient.delete('/catalogos/plato-momentos', { params }).then(() => undefined);
     },
   },
 

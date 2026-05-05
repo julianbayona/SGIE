@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import catalogosApi from '@/api/catalogos';
 import salonesApi from '@/api/salones';
-import type { CatalogoBasicoResponse, TipoAdicionalResponse, SalonResponse } from '@/api/types';
+import type {
+  CatalogoBasicoResponse,
+  TipoAdicionalResponse,
+  SalonResponse,
+  PlatoResponse,
+  TipoMomentoMenuResponse,
+} from '@/api/types';
 
 type CatalogKey =
   | 'tipo_evento'
@@ -12,7 +18,9 @@ type CatalogKey =
   | 'sobremantel'
   | 'color'
   | 'tipo_adicional'
-  | 'salon';
+  | 'salon'
+  | 'plato'
+  | 'tipo_momento_menu';
 
 interface CatalogTab {
   key: CatalogKey;
@@ -29,10 +37,17 @@ const catalogTabs: CatalogTab[] = [
   { key: 'sobremantel', label: 'Sobremanteles', description: 'Sobremanteles asociados a colores.' },
   { key: 'color', label: 'Colores', description: 'Colores reutilizados por manteles y sobremanteles.' },
   { key: 'tipo_adicional', label: 'Tipos de adicional', description: 'Adicionales del montaje con modo de cobro y precio base.' },
+  { key: 'plato', label: 'Platos', description: 'Catalogo base de platos disponibles para menu.' },
+  { key: 'tipo_momento_menu', label: 'Momentos de menu', description: 'Momentos configurables del flujo gastronomico.' },
   { key: 'salon', label: 'Salones', description: 'Espacios fisicos reservables para eventos.' },
 ];
 
-type GenericRow = CatalogoBasicoResponse | TipoAdicionalResponse | SalonResponse;
+type GenericRow =
+  | CatalogoBasicoResponse
+  | TipoAdicionalResponse
+  | SalonResponse
+  | PlatoResponse
+  | TipoMomentoMenuResponse;
 
 const formatCOP = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -52,6 +67,8 @@ const CatalogsPage: React.FC = () => {
 
   const isSalon = activeCatalog === 'salon';
   const isTipoAdicional = activeCatalog === 'tipo_adicional';
+  const isPlato = activeCatalog === 'plato';
+  const isTipoMomentoMenu = activeCatalog === 'tipo_momento_menu';
   const activeTab = catalogTabs.find((tab) => tab.key === activeCatalog)!;
 
   const resetForm = () => {
@@ -79,6 +96,8 @@ const CatalogsPage: React.FC = () => {
         case 'sobremantel': data = await catalogosApi.sobremanteles.listar(); break;
         case 'color': data = await catalogosApi.colores.listar(); break;
         case 'tipo_adicional': data = await catalogosApi.tiposAdicional.listar(); break;
+        case 'plato': data = await catalogosApi.platos.listar(); break;
+        case 'tipo_momento_menu': data = await catalogosApi.tiposMomentoMenu.listar(); break;
         case 'salon': data = await salonesApi.listar(); break;
       }
 
@@ -123,6 +142,14 @@ const CatalogsPage: React.FC = () => {
         modoCobro: formModoCobro,
         precioBase: formPrecioBase,
       };
+      const platoData = {
+        nombre: formNombre.trim(),
+        descripcion: formDescripcion.trim() || undefined,
+        precioBase: formPrecioBase,
+      };
+      const tipoMomentoMenuData = {
+        nombre: formNombre.trim(),
+      };
 
       if (editingId) {
         switch (activeCatalog) {
@@ -134,6 +161,8 @@ const CatalogsPage: React.FC = () => {
           case 'sobremantel': await catalogosApi.sobremanteles.actualizar(editingId, basicData); break;
           case 'color': await catalogosApi.colores.actualizar(editingId, basicData); break;
           case 'tipo_adicional': await catalogosApi.tiposAdicional.actualizar(editingId, tipoAdicionalData); break;
+          case 'plato': await catalogosApi.platos.actualizar(editingId, platoData); break;
+          case 'tipo_momento_menu': await catalogosApi.tiposMomentoMenu.actualizar(editingId, tipoMomentoMenuData); break;
           default: break;
         }
       } else {
@@ -146,6 +175,8 @@ const CatalogsPage: React.FC = () => {
           case 'sobremantel': await catalogosApi.sobremanteles.crear(basicData); break;
           case 'color': await catalogosApi.colores.crear(basicData); break;
           case 'tipo_adicional': await catalogosApi.tiposAdicional.crear(tipoAdicionalData); break;
+          case 'plato': await catalogosApi.platos.crear(platoData); break;
+          case 'tipo_momento_menu': await catalogosApi.tiposMomentoMenu.crear(tipoMomentoMenuData); break;
           case 'salon': await salonesApi.registrar(salonData); break;
         }
       }
@@ -170,6 +201,8 @@ const CatalogsPage: React.FC = () => {
         case 'sobremantel': await catalogosApi.sobremanteles.desactivar(id); break;
         case 'color': await catalogosApi.colores.desactivar(id); break;
         case 'tipo_adicional': await catalogosApi.tiposAdicional.desactivar(id); break;
+        case 'plato': await catalogosApi.platos.desactivar(id); break;
+        case 'tipo_momento_menu': await catalogosApi.tiposMomentoMenu.desactivar(id); break;
         default: return;
       }
 
@@ -232,6 +265,7 @@ const CatalogsPage: React.FC = () => {
                     {isSalon ? <th className="px-4 py-3">Capacidad</th> : null}
                     {isTipoAdicional ? <th className="px-4 py-3">Modo cobro</th> : null}
                     {isTipoAdicional ? <th className="px-4 py-3">Precio base</th> : null}
+                    {isPlato ? <th className="px-4 py-3">Precio base</th> : null}
                     <th className="px-4 py-3">Estado</th>
                     <th className="px-4 py-3 text-right">Acciones</th>
                   </tr>
@@ -262,6 +296,11 @@ const CatalogsPage: React.FC = () => {
                               {formatCOP(Number((row as TipoAdicionalResponse).precioBase))}
                             </td>
                           </>
+                        ) : null}
+                        {isPlato ? (
+                          <td className="px-4 py-3 text-sm text-on-surface-variant">
+                            {formatCOP(Number((row as PlatoResponse).precioBase))}
+                          </td>
                         ) : null}
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold ${
@@ -331,7 +370,7 @@ const CatalogsPage: React.FC = () => {
               />
             </div>
 
-            {!isSalon && !isTipoAdicional ? (
+            {!isSalon && !isTipoAdicional && !isTipoMomentoMenu ? (
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-2">Descripcion</label>
                 <input
@@ -394,6 +433,19 @@ const CatalogsPage: React.FC = () => {
                 </div>
               </>
             ) : null}
+
+            {isPlato ? (
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-2">Precio base *</label>
+                <input
+                  className="w-full bg-surface-container-low border border-outline-variant/40 rounded-md px-3 py-2.5 text-sm"
+                  type="number"
+                  min={0}
+                  value={formPrecioBase}
+                  onChange={(e) => setFormPrecioBase(Number(e.target.value) || 0)}
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
@@ -411,7 +463,7 @@ const CatalogsPage: React.FC = () => {
                 !formNombre.trim() ||
                 saving ||
                 (isSalon && formCapacidad < 1) ||
-                (isTipoAdicional && formPrecioBase < 0)
+                ((isTipoAdicional || isPlato) && formPrecioBase < 0)
               }
               className="px-5 py-2 rounded-md bg-primary-gold text-white text-sm font-bold hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed"
             >
