@@ -4,7 +4,6 @@ import type {
   CrearEventoRequest,
   CrearReservaSalonRequest,
   ModificarReservaSalonRequest,
-  ConfirmarEventoRequest,
 } from './types';
 
 const eventosApi = {
@@ -41,10 +40,8 @@ const eventosApi = {
   },
 
   /** Confirma un evento (transición de estado). */
-  confirmar(eventoId: string, data: ConfirmarEventoRequest): Promise<EventoResponse> {
-    return apiClient
-      .post<EventoResponse>(`/eventos/${eventoId}/confirmar`, data)
-      .then((r) => r.data);
+  confirmar(eventoId: string): Promise<EventoResponse> {
+    return apiClient.post<EventoResponse>(`/eventos/${eventoId}/confirmar`).then((r) => r.data);
   },
 };
 

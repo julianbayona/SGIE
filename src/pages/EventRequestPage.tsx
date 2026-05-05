@@ -89,14 +89,12 @@ const EventRequestPage: React.FC = () => {
         clienteId: clienteEncontrado.id,
         tipoEventoId,
         tipoComidaId,
-        usuarioCreadorId: '00000000-0000-0000-0000-000000000001', // reemplazar con usuario autenticado
         fechaHoraInicio: toLocalISO(inicio),
         fechaHoraFin: toLocalISO(fin),
       });
 
       // Crear reserva de salón
       await eventosApi.crearReserva(evento.id, {
-        usuarioId: '00000000-0000-0000-0000-000000000001',
         salonId: selectedVenueId,
         numInvitados: numPersonas || 1,
         fechaHoraInicio: toLocalISO(inicio),

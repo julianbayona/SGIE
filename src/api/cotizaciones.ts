@@ -33,7 +33,9 @@ const cotizacionesApi = {
     data: ActualizarItemCotizacionRequest
   ): Promise<CotizacionResponse> {
     return apiClient
-      .patch<CotizacionResponse>(`/cotizaciones/${cotizacionId}/items/${itemId}`, data)
+      .put<CotizacionResponse>(`/cotizaciones/${cotizacionId}/items`, {
+        items: [{ itemId, precioOverride: data.precioOverride }],
+      })
       .then((r) => r.data);
   },
 

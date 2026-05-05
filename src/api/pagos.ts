@@ -7,7 +7,12 @@ import type {
 } from './types';
 
 const pagosApi = {
-  /** Registra un anticipo sobre una cotización. */
+  listarAnticipos(cotizacionId: string): Promise<AnticipoResponse[]> {
+    return apiClient
+      .get<AnticipoResponse[]>(`/cotizaciones/${cotizacionId}/anticipos`)
+      .then((r) => r.data);
+  },
+
   registrarAnticipo(
     cotizacionId: string,
     data: RegistrarAnticipoRequest
@@ -17,7 +22,6 @@ const pagosApi = {
       .then((r) => r.data);
   },
 
-  /** Programa un recordatorio de anticipo para un evento. */
   programarRecordatorio(
     eventoId: string,
     data: ProgramarRecordatorioRequest

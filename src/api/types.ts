@@ -100,13 +100,11 @@ export interface CrearEventoRequest {
   clienteId: string;
   tipoEventoId: string;
   tipoComidaId: string;
-  usuarioCreadorId: string;
   fechaHoraInicio: string; // ISO 8601 LocalDateTime
   fechaHoraFin: string;
 }
 
 export interface CrearReservaSalonRequest {
-  usuarioId: string;
   salonId: string;
   numInvitados: number;
   fechaHoraInicio: string;
@@ -114,16 +112,13 @@ export interface CrearReservaSalonRequest {
 }
 
 export interface ModificarReservaSalonRequest {
-  usuarioId: string;
   salonId: string;
   numInvitados: number;
   fechaHoraInicio: string;
   fechaHoraFin: string;
 }
 
-export interface ConfirmarEventoRequest {
-  usuarioId: string;
-}
+export interface ConfirmarEventoRequest {}
 
 // ─────────────────────────────────────────────
 // Cotizaciones
@@ -185,9 +180,15 @@ export interface CatalogoBasicoRequest {
 export interface TipoAdicionalResponse {
   id: string;
   nombre: string;
-  modoCobro: 'POR_UNIDAD' | 'POR_SERVICIO';
+  modoCobro: 'UNIDAD' | 'SERVICIO';
   precioBase: number;
   activo: boolean;
+}
+
+export interface TipoAdicionalRequest {
+  nombre: string;
+  modoCobro: 'UNIDAD' | 'SERVICIO';
+  precioBase: number;
 }
 
 // ─────────────────────────────────────────────
@@ -361,7 +362,6 @@ export interface AnticipoResponse {
 }
 
 export interface RegistrarAnticipoRequest {
-  usuarioId: string;
   valor: number;
   metodoPago: string;
   fechaPago: string; // "YYYY-MM-DD"
@@ -378,6 +378,5 @@ export interface RecordatorioAnticipoResponse {
 }
 
 export interface ProgramarRecordatorioRequest {
-  usuarioId: string;
   fechaRecordatorio: string; // ISO 8601
 }

@@ -6,6 +6,7 @@ import clientesApi from '@/api/clientes';
 import salonesApi from '@/api/salones';
 import catalogosApi from '@/api/catalogos';
 import menusApi from '@/api/menus';
+import { fallbackMomentosMenu, fallbackPlatos } from '@/features/events/data/menuCatalogFallback';
 import type {
   EventoResponse,
   ClienteResponse,
@@ -61,6 +62,7 @@ const EventMenuPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [catalogWarning, setCatalogWarning] = useState<string | null>(null);
 
   // formulario para agregar un ítem
   const [addMomentoId, setAddMomentoId] = useState('');
@@ -80,16 +82,30 @@ const EventMenuPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const [eventoData, platosData, momentosData] = await Promise.all([
-          eventosApi.obtenerPorId(eventId),
-          catalogosApi.platos.listar(),
-          catalogosApi.tiposMomentoMenu.listar(),
-        ]);
+        const eventoData = await eventosApi.obtenerPorId(eventId);
         if (cancelled) return;
 
         setEvento(eventoData);
-        setPlatos(platosData.filter(p => p.activo));
-        setMomentos(momentosData.filter(m => m.activo));
+
+        let platosData = fallbackPlatos;
+        let momentosData = fallbackMomentosMenu;
+
+        try {
+          const [platosApiData, momentosApiData] = await Promise.all([
+            catalogosApi.platos.listar(),
+            catalogosApi.tiposMomentoMenu.listar(),
+          ]);
+          platosData = platosApiData.filter((plato) => plato.activo);
+          momentosData = momentosApiData.filter((momento) => momento.activo);
+          setCatalogWarning(null);
+        } catch {
+          setCatalogWarning(
+            'Se esta usando un catalogo temporal local para Menu porque el contrato actual no expone CRUD REST de platos ni tipos de momento.'
+          );
+        }
+
+        setPlatos(platosData);
+        setMomentos(momentosData);
 
         // inicializar selector con el primer momento disponible
         if (momentosData.length > 0) setAddMomentoId(momentosData[0]!.id);
@@ -311,6 +327,12 @@ const EventMenuPage: React.FC = () => {
           {/* banner de error */}
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          {catalogWarning && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              {catalogWarning}
+            </div>
           )}
 
           {/* banner de éxito */}

@@ -9,8 +9,6 @@ import salonesApi from '@/api/salones';
 import type { 
   EventoResponse, 
   CatalogoBasicoResponse, 
-  TipoAdicionalResponse,
-  MontajeResponse,
   ClienteResponse,
   SalonResponse
 } from '@/api/types';
@@ -25,7 +23,7 @@ interface AdditionalItem {
   id: string;
   tipoAdicionalId: string;
   name: string;
-  billingType: 'POR_SERVICIO' | 'POR_UNIDAD';
+  billingType: 'SERVICIO' | 'UNIDAD';
   selected: boolean;
   quantity: number;
   basePrice: number;
@@ -50,7 +48,6 @@ const EventMontagePage: React.FC = () => {
   const [manteles, setManteles] = useState<CatalogoBasicoResponse[]>([]);
   const [sobremanteles, setSobremanteles] = useState<CatalogoBasicoResponse[]>([]);
   const [colores, setColores] = useState<CatalogoBasicoResponse[]>([]);
-  const [tiposAdicional, setTiposAdicional] = useState<TipoAdicionalResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,16 +111,12 @@ const EventMontagePage: React.FC = () => {
         setManteles(mantelesData);
         setSobremanteles(sobremantelesData);
         setColores(coloresData);
-        setTiposAdicional(adicionalesData);
-
         const reservaActual = eventoData.reservas.find(r => r.vigente);
         if (!reservaActual) {
           setError('No hay reserva activa para este evento');
           setLoading(false);
           return;
         }
-
-        const reservaId = reservaActual.reservaRaizId || reservaActual.id;
 
         // Cargar datos relacionados del evento
         const [clienteData, tipoEventoData, salonData] = await Promise.all([
@@ -153,8 +146,6 @@ const EventMontagePage: React.FC = () => {
         setManteles(mantelesActivos);
         setSobremanteles(sobremantelesActivos);
         setColores(coloresActivos);
-        setTiposAdicional(adicionalesActivos);
-
         // Inicializar valores por defecto
         if (mesasActivas.length > 0) setTableType(mesasActivas[0]!.id);
         if (sillasActivas.length > 0) setChairType(sillasActivas[0]!.id);
@@ -186,14 +177,16 @@ const EventMontagePage: React.FC = () => {
             // Poblar formulario con datos existentes
             if (montaje.mesas.length > 0) {
               const mesa = montaje.mesas[0];
-              setTableType(mesa.tipoMesaId);
-              setChairType(mesa.tipoSillaId);
-              setPeoplePerTable(mesa.sillaPorMesa);
-              setTableCount(mesa.cantidadMesas);
-              if (mesa.mantelId) setClothType(mesa.mantelId);
-              if (mesa.sobremantelId) setTopClothType(mesa.sobremantelId);
-              setDinnerware(mesa.vajilla);
-              setFajonEnabled(mesa.fajon);
+              if (mesa) {
+                setTableType(mesa.tipoMesaId);
+                setChairType(mesa.tipoSillaId);
+                setPeoplePerTable(mesa.sillaPorMesa);
+                setTableCount(mesa.cantidadMesas);
+                if (mesa.mantelId) setClothType(mesa.mantelId);
+                if (mesa.sobremantelId) setTopClothType(mesa.sobremantelId);
+                setDinnerware(mesa.vajilla);
+                setFajonEnabled(mesa.fajon);
+              }
             }
 
             // Poblar infraestructura
@@ -248,7 +241,7 @@ const EventMontagePage: React.FC = () => {
   const updateAdditionalQuantity = (itemId: string, quantity: number) => {
     setAdditionalItems((prev) =>
       prev.map((item) => {
-        if (item.id !== itemId || item.billingType !== 'POR_UNIDAD') {
+        if (item.id !== itemId || item.billingType !== 'UNIDAD') {
           return item;
         }
 
@@ -292,7 +285,7 @@ const EventMontagePage: React.FC = () => {
       setError(null);
 
       await montajesApi.configurar(reservaId, {
-        observaciones: null,
+        observaciones: undefined,
         mesas: [{
           tipoMesaId: tableType,
           tipoSillaId: chairType,
@@ -383,7 +376,7 @@ const EventMontagePage: React.FC = () => {
 
   const additionalTotal = useMemo(() => {
     return selectedAdditionalItems.reduce((sum, item) => {
-      const lineTotal = item.billingType === 'POR_UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
+      const lineTotal = item.billingType === 'UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
       return sum + lineTotal;
     }, 0);
   }, [selectedAdditionalItems]);
@@ -640,10 +633,10 @@ const EventMontagePage: React.FC = () => {
                       <tr key={item.id}>
                         <td className="px-5 py-3 font-semibold text-on-surface">{item.name}</td>
                         <td className="px-5 py-3 text-sm text-on-surface-variant">
-                          {item.billingType === 'POR_SERVICIO' ? 'Por servicio' : 'Por unidad'}
+                          {item.billingType === 'SERVICIO' ? 'Por servicio' : 'Por unidad'}
                         </td>
                         <td className="px-5 py-3 text-right">
-                          {item.billingType === 'POR_UNIDAD' ? (
+                          {item.billingType === 'UNIDAD' ? (
                             <input
                               className="w-20 bg-surface-container-low border border-outline-variant/40 rounded-md px-2 py-1.5 text-sm text-right"
                               type="number"
@@ -740,14 +733,14 @@ const EventMontagePage: React.FC = () => {
               <div className="space-y-3">
                 {selectedAdditionalItems.map((item) => {
                   const lineTotal =
-                    item.billingType === 'POR_UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
+                    item.billingType === 'UNIDAD' ? item.quantity * item.basePrice : item.basePrice;
 
                   return (
                     <div key={item.id} className="flex items-start justify-between gap-3 text-sm">
                       <div>
                         <p className="font-semibold text-on-surface">{item.name}</p>
                         <p className="text-on-surface-variant text-xs">
-                          {item.billingType === 'POR_UNIDAD' ? `${item.quantity} unidades` : '1 servicio'}
+                          {item.billingType === 'UNIDAD' ? `${item.quantity} unidades` : '1 servicio'}
                         </p>
                       </div>
                       <p className="font-semibold text-on-surface">

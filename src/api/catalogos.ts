@@ -3,6 +3,7 @@ import type {
   CatalogoBasicoResponse, 
   CatalogoBasicoRequest, 
   TipoAdicionalResponse,
+  TipoAdicionalRequest,
   PlatoResponse,
   TipoMomentoMenuResponse
 } from './types';
@@ -46,6 +47,21 @@ const catalogosApi = {
     obtenerPorId(id: string): Promise<TipoAdicionalResponse> {
       return apiClient
         .get<TipoAdicionalResponse>(`/catalogos/tipos-adicional/${id}`)
+        .then((r) => r.data);
+    },
+    crear(data: TipoAdicionalRequest): Promise<TipoAdicionalResponse> {
+      return apiClient
+        .post<TipoAdicionalResponse>('/catalogos/tipos-adicional', data)
+        .then((r) => r.data);
+    },
+    actualizar(id: string, data: TipoAdicionalRequest): Promise<TipoAdicionalResponse> {
+      return apiClient
+        .put<TipoAdicionalResponse>(`/catalogos/tipos-adicional/${id}`, data)
+        .then((r) => r.data);
+    },
+    desactivar(id: string): Promise<TipoAdicionalResponse> {
+      return apiClient
+        .delete<TipoAdicionalResponse>(`/catalogos/tipos-adicional/${id}`)
         .then((r) => r.data);
     },
   },

@@ -42,10 +42,12 @@ const UserMenu: React.FC = () => {
   // Obtener iniciales del nombre
   const getInitials = (name: string): string => {
     const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+    const first = parts[0] ?? '';
+    const second = parts[1] ?? '';
+    if (first && second) {
+      return `${first[0] ?? ''}${second[0] ?? ''}`.toUpperCase();
     }
-    return parts[0].slice(0, 2).toUpperCase();
+    return first.slice(0, 2).toUpperCase();
   };
 
   return (

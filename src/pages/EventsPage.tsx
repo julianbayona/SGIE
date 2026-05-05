@@ -52,10 +52,12 @@ function toEventRecord(
   // Obtener iniciales del cliente
   const getInitials = (name: string): string => {
     const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+    const first = parts[0] ?? '';
+    const second = parts[1] ?? '';
+    if (first && second) {
+      return `${first[0] ?? ''}${second[0] ?? ''}`.toUpperCase();
     }
-    return parts[0].slice(0, 2).toUpperCase();
+    return first.slice(0, 2).toUpperCase();
   };
 
   return {
@@ -65,7 +67,7 @@ function toEventRecord(
     clientDocument: cliente?.cedula ?? `ID: ${e.clienteId.slice(0, 8)}`,
     clientInitials: cliente ? getInitials(cliente.nombreCompleto) : '??',
     hall: salon?.nombre ?? 'Sin salón',
-    eventKind: tipoEvento?.nombre ?? 'Social',
+    eventKind: (tipoEvento?.nombre ?? 'Social') as EventRecord['eventKind'],
     status: estadoMap[e.estado] ?? 'Pendiente',
     isActive: e.estado !== 'CANCELADO',
     nextAction: nextActionMap[e.estado] ?? '',
